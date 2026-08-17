@@ -1,0 +1,91 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { db } from "@/lib/db";
+
+import { CreateCourseForm } from "./_components/create-course-form";
+
+export const metadata: Metadata = {
+  title: "Courses",
+};
+
+// Fixed locale and time zone so the server always renders the same string a
+// user would see, regardless of where the server happens to run.
+const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeZone: "UTC",
+});
+
+export default async function CoursesPage() {
+  // This is a Server Component, so it can query the database directly.
+  const courses = await db.course.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  return (
+    <main className="mx-auto w-full max-w-3xl px-6 py-12">
+      <header className="mb-8">
+        <h1 className="text-3xl font-semibold tracking-tight">Your courses</h1>
+        <p className="text-muted-foreground mt-2">
+          Every note, assignment and document you add later will live inside a
+          course.
+        </p>
+      </header>
+
+      <Card className="mb-10">
+        <CardHeader>
+          <CardTitle>Add a course</CardTitle>
+          <CardDescription>
+            Start with the subject you are studying right now.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CreateCourseForm />
+        </CardContent>
+      </Card>
+
+      <section aria-labelledby="course-list-heading">
+        <h2 id="course-list-heading" className="mb-4 text-lg font-medium">
+          {courses.length} {courses.length === 1 ? "course" : "courses"}
+        </h2>
+
+        {courses.length === 0 ? (
+          <p className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
+            No courses yet. Add your first one above.
+          </p>
+        ) : (
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {courses.map((course) => (
+              <li key={course.id}>
+                <Link href={`/courses/${course.id}`} className="block h-full">
+                  <Card className="h-full transition-colors hover:bg-muted/50">
+                    <CardHeader>
+                      <CardTitle>{course.title}</CardTitle>
+                      {course.description ? (
+                        <CardDescription>
+                          {course.description}
+                        </CardDescription>
+                      ) : null}
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground text-xs">
+                        Added {dateFormatter.format(course.createdAt)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </main>
+  );
+}

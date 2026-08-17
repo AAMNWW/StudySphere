@@ -1,0 +1,23 @@
+export type NoteFormState = {
+  /**
+   * Incremented on every submission. The form uses it as a React `key` so the
+   * inputs remount and pick up the values echoed back below.
+   */
+  submission: number;
+  status: "idle" | "error" | "success";
+  message?: string;
+  errors?: {
+    title?: string[];
+    content?: string[];
+  };
+  /** Echoed back on failure so the user does not lose what they typed. */
+  values?: {
+    title: string;
+    content: string;
+  };
+};
+
+export const initialNoteFormState: NoteFormState = {
+  submission: 0,
+  status: "idle",
+};
