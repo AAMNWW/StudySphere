@@ -10,13 +10,18 @@ export async function NavUser() {
 
   if (!session?.user) {
     return (
-      <nav className="flex items-center gap-4 text-sm">
-        <Link href="/login" className="hover:underline">
-          Sign in
-        </Link>
-        <Link href="/signup" className="hover:underline">
-          Sign up
-        </Link>
+      <nav className="flex items-center gap-2 text-sm">
+        <Button
+          variant="outline"
+          size="sm"
+          nativeButton={false}
+          render={<Link href="/login">Login</Link>}
+        />
+        <Button
+          size="sm"
+          nativeButton={false}
+          render={<Link href="/signup">Start for free</Link>}
+        />
       </nav>
     );
   }

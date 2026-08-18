@@ -1,6 +1,8 @@
+import { BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { ICON_TILE_COLOR_CYCLE, IconTile } from "@/components/icon-tile";
 import {
   Card,
   CardContent,
@@ -36,7 +38,7 @@ export default async function CoursesPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
       <header className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Your courses</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Your courses</h1>
         <p className="text-muted-foreground mt-2">
           Every note, assignment and document you add later will live inside a
           course.
@@ -56,22 +58,27 @@ export default async function CoursesPage() {
       </Card>
 
       <section aria-labelledby="course-list-heading">
-        <h2 id="course-list-heading" className="mb-4 text-lg font-medium">
+        <h2 id="course-list-heading" className="mb-4 text-lg font-bold">
           {courses.length} {courses.length === 1 ? "course" : "courses"}
         </h2>
 
         {courses.length === 0 ? (
-          <p className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
+          <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
             No courses yet. Add your first one above.
           </p>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2">
-            {courses.map((course) => (
+            {courses.map((course, index) => (
               <li key={course.id}>
                 <Link href={`/courses/${course.id}`} className="block h-full">
                   <Card className="h-full transition-colors hover:bg-muted/50">
                     <CardHeader>
-                      <CardTitle>{course.title}</CardTitle>
+                      <IconTile
+                        color={ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length]}
+                      >
+                        <BookOpen className="size-5" />
+                      </IconTile>
+                      <CardTitle className="mt-3">{course.title}</CardTitle>
                       {course.description ? (
                         <CardDescription>
                           {course.description}
