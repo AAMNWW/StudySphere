@@ -1,15 +1,27 @@
 "use server";
 
+import { readFile } from "node:fs/promises";
+
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { summarizeDocument } from "@/lib/ai/summarize-document";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  ALLOWED_FILE_TYPES,
+  deleteUploadedFile,
+  getUploadedFilePath,
+  MAX_FILE_SIZE_BYTES,
+  saveUploadedFile,
+} from "@/lib/uploads";
 import { assignmentSchema } from "@/lib/validations/assignment";
 import { noteSchema } from "@/lib/validations/note";
 
 import type { AssignmentFormState } from "./assignment-form-state";
+import type { DocumentFormState } from "./document-form-state";
 import type { NoteFormState } from "./note-form-state";
+import type { SummarizeDocumentFormState } from "./summarize-document-form-state";
 
 export async function createNote(
   courseId: string,
@@ -303,4 +315,158 @@ export async function setAssignmentCompleted(
   });
 
   revalidatePath(`/courses/${courseId}`);
+  // The dashboard's "Due soon" list can also toggle completion, so it needs
+  // to drop out of that list in place rather than on next full navigation.
+  revalidatePath("/");
+}
+
+export async function uploadDocument(
+  courseId: string,
+  previousState: DocumentFormState,
+  formData: FormData,
+): Promise<DocumentFormState> {
+  const userId = await requireUserId();
+  const submission = previousState.submission + 1;
+
+  const file = formData.get("file");
+
+  if (!(file instanceof File) || file.size === 0) {
+    return {
+      submission,
+      status: "error",
+      message: "Choose a file to upload.",
+    };
+  }
+
+  if (!(file.type in ALLOWED_FILE_TYPES)) {
+    return {
+      submission,
+      status: "error",
+      message: "Only PDF, Word (.docx) and PowerPoint (.pptx) files are supported.",
+    };
+  }
+
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return {
+      submission,
+      status: "error",
+      message: `Files must be ${MAX_FILE_SIZE_BYTES / (1024 * 1024)}MB or smaller.`,
+    };
+  }
+
+  const course = await db.course.findFirst({
+    where: { id: courseId, userId },
+    select: { id: true },
+  });
+
+  if (!course) {
+    return {
+      submission,
+      status: "error",
+      message: "Could not save the file. Please try again.",
+    };
+  }
+
+  try {
+    const storedName = await saveUploadedFile(courseId, file);
+
+    await db.document.create({
+      data: {
+        courseId,
+        fileName: file.name,
+        storedName,
+        mimeType: file.type,
+        sizeBytes: file.size,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to save uploaded file", error);
+    return {
+      submission,
+      status: "error",
+      message: "Could not save the file. Please try again.",
+    };
+  }
+
+  revalidatePath(`/courses/${courseId}`);
+
+  return { submission, status: "success" };
+}
+
+export async function deleteDocument(
+  courseId: string,
+  documentId: string,
+): Promise<void> {
+  const userId = await requireUserId();
+
+  const document = await db.document.findFirst({
+    where: { id: documentId, courseId, course: { userId } },
+  });
+
+  if (!document) {
+    return;
+  }
+
+  await db.document.delete({ where: { id: document.id } });
+  await deleteUploadedFile(courseId, document.storedName);
+
+  revalidatePath(`/courses/${courseId}`);
+}
+
+export async function generateDocumentSummary(
+  courseId: string,
+  documentId: string,
+  previousState: SummarizeDocumentFormState,
+): Promise<SummarizeDocumentFormState> {
+  const userId = await requireUserId();
+  const submission = previousState.submission + 1;
+
+  const document = await db.document.findFirst({
+    where: { id: documentId, courseId, course: { userId } },
+  });
+
+  if (!document) {
+    return {
+      submission,
+      status: "error",
+      message: "Could not summarize the file. Please try again.",
+    };
+  }
+
+  try {
+    const bytes = await readFile(
+      getUploadedFilePath(document.courseId, document.storedName),
+    );
+    const summary = await summarizeDocument(
+      bytes,
+      document.mimeType,
+      document.fileName,
+    );
+
+    await db.document.update({
+      where: { id: document.id },
+      data: { summary, summaryError: null },
+    });
+  } catch (error) {
+    console.error("Failed to summarize document", error);
+
+    await db.document.update({
+      where: { id: document.id },
+      data: {
+        summaryError: "Could not summarize this file. Please try again.",
+      },
+    });
+
+    revalidatePath(`/courses/${courseId}`);
+
+    return {
+      submission,
+      status: "error",
+      message: "Could not summarize the file. Please try again.",
+    };
+  }
+
+  revalidatePath(`/courses/${courseId}`);
+
+  return { submission, status: "success" };
 }

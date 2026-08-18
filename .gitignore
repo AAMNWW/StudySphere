@@ -44,6 +44,9 @@ next-env.d.ts
 
 /src/generated/prisma
 
+# uploaded course documents (local-disk storage, see src/lib/uploads.ts)
+/uploads
+
 # claude code (machine/session-local, not shared project config)
 .claude/settings.local.json
 .claude/scheduled_tasks.lock

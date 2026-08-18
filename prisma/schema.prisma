@@ -26,7 +26,7 @@ model User {
 }
 
 /// A subject the student is studying. Notes, assignments and uploaded
-/// documents will all hang off this model in later milestones.
+/// documents all hang off this model.
 model Course {
   id          String       @id @default(cuid())
   title       String
@@ -35,6 +35,7 @@ model Course {
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   notes       Note[]
   assignments Assignment[]
+  documents   Document[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -67,6 +68,32 @@ model Assignment {
   course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([courseId])
+}
+
+/// A file (PDF, DOCX or PPTX) a student has uploaded against a course. The
+/// bytes live on local disk (see src/lib/uploads.ts); this row is the
+/// pointer plus enough metadata to render and authorize a download.
+model Document {
+  id           String   @id @default(cuid())
+  /// The name as uploaded, shown in the UI and used for the download.
+  fileName     String
+  /// The on-disk filename (a random id + extension) — never derived from
+  /// user input, so it can't be used for path traversal or collide.
+  storedName   String
+  mimeType     String
+  sizeBytes    Int
+  /// AI-generated summary of the file's contents, produced on demand via
+  /// the Gemini API (see src/lib/ai/summarize-document.ts). Null until a
+  /// student requests one.
+  summary      String?
+  /// Set when the most recent summary attempt failed, so the UI can show
+  /// why and offer a retry. Cleared on the next successful attempt.
+  summaryError String?
+  courseId     String
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
 
   @@index([courseId])
 }
