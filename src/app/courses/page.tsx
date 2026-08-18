@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 import { CreateCourseForm } from "./_components/create-course-form";
@@ -24,8 +25,11 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
 });
 
 export default async function CoursesPage() {
+  const userId = await requireUserId();
+
   // This is a Server Component, so it can query the database directly.
   const courses = await db.course.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
   });
 

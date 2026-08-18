@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { assignmentSchema } from "@/lib/validations/assignment";
 import { noteSchema } from "@/lib/validations/note";
@@ -15,6 +16,7 @@ export async function createNote(
   previousState: NoteFormState,
   formData: FormData,
 ): Promise<NoteFormState> {
+  const userId = await requireUserId();
   const submission = previousState.submission + 1;
 
   const values = {
@@ -29,6 +31,22 @@ export async function createNote(
       submission,
       status: "error",
       errors: z.flattenError(parsed.error).fieldErrors,
+      values,
+    };
+  }
+
+  // A course id owned by someone else should behave like one that doesn't
+  // exist, not leak whether it exists.
+  const course = await db.course.findFirst({
+    where: { id: courseId, userId },
+    select: { id: true },
+  });
+
+  if (!course) {
+    return {
+      submission,
+      status: "error",
+      message: "Could not save the note. Please try again.",
       values,
     };
   }
@@ -66,6 +84,7 @@ export async function updateNote(
   previousState: NoteFormState,
   formData: FormData,
 ): Promise<NoteFormState> {
+  const userId = await requireUserId();
   const submission = previousState.submission + 1;
 
   const values = {
@@ -85,13 +104,25 @@ export async function updateNote(
   }
 
   try {
-    await db.note.update({
-      where: { id: noteId },
+    // Filtering on the owning course's userId doubles as the ownership
+    // check: it silently matches zero rows for a note that isn't this
+    // user's, whether because the note or the course id is wrong.
+    const { count } = await db.note.updateMany({
+      where: { id: noteId, courseId, course: { userId } },
       data: {
         title: parsed.data.title,
         content: parsed.data.content || null,
       },
     });
+
+    if (count === 0) {
+      return {
+        submission,
+        status: "error",
+        message: "Could not save the note. Please try again.",
+        values,
+      };
+    }
   } catch (error) {
     console.error("Failed to update note", error);
     return {
@@ -113,7 +144,11 @@ export async function deleteNote(
   courseId: string,
   noteId: string,
 ): Promise<void> {
-  await db.note.delete({ where: { id: noteId } });
+  const userId = await requireUserId();
+
+  await db.note.deleteMany({
+    where: { id: noteId, courseId, course: { userId } },
+  });
 
   revalidatePath(`/courses/${courseId}`);
 }
@@ -123,6 +158,7 @@ export async function createAssignment(
   previousState: AssignmentFormState,
   formData: FormData,
 ): Promise<AssignmentFormState> {
+  const userId = await requireUserId();
   const submission = previousState.submission + 1;
 
   const values = {
@@ -138,6 +174,20 @@ export async function createAssignment(
       submission,
       status: "error",
       errors: z.flattenError(parsed.error).fieldErrors,
+      values,
+    };
+  }
+
+  const course = await db.course.findFirst({
+    where: { id: courseId, userId },
+    select: { id: true },
+  });
+
+  if (!course) {
+    return {
+      submission,
+      status: "error",
+      message: "Could not save the assignment. Please try again.",
       values,
     };
   }
@@ -172,6 +222,7 @@ export async function updateAssignment(
   previousState: AssignmentFormState,
   formData: FormData,
 ): Promise<AssignmentFormState> {
+  const userId = await requireUserId();
   const submission = previousState.submission + 1;
 
   const values = {
@@ -192,14 +243,23 @@ export async function updateAssignment(
   }
 
   try {
-    await db.assignment.update({
-      where: { id: assignmentId },
+    const { count } = await db.assignment.updateMany({
+      where: { id: assignmentId, courseId, course: { userId } },
       data: {
         title: parsed.data.title,
         description: parsed.data.description || null,
         dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
       },
     });
+
+    if (count === 0) {
+      return {
+        submission,
+        status: "error",
+        message: "Could not save the assignment. Please try again.",
+        values,
+      };
+    }
   } catch (error) {
     console.error("Failed to update assignment", error);
     return {
@@ -221,7 +281,11 @@ export async function deleteAssignment(
   courseId: string,
   assignmentId: string,
 ): Promise<void> {
-  await db.assignment.delete({ where: { id: assignmentId } });
+  const userId = await requireUserId();
+
+  await db.assignment.deleteMany({
+    where: { id: assignmentId, courseId, course: { userId } },
+  });
 
   revalidatePath(`/courses/${courseId}`);
 }
@@ -231,8 +295,10 @@ export async function setAssignmentCompleted(
   assignmentId: string,
   completed: boolean,
 ): Promise<void> {
-  await db.assignment.update({
-    where: { id: assignmentId },
+  const userId = await requireUserId();
+
+  await db.assignment.updateMany({
+    where: { id: assignmentId, courseId, course: { userId } },
     data: { completed },
   });
 

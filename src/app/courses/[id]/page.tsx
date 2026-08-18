@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
 
@@ -16,9 +17,10 @@ import { NoteCard } from "./_components/note-card";
 export async function generateMetadata({
   params,
 }: PageProps<"/courses/[id]">): Promise<Metadata> {
+  const userId = await requireUserId();
   const { id } = await params;
-  const course = await db.course.findUnique({
-    where: { id },
+  const course = await db.course.findFirst({
+    where: { id, userId },
     select: { title: true },
   });
 
@@ -28,9 +30,10 @@ export async function generateMetadata({
 export default async function CoursePage({
   params,
 }: PageProps<"/courses/[id]">) {
+  const userId = await requireUserId();
   const { id } = await params;
-  const course = await db.course.findUnique({
-    where: { id },
+  const course = await db.course.findFirst({
+    where: { id, userId },
     include: {
       notes: { orderBy: { createdAt: "desc" } },
       assignments: {

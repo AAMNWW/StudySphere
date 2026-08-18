@@ -12,16 +12,33 @@ datasource db {
   provider = "postgresql"
 }
 
+/// A student. Owns every course (and, through courses, every note and
+/// assignment) they create.
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  /// bcrypt hash, never the plaintext password.
+  password  String
+  courses   Course[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 /// A subject the student is studying. Notes, assignments and uploaded
 /// documents will all hang off this model in later milestones.
 model Course {
   id          String       @id @default(cuid())
   title       String
   description String?
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   notes       Note[]
   assignments Assignment[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
 }
 
 /// A piece of writing a student keeps against a course: a lecture summary,
