@@ -2,26 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
+import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
 
+import { AssignmentCard } from "./_components/assignment-card";
+import { CreateAssignmentForm } from "./_components/create-assignment-form";
 import { CreateNoteForm } from "./_components/create-note-form";
 import { DeleteCourseButton } from "./_components/delete-course-button";
-import { DeleteNoteButton } from "./_components/delete-note-button";
 import { EditCourseForm } from "./_components/edit-course-form";
-
-// Fixed locale and time zone so the server always renders the same string a
-// user would see, regardless of where the server happens to run.
-const dateFormatter = new Intl.DateTimeFormat("en-GB", {
-  dateStyle: "medium",
-  timeZone: "UTC",
-});
+import { NoteCard } from "./_components/note-card";
 
 export async function generateMetadata({
   params,
@@ -41,7 +31,15 @@ export default async function CoursePage({
   const { id } = await params;
   const course = await db.course.findUnique({
     where: { id },
-    include: { notes: { orderBy: { createdAt: "desc" } } },
+    include: {
+      notes: { orderBy: { createdAt: "desc" } },
+      assignments: {
+        orderBy: [
+          { completed: "asc" },
+          { dueDate: { sort: "asc", nulls: "last" } },
+        ],
+      },
+    },
   });
 
   if (!course) {
@@ -72,6 +70,40 @@ export default async function CoursePage({
 
       <Card className="mt-10">
         <CardHeader>
+          <CardTitle>Add an assignment</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CreateAssignmentForm courseId={course.id} />
+        </CardContent>
+      </Card>
+
+      <section aria-labelledby="assignment-list-heading" className="mt-8">
+        <h2 id="assignment-list-heading" className="mb-4 text-lg font-medium">
+          {course.assignments.length}{" "}
+          {course.assignments.length === 1 ? "assignment" : "assignments"}
+        </h2>
+
+        {course.assignments.length === 0 ? (
+          <p className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
+            No assignments yet. Add your first one above.
+          </p>
+        ) : (
+          <ul className="space-y-4">
+            {course.assignments.map((assignment) => (
+              <li key={assignment.id}>
+                <AssignmentCard
+                  courseId={course.id}
+                  assignment={assignment}
+                  isOverdue={isAssignmentOverdue(assignment)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <Card className="mt-10">
+        <CardHeader>
           <CardTitle>Add a note</CardTitle>
         </CardHeader>
         <CardContent>
@@ -93,28 +125,7 @@ export default async function CoursePage({
           <ul className="space-y-4">
             {course.notes.map((note) => (
               <li key={note.id}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{note.title}</CardTitle>
-                    <p className="text-muted-foreground mt-1 text-xs">
-                      Added {dateFormatter.format(note.createdAt)}
-                    </p>
-                    <CardAction>
-                      <DeleteNoteButton
-                        courseId={course.id}
-                        noteId={note.id}
-                        noteTitle={note.title}
-                      />
-                    </CardAction>
-                  </CardHeader>
-                  {note.content ? (
-                    <CardContent>
-                      <p className="text-sm whitespace-pre-wrap">
-                        {note.content}
-                      </p>
-                    </CardContent>
-                  ) : null}
-                </Card>
+                <NoteCard courseId={course.id} note={note} />
               </li>
             ))}
           </ul>
