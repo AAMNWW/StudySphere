@@ -1,7 +1,11 @@
+import { Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 
+import { IconTile } from "@/components/icon-tile";
+import { MainNav } from "@/components/main-nav";
 import { NavUser } from "@/components/nav-user";
 
 const geistSans = Geist({
@@ -38,7 +42,17 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <header className="border-b">
           <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-4">
-            <span className="font-heading font-medium">StudySphere AI</span>
+            <div className="flex items-center gap-6">
+              <Link href="/" className="flex items-center gap-2">
+                <IconTile color="purple" size="sm">
+                  <Sparkles className="size-4" />
+                </IconTile>
+                <span className="font-heading text-lg font-bold tracking-tight">
+                  StudySphere AI
+                </span>
+              </Link>
+              <MainNav />
+            </div>
             <NavUser />
           </div>
         </header>
