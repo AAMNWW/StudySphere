@@ -1,17 +1,14 @@
-import { FileText, ListTodo, Sparkles, StickyNote } from "lucide-react";
+import { CalendarDays, FileText, ListTodo, MessageCircle, SquareStack, StickyNote, Layers3 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { FeatureTile } from "@/components/feature-tile";
 import { IconTile } from "@/components/icon-tile";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
 
-import { AssignmentCard } from "./_components/assignment-card";
-import { CreateAssignmentForm } from "./_components/create-assignment-form";
 import { CreateNoteForm } from "./_components/create-note-form";
 import { DeleteCourseButton } from "./_components/delete-course-button";
 import { DocumentRow } from "./_components/document-row";
@@ -41,12 +38,6 @@ export default async function CoursePage({
     where: { id, userId },
     include: {
       notes: { orderBy: { createdAt: "desc" } },
-      assignments: {
-        orderBy: [
-          { completed: "asc" },
-          { dueDate: { sort: "asc", nulls: "last" } },
-        ],
-      },
       documents: { orderBy: { createdAt: "desc" } },
     },
   });
@@ -55,27 +46,23 @@ export default async function CoursePage({
     notFound();
   }
 
+  const [quizCount, flashcardSetCount, chatThreadCount, topicCount, assignmentCount] =
+    await Promise.all([
+      db.quiz.count({ where: { courseId: course.id } }),
+      db.flashcardSet.count({ where: { courseId: course.id } }),
+      db.chatThread.count({ where: { courseId: course.id } }),
+      db.topic.count({ where: { courseId: course.id } }),
+      db.assignment.count({ where: { courseId: course.id } }),
+    ]);
+
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
-      <div className="flex items-center justify-between">
-        <Link
-          href="/courses"
-          className="text-muted-foreground text-sm hover:underline"
-        >
-          ← Back to courses
-        </Link>
-        <Button
-          variant="outline"
-          size="sm"
-          nativeButton={false}
-          render={
-            <Link href={`/courses/${course.id}/tutor`}>
-              <Sparkles />
-              AI tutor
-            </Link>
-          }
-        />
-      </div>
+      <Link
+        href="/courses"
+        className="text-muted-foreground text-sm hover:underline"
+      >
+        ← Back to courses
+      </Link>
 
       <Card className="mt-4">
         <CardHeader>
@@ -89,6 +76,64 @@ export default async function CoursePage({
       <div className="mt-6 flex justify-end">
         <DeleteCourseButton courseId={course.id} courseTitle={course.title} />
       </div>
+
+      <section aria-labelledby="feature-grid-heading" className="mt-10">
+        <h2 id="feature-grid-heading" className="sr-only">
+          Study tools
+        </h2>
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <li>
+            <FeatureTile
+              href={`/courses/${course.id}/quiz`}
+              color="purple"
+              icon={<SquareStack className="size-6" />}
+              title="Quiz"
+              description="Test yourself, with a difficulty you pick."
+              count={quizCount}
+            />
+          </li>
+          <li>
+            <FeatureTile
+              href={`/courses/${course.id}/flashcards`}
+              color="blue"
+              icon={<Layers3 className="size-6" />}
+              title="Flashcards"
+              description="Flip through key terms and concepts."
+              count={flashcardSetCount}
+            />
+          </li>
+          <li>
+            <FeatureTile
+              href={`/courses/${course.id}/chat`}
+              color="pink"
+              icon={<MessageCircle className="size-6" />}
+              title="Chat"
+              description="Ask the AI tutor about this course."
+              count={chatThreadCount}
+            />
+          </li>
+          <li>
+            <FeatureTile
+              href={`/courses/${course.id}/topics`}
+              color="green"
+              icon={<CalendarDays className="size-6" />}
+              title="Topics"
+              description="What to study this week."
+              count={topicCount}
+            />
+          </li>
+          <li>
+            <FeatureTile
+              href={`/courses/${course.id}/assignments`}
+              color="yellow"
+              icon={<ListTodo className="size-6" />}
+              title="Assignments"
+              description="Everything due for this course."
+              count={assignmentCount}
+            />
+          </li>
+        </ul>
+      </section>
 
       <Card className="mt-10">
         <CardHeader>
@@ -120,46 +165,6 @@ export default async function CoursePage({
             {course.documents.map((document) => (
               <li key={document.id}>
                 <DocumentRow courseId={course.id} document={document} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <Card className="mt-10">
-        <CardHeader>
-          <CardTitle>Add an assignment</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CreateAssignmentForm courseId={course.id} />
-        </CardContent>
-      </Card>
-
-      <section aria-labelledby="assignment-list-heading" className="mt-8">
-        <h2
-          id="assignment-list-heading"
-          className="mb-4 flex items-center gap-2 text-lg font-bold"
-        >
-          <IconTile color="purple" size="sm">
-            <ListTodo className="size-4" />
-          </IconTile>
-          {course.assignments.length}{" "}
-          {course.assignments.length === 1 ? "assignment" : "assignments"}
-        </h2>
-
-        {course.assignments.length === 0 ? (
-          <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
-            No assignments yet. Add your first one above.
-          </p>
-        ) : (
-          <ul className="space-y-4">
-            {course.assignments.map((assignment) => (
-              <li key={assignment.id}>
-                <AssignmentCard
-                  courseId={course.id}
-                  assignment={assignment}
-                  isOverdue={isAssignmentOverdue(assignment)}
-                />
               </li>
             ))}
           </ul>

@@ -15,39 +15,42 @@ datasource db {
 /// A student. Owns every course (and, through courses, every note and
 /// assignment) they create.
 model User {
-  id        String   @id @default(cuid())
-  name      String?
-  email     String   @unique
+  id             String          @id @default(cuid())
+  name           String?
+  email          String          @unique
   /// bcrypt hash, never the plaintext password.
-  password  String
-  courses   Course[]
+  password       String
+  courses        Course[]
+  quizAnswerLogs QuizAnswerLog[]
   /// Consecutive days (including today) the dashboard has been visited.
   /// Updated in src/lib/streak.ts whenever the dashboard loads.
-  currentStreak Int       @default(0)
-  longestStreak Int       @default(0)
+  currentStreak  Int             @default(0)
+  longestStreak  Int             @default(0)
   /// UTC calendar date of the last dashboard visit that counted toward the
   /// streak. Null until the first visit.
-  lastVisitAt   DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  lastVisitAt    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 /// A subject the student is studying. Notes, assignments and uploaded
 /// documents all hang off this model.
 model Course {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  notes       Note[]
-  assignments Assignment[]
-  documents   Document[]
-  chatThreads   ChatThread[]
-  flashcardSets FlashcardSet[]
-  quizzes       Quiz[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String          @id @default(cuid())
+  title          String
+  description    String?
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes          Note[]
+  assignments    Assignment[]
+  documents      Document[]
+  chatThreads    ChatThread[]
+  flashcardSets  FlashcardSet[]
+  quizzes        Quiz[]
+  topics         Topic[]
+  quizAnswerLogs QuizAnswerLog[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([userId])
 }
@@ -69,15 +72,19 @@ model Note {
 /// Something with a deadline the student owes for a course: a problem set,
 /// an essay, a reading due before the next class.
 model Assignment {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  dueDate     DateTime?
-  completed   Boolean   @default(false)
-  courseId    String
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  title          String
+  description    String?
+  dueDate        DateTime?
+  completed      Boolean   @default(false)
+  courseId       String
+  course         Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// Set once a deadline-reminder email has gone out for this assignment,
+  /// so the daily cron (src/app/api/cron/deadline-reminders) never sends a
+  /// duplicate. Not cleared if the due date later moves.
+  reminderSentAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([courseId])
 }
@@ -86,45 +93,54 @@ model Assignment {
 /// bytes live on local disk (see src/lib/uploads.ts); this row is the
 /// pointer plus enough metadata to render and authorize a download.
 model Document {
-  id           String   @id @default(cuid())
+  id            String         @id @default(cuid())
   /// The name as uploaded, shown in the UI and used for the download.
-  fileName     String
+  fileName      String
   /// The on-disk filename (a random id + extension) — never derived from
   /// user input, so it can't be used for path traversal or collide.
-  storedName   String
-  mimeType     String
-  sizeBytes    Int
+  storedName    String
+  /// Public URL when the file lives in Vercel Blob storage; null when it
+  /// lives on local disk (see src/lib/uploads.ts, which branches on this).
+  storageUrl    String?
+  mimeType      String
+  sizeBytes     Int
   /// AI-generated summary of the file's contents, produced on demand via
   /// the Gemini API (see src/lib/ai/summarize-document.ts). Null until a
   /// student requests one.
-  summary      String?
+  summary       String?
   /// Set when the most recent summary attempt failed, so the UI can show
   /// why and offer a retry. Cleared on the next successful attempt.
-  summaryError String?
-  courseId     String
-  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  summaryError  String?
+  courseId      String
+  course        Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
   chatThreads   ChatThread[]
   flashcardSets FlashcardSet[]
   quizzes       Quiz[]
-  createdAt    DateTime @default(now())
+  createdAt     DateTime       @default(now())
 
   @@index([courseId])
 }
 
-/// A conversation with the AI, either scoped to one document ("PDF chat") or
-/// general to a course with no document ("AI tutor").
+/// A conversation with the AI: general course chat, or grounded in one or
+/// more documents and/or a topic focus.
 model ChatThread {
-  id         String        @id @default(cuid())
-  title      String
-  courseId   String
-  course     Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  /// Null for a general AI tutor thread; set for a thread scoped to one
-  /// document's content ("PDF chat").
-  documentId String?
-  document   Document?     @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  messages   ChatMessage[]
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id                String        @id @default(cuid())
+  title             String
+  courseId          String
+  course            Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// Legacy FK, set only for the original single-document "PDF chat"
+  /// threads (kept so deleting that document cascades the thread away).
+  /// New threads leave this null and record sources via
+  /// sourceDocumentIds instead, since they may ground on 0-5 documents.
+  documentId        String?
+  document          Document?     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  /// IDs of every document grounding this thread, in selection order.
+  sourceDocumentIds Json          @default("[]")
+  /// Optional free-text focus hint, e.g. "the French Revolution".
+  topic             String?
+  messages          ChatMessage[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([courseId])
   @@index([documentId])
@@ -142,16 +158,35 @@ model ChatMessage {
   @@index([threadId])
 }
 
-/// An AI-generated multiple-choice quiz over a document's content.
+enum QuizDifficulty {
+  EASY
+  MEDIUM
+  HARD
+  PRO
+  MASTER
+}
+
+/// An AI-generated multiple-choice quiz. Scoped to one legacy document
+/// (documentId set) or to a course-wide / topic-focused set of documents
+/// chosen at generation time (documentId null, sourceDocumentIds set).
+/// Regenerating never deletes prior quizzes — they accumulate as history.
 model Quiz {
-  id         String         @id @default(cuid())
-  title      String
-  courseId   String
-  course     Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  documentId String
-  document   Document       @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  questions  QuizQuestion[]
-  createdAt  DateTime       @default(now())
+  id                String          @id @default(cuid())
+  title             String
+  courseId          String
+  course            Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// Legacy FK, set only for the original single-document generation path
+  /// (kept so deleting that document cascades its quizzes away).
+  documentId        String?
+  document          Document?       @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  /// IDs of every document used as generation source, in selection order.
+  sourceDocumentIds Json            @default("[]")
+  /// Optional free-text focus hint, independent of the Topic model.
+  topic             String?
+  difficulty        QuizDifficulty  @default(MEDIUM)
+  questions         QuizQuestion[]
+  answerLogs        QuizAnswerLog[]
+  createdAt         DateTime        @default(now())
 
   @@index([courseId])
   @@index([documentId])
@@ -172,16 +207,19 @@ model QuizQuestion {
   @@index([quizId])
 }
 
-/// An AI-generated set of flashcards over a document's content.
+/// An AI-generated set of flashcards. Same multi-document/topic shape as
+/// Quiz, minus difficulty (flashcards have no difficulty tiers).
 model FlashcardSet {
-  id         String      @id @default(cuid())
-  title      String
-  courseId   String
-  course     Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  documentId String
-  document   Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  cards      Flashcard[]
-  createdAt  DateTime    @default(now())
+  id                String      @id @default(cuid())
+  title             String
+  courseId          String
+  course            Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  documentId        String?
+  document          Document?   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  sourceDocumentIds Json        @default("[]")
+  topic             String?
+  cards             Flashcard[]
+  createdAt         DateTime    @default(now())
 
   @@index([courseId])
   @@index([documentId])
@@ -196,4 +234,52 @@ model Flashcard {
   order Int
 
   @@index([setId])
+}
+
+enum TopicSource {
+  AI
+  MANUAL
+}
+
+/// A weekly-roadmap entry for a course: what to study and when. Either
+/// proposed by Gemini from the course's documents (source = AI) or typed in
+/// directly by the student (source = MANUAL).
+model Topic {
+  id          String      @id @default(cuid())
+  courseId    String
+  course      Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  weekNumber  Int?
+  source      TopicSource @default(MANUAL)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([courseId])
+}
+
+/// A durable record of one quiz-answer submission, written at
+/// answer-submission time (not generation time) so it survives quiz
+/// regeneration/deletion — the source of per-course wrong-answer history.
+model QuizAnswerLog {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId      String
+  course        Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// Nulled (not cascade-deleted) when the originating Quiz is later
+  /// deleted or regenerated — the point of this table is to outlive it.
+  quizId        String?
+  quiz          Quiz?          @relation(fields: [quizId], references: [id], onDelete: SetNull)
+  topic         String?
+  difficulty    QuizDifficulty
+  question      String
+  options       Json
+  correctIndex  Int
+  selectedIndex Int
+  isCorrect     Boolean
+  createdAt     DateTime       @default(now())
+
+  @@index([userId, courseId])
+  @@index([courseId, isCorrect])
 }

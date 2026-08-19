@@ -1,12 +1,17 @@
 import { createUserContent, Type } from "@google/genai";
 
 import { getClient, MODEL } from "./client";
-import { getDocumentContent } from "./document-content";
+import { getDocumentsContent, type SourceDocument } from "./document-content";
 import { requireText } from "./summarize-document";
 
 export interface GeneratedFlashcard {
   front: string;
   back: string;
+}
+
+export interface GenerateFlashcardsOptions {
+  /** Optional free-text focus, e.g. "the French Revolution". */
+  topic?: string;
 }
 
 const CARD_COUNT = 10;
@@ -29,28 +34,31 @@ const FLASHCARD_SCHEMA = {
   required: ["cards"],
 };
 
-/** Generates a set of flashcards over a document's content with Gemini. */
+/** Generates a set of flashcards over one or more documents with Gemini. */
 export async function generateFlashcards(
-  bytes: Buffer,
-  mimeType: string,
-  fileName: string,
+  documents: SourceDocument[],
+  options: GenerateFlashcardsOptions = {},
 ): Promise<GeneratedFlashcard[]> {
   const ai = getClient();
-  const document = await getDocumentContent(bytes, mimeType, fileName);
+  const parts = await getDocumentsContent(documents);
+
+  const scope =
+    documents.length > 1
+      ? `across the ${documents.length} provided documents`
+      : "in the provided document";
+  const topicClause = options.topic
+    ? ` Focus specifically on this topic: "${options.topic}"; draw cards ` +
+      `only from material relevant to it.`
+    : "";
 
   const prompt =
-    `Create ${CARD_COUNT} flashcards covering this document's key ` +
-    `concepts. Each card has a short term or question on the front and its ` +
-    `definition or answer on the back.`;
-
-  const contents =
-    document.kind === "part"
-      ? createUserContent([prompt, document.part])
-      : `${prompt}\n\n---\n\n${document.text}`;
+    `Create ${CARD_COUNT} flashcards covering the key concepts ${scope}.` +
+    `${topicClause} Each card has a short term or question on the front and ` +
+    `its definition or answer on the back.`;
 
   const response = await ai.models.generateContent({
     model: MODEL,
-    contents,
+    contents: createUserContent([prompt, ...parts]),
     config: { responseMimeType: "application/json", responseSchema: FLASHCARD_SCHEMA },
   });
 

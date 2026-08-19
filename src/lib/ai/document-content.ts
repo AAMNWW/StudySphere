@@ -12,6 +12,12 @@ export type DocumentContent =
   | { kind: "part"; part: Part }
   | { kind: "text"; text: string };
 
+export interface SourceDocument {
+  bytes: Buffer;
+  mimeType: string;
+  fileName: string;
+}
+
 export async function getDocumentContent(
   bytes: Buffer,
   mimeType: string,
@@ -33,4 +39,27 @@ export async function getDocumentContent(
   }
 
   return { kind: "text", text };
+}
+
+/**
+ * Resolves several documents to Gemini-ready content in one call. PDFs pass
+ * through as distinct `Part`s (Gemini already sees each as a separate
+ * attachment); text-extracted files (DOCX/PPTX) are labeled with their
+ * filename so a multi-document prompt stays attributable.
+ */
+export async function getDocumentsContent(
+  documents: SourceDocument[],
+): Promise<(string | Part)[]> {
+  const parts: (string | Part)[] = [];
+
+  for (const doc of documents) {
+    const content = await getDocumentContent(doc.bytes, doc.mimeType, doc.fileName);
+    parts.push(
+      content.kind === "part"
+        ? content.part
+        : `--- Document: ${doc.fileName} ---\n${content.text}`,
+    );
+  }
+
+  return parts;
 }
