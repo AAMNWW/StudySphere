@@ -76,5 +76,5 @@ export async function signup(
     redirect: false,
   });
 
-  redirect("/courses");
+  redirect("/");
 }

@@ -1,4 +1,5 @@
-import { FileText } from "lucide-react";
+import { FileText, MessageCircle } from "lucide-react";
+import Link from "next/link";
 
 import { IconTile, type IconTileColor } from "@/components/icon-tile";
 import { Card, CardContent } from "@/components/ui/card";
@@ -70,11 +71,20 @@ export function DocumentRow({
           </p>
         ) : null}
 
-        <SummarizeDocumentButton
-          courseId={courseId}
-          documentId={document.id}
-          hasSummary={Boolean(document.summary)}
-        />
+        <div className="flex flex-wrap gap-2">
+          <SummarizeDocumentButton
+            courseId={courseId}
+            documentId={document.id}
+            hasSummary={Boolean(document.summary)}
+          />
+          <Link
+            href={`/courses/${courseId}/documents/${document.id}`}
+            className="text-muted-foreground inline-flex items-center gap-1.5 text-sm hover:underline"
+          >
+            <MessageCircle className="size-4" />
+            Chat, quiz & flashcards
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );

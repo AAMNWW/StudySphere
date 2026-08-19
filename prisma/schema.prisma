@@ -21,6 +21,13 @@ model User {
   /// bcrypt hash, never the plaintext password.
   password  String
   courses   Course[]
+  /// Consecutive days (including today) the dashboard has been visited.
+  /// Updated in src/lib/streak.ts whenever the dashboard loads.
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
+  /// UTC calendar date of the last dashboard visit that counted toward the
+  /// streak. Null until the first visit.
+  lastVisitAt   DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -36,6 +43,9 @@ model Course {
   notes       Note[]
   assignments Assignment[]
   documents   Document[]
+  chatThreads   ChatThread[]
+  flashcardSets FlashcardSet[]
+  quizzes       Quiz[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -93,7 +103,97 @@ model Document {
   summaryError String?
   courseId     String
   course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  chatThreads   ChatThread[]
+  flashcardSets FlashcardSet[]
+  quizzes       Quiz[]
   createdAt    DateTime @default(now())
 
   @@index([courseId])
+}
+
+/// A conversation with the AI, either scoped to one document ("PDF chat") or
+/// general to a course with no document ("AI tutor").
+model ChatThread {
+  id         String        @id @default(cuid())
+  title      String
+  courseId   String
+  course     Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// Null for a general AI tutor thread; set for a thread scoped to one
+  /// document's content ("PDF chat").
+  documentId String?
+  document   Document?     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  messages   ChatMessage[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([courseId])
+  @@index([documentId])
+}
+
+model ChatMessage {
+  id        String     @id @default(cuid())
+  threadId  String
+  thread    ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  /// "user" or "assistant".
+  role      String
+  content   String
+  createdAt DateTime   @default(now())
+
+  @@index([threadId])
+}
+
+/// An AI-generated multiple-choice quiz over a document's content.
+model Quiz {
+  id         String         @id @default(cuid())
+  title      String
+  courseId   String
+  course     Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  documentId String
+  document   Document       @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  questions  QuizQuestion[]
+  createdAt  DateTime       @default(now())
+
+  @@index([courseId])
+  @@index([documentId])
+}
+
+model QuizQuestion {
+  id            String @id @default(cuid())
+  quizId        String
+  quiz          Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question      String
+  /// The answer choices, in display order.
+  options       Json
+  correctIndex  Int
+  /// The index the student picked; null until they answer.
+  selectedIndex Int?
+  order         Int
+
+  @@index([quizId])
+}
+
+/// An AI-generated set of flashcards over a document's content.
+model FlashcardSet {
+  id         String      @id @default(cuid())
+  title      String
+  courseId   String
+  course     Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  documentId String
+  document   Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  cards      Flashcard[]
+  createdAt  DateTime    @default(now())
+
+  @@index([courseId])
+  @@index([documentId])
+}
+
+model Flashcard {
+  id    String       @id @default(cuid())
+  setId String
+  set   FlashcardSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  front String
+  back  String
+  order Int
+
+  @@index([setId])
 }

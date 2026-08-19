@@ -6,7 +6,34 @@ export async function MainNav() {
   const session = await auth();
 
   if (!session?.user) {
-    return null;
+    return (
+      <nav className="hidden items-center gap-4 text-sm font-medium lg:flex">
+        <Link
+          href="/#features"
+          className="text-foreground/70 transition-colors hover:text-foreground"
+        >
+          Features
+        </Link>
+        <Link
+          href="/#how-it-works"
+          className="text-foreground/70 transition-colors hover:text-foreground"
+        >
+          How it works
+        </Link>
+        <Link
+          href="/#ai-assistant"
+          className="text-foreground/70 transition-colors hover:text-foreground"
+        >
+          AI tools
+        </Link>
+        <Link
+          href="/#pricing"
+          className="text-foreground/70 transition-colors hover:text-foreground"
+        >
+          Pricing
+        </Link>
+      </nav>
+    );
   }
 
   return (

@@ -13,12 +13,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import type { NoteModel } from "@/generated/prisma/models";
 
 import { updateNote } from "../actions";
 import { initialNoteFormState } from "../note-form-state";
 import { DeleteNoteButton } from "./delete-note-button";
+import { NoteContent } from "./note-content";
 
 // Fixed locale and time zone so the server always renders the same string a
 // user would see, regardless of where the server happens to run.
@@ -89,13 +90,11 @@ export function NoteCard({
               <Label htmlFor={`note-content-${note.id}`}>
                 Content (optional)
               </Label>
-              <Textarea
+              <RichTextEditor
                 id={`note-content-${note.id}`}
                 name="content"
                 defaultValue={state.values?.content}
-                maxLength={10000}
-                rows={4}
-                aria-invalid={Boolean(state.errors?.content)}
+                ariaInvalid={Boolean(state.errors?.content)}
               />
               {state.errors?.content ? (
                 <p className="text-destructive text-sm">
@@ -154,7 +153,7 @@ export function NoteCard({
       </CardHeader>
       {note.content ? (
         <CardContent>
-          <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+          <NoteContent content={note.content} />
         </CardContent>
       ) : null}
     </Card>

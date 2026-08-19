@@ -1,9 +1,10 @@
-import { FileText, ListTodo, StickyNote } from "lucide-react";
+import { FileText, ListTodo, Sparkles, StickyNote } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { IconTile } from "@/components/icon-tile";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -56,12 +57,25 @@ export default async function CoursePage({
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
-      <Link
-        href="/courses"
-        className="text-muted-foreground text-sm hover:underline"
-      >
-        ← Back to courses
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/courses"
+          className="text-muted-foreground text-sm hover:underline"
+        >
+          ← Back to courses
+        </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          nativeButton={false}
+          render={
+            <Link href={`/courses/${course.id}/tutor`}>
+              <Sparkles />
+              AI tutor
+            </Link>
+          }
+        />
+      </div>
 
       <Card className="mt-4">
         <CardHeader>

@@ -1,80 +1,37 @@
-import { createPartFromBase64, createUserContent, GoogleGenAI } from "@google/genai";
-import { parseOffice } from "officeparser";
+import { createUserContent, type GoogleGenAI } from "@google/genai";
 
-import { ALLOWED_FILE_TYPES } from "@/lib/uploads";
-
-// gemini-3.6-flash has native PDF document vision (reads layout, figures and
-// scanned pages, not just embedded text), which is why PDFs are sent to it
-// directly instead of going through the officeparser text-extraction path
-// below.
-const MODEL = "gemini-3.6-flash";
+import { getClient, MODEL } from "./client";
+import { getDocumentContent } from "./document-content";
 
 const SUMMARY_PROMPT =
   "Summarize this document for a student studying it. Cover the main " +
   "topics and key points in 3-6 sentences, using plain language.";
 
-let client: GoogleGenAI | undefined;
-
-function getClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured.");
-  }
-
-  client ??= new GoogleGenAI({ apiKey });
-  return client;
-}
-
-/**
- * Summarizes an uploaded document's contents with Gemini.
- *
- * PDFs are sent to Gemini directly — its document vision only meaningfully
- * understands PDFs, so DOCX/PPTX are extracted to plain text locally with
- * officeparser first and sent as a text prompt instead.
- */
+/** Summarizes an uploaded document's contents with Gemini. */
 export async function summarizeDocument(
   bytes: Buffer,
   mimeType: string,
   fileName: string,
 ): Promise<string> {
   const ai = getClient();
+  const document = await getDocumentContent(bytes, mimeType, fileName);
 
-  if (mimeType === "application/pdf") {
-    const response = await ai.models.generateContent({
-      model: MODEL,
-      contents: createUserContent([
-        SUMMARY_PROMPT,
-        createPartFromBase64(bytes.toString("base64"), mimeType),
-      ]),
-    });
+  const contents =
+    document.kind === "part"
+      ? createUserContent([SUMMARY_PROMPT, document.part])
+      : `${SUMMARY_PROMPT}\n\n---\n\n${document.text}`;
 
-    return requireText(response);
-  }
-
-  const fileType = ALLOWED_FILE_TYPES[mimeType]?.extension;
-  const ast = await parseOffice(bytes, { fileType });
-  const text = ast.toText().trim();
-
-  if (!text) {
-    throw new Error(`No extractable text found in "${fileName}".`);
-  }
-
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: `${SUMMARY_PROMPT}\n\n---\n\n${text}`,
-  });
-
+  const response = await ai.models.generateContent({ model: MODEL, contents });
   return requireText(response);
 }
 
-function requireText(response: Awaited<
-  ReturnType<GoogleGenAI["models"]["generateContent"]>
->): string {
+export function requireText(
+  response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>,
+): string {
   const text = response.text?.trim();
 
   if (!text) {
-    throw new Error("Gemini returned an empty summary.");
+    throw new Error("Gemini returned an empty response.");
   }
 
   return text;

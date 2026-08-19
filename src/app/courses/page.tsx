@@ -36,7 +36,7 @@ export default async function CoursesPage() {
   });
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-12">
+    <main className="mx-auto w-full max-w-5xl px-6 py-12">
       <header className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Your courses</h1>
         <p className="text-muted-foreground mt-2">
@@ -45,7 +45,7 @@ export default async function CoursesPage() {
         </p>
       </header>
 
-      <Card className="mb-10">
+      <Card className="mb-10 max-w-xl">
         <CardHeader>
           <CardTitle>Add a course</CardTitle>
           <CardDescription>
@@ -67,7 +67,7 @@ export default async function CoursesPage() {
             No courses yet. Add your first one above.
           </p>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {courses.map((course, index) => (
               <li key={course.id}>
                 <Link href={`/courses/${course.id}`} className="block h-full">

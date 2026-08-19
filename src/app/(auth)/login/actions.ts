@@ -49,5 +49,5 @@ export async function login(
     throw error;
   }
 
-  redirect("/courses");
+  redirect("/");
 }

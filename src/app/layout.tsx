@@ -7,6 +7,7 @@ import "./globals.css";
 import { IconTile } from "@/components/icon-tile";
 import { MainNav } from "@/components/main-nav";
 import { NavUser } from "@/components/nav-user";
+import { SiteFooter } from "@/components/site-footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,7 +42,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <header className="border-b">
-          <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-4">
+          <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
             <div className="flex items-center gap-6">
               <Link href="/" className="flex items-center gap-2">
                 <IconTile color="purple" size="sm">
@@ -56,7 +57,8 @@ export default function RootLayout({
             <NavUser />
           </div>
         </header>
-        {children}
+        <div className="flex flex-1 flex-col">{children}</div>
+        <SiteFooter />
       </body>
     </html>
   );

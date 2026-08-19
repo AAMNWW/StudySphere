@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 import { createNote } from "../actions";
 import { initialNoteFormState } from "../note-form-state";
@@ -47,15 +47,13 @@ export function CreateNoteForm({ courseId }: { courseId: string }) {
 
       <div className="space-y-2">
         <Label htmlFor="note-content">Content (optional)</Label>
-        <Textarea
+        <RichTextEditor
           id="note-content"
           name="content"
           placeholder="Whatever you want to remember."
           defaultValue={state.values?.content}
-          maxLength={10000}
-          rows={4}
-          aria-invalid={Boolean(state.errors?.content)}
-          aria-describedby={
+          ariaInvalid={Boolean(state.errors?.content)}
+          ariaDescribedBy={
             state.errors?.content ? "note-content-error" : undefined
           }
         />

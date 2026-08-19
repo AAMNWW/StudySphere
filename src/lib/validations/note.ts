@@ -10,10 +10,12 @@ export const noteSchema = z.object({
     .trim()
     .min(1, "Title is required.")
     .max(100, "Title must be 100 characters or fewer."),
+  // Content is Tiptap's HTML output, not plain text, so this bound leaves
+  // headroom for markup overhead on top of a ~10,000-character note.
   content: z
     .string()
     .trim()
-    .max(10000, "Content must be 10,000 characters or fewer."),
+    .max(50000, "Content is too long."),
 });
 
 export type NoteInput = z.infer<typeof noteSchema>;
