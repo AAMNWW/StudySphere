@@ -1,7 +1,5 @@
 "use server";
 
-import { readFile } from "node:fs/promises";
-
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -11,8 +9,8 @@ import { db } from "@/lib/db";
 import {
   ALLOWED_FILE_TYPES,
   deleteUploadedFile,
-  getUploadedFilePath,
   MAX_FILE_SIZE_BYTES,
+  readUploadedFile,
   saveUploadedFile,
 } from "@/lib/uploads";
 import { assignmentSchema } from "@/lib/validations/assignment";
@@ -368,13 +366,14 @@ export async function uploadDocument(
   }
 
   try {
-    const storedName = await saveUploadedFile(courseId, file);
+    const { storedName, storageUrl } = await saveUploadedFile(courseId, file);
 
     await db.document.create({
       data: {
         courseId,
         fileName: file.name,
         storedName,
+        storageUrl,
         mimeType: file.type,
         sizeBytes: file.size,
       },
@@ -408,7 +407,7 @@ export async function deleteDocument(
   }
 
   await db.document.delete({ where: { id: document.id } });
-  await deleteUploadedFile(courseId, document.storedName);
+  await deleteUploadedFile(document);
 
   revalidatePath(`/courses/${courseId}`);
 }
@@ -434,9 +433,7 @@ export async function generateDocumentSummary(
   }
 
   try {
-    const bytes = await readFile(
-      getUploadedFilePath(document.courseId, document.storedName),
-    );
+    const bytes = await readUploadedFile(document);
     const summary = await summarizeDocument(
       bytes,
       document.mimeType,

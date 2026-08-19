@@ -1,7 +1,5 @@
 "use server";
 
-import { readFile } from "node:fs/promises";
-
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -9,7 +7,7 @@ import { z } from "zod";
 import { generateFlashcards } from "@/lib/ai/generate-flashcards";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getUploadedFilePath } from "@/lib/uploads";
+import { readUploadedFile } from "@/lib/uploads";
 import { generateFlashcardsSchema } from "@/lib/validations/generate-content";
 
 import type { GenerationFormState } from "../generation-form-state";
@@ -56,7 +54,7 @@ export async function generateFlashcardSet(
   try {
     const sourceDocuments = await Promise.all(
       documents.map(async (document) => ({
-        bytes: await readFile(getUploadedFilePath(document.courseId, document.storedName)),
+        bytes: await readUploadedFile(document),
         mimeType: document.mimeType,
         fileName: document.fileName,
       })),

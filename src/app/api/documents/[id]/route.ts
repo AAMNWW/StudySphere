@@ -1,8 +1,6 @@
-import { readFile } from "node:fs/promises";
-
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { getUploadedFilePath } from "@/lib/uploads";
+import { readUploadedFile } from "@/lib/uploads";
 
 export async function GET(
   request: Request,
@@ -27,9 +25,7 @@ export async function GET(
   let bytes: Buffer;
 
   try {
-    bytes = await readFile(
-      getUploadedFilePath(document.courseId, document.storedName),
-    );
+    bytes = await readUploadedFile(document);
   } catch (error) {
     console.error("Failed to read uploaded file", error);
     return new Response(null, { status: 404 });

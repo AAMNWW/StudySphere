@@ -1,7 +1,5 @@
 "use server";
 
-import { readFile } from "node:fs/promises";
-
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -10,7 +8,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { generateQuizQuestions } from "@/lib/ai/generate-quiz";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getUploadedFilePath } from "@/lib/uploads";
+import { readUploadedFile } from "@/lib/uploads";
 import { generateQuizSchema } from "@/lib/validations/generate-content";
 
 import type { GenerationFormState } from "../generation-form-state";
@@ -58,7 +56,7 @@ export async function generateQuiz(
   try {
     const sourceDocuments = await Promise.all(
       documents.map(async (document) => ({
-        bytes: await readFile(getUploadedFilePath(document.courseId, document.storedName)),
+        bytes: await readUploadedFile(document),
         mimeType: document.mimeType,
         fileName: document.fileName,
       })),

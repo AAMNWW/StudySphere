@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-// Local disk for now — see the file-storage decision in the auth/uploads
-// planning conversation. Move this to object storage before deploying
-// anywhere with more than one server instance or an ephemeral filesystem.
+// Local disk when running without Blob configured (plain local dev); Vercel
+// Blob storage everywhere BLOB_READ_WRITE_TOKEN is set (production), since
+// Vercel's filesystem is ephemeral and local disk wouldn't survive a deploy.
 const UPLOAD_ROOT = path.join(process.cwd(), "uploads");
 
 export const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
@@ -20,39 +20,84 @@ export const ALLOWED_FILE_TYPES: Record<
     { extension: "pptx", label: "PowerPoint presentation" },
 };
 
+export interface StoredFile {
+  storedName: string;
+  /** Public Blob URL when stored in Vercel Blob; null when stored on local disk. */
+  storageUrl: string | null;
+}
+
+/** The subset of a Document row needed to locate its bytes, regardless of
+ * which storage backend it was saved under. */
+export interface UploadedFileRef {
+  courseId: string;
+  storedName: string;
+  storageUrl: string | null;
+}
+
+function blobStorageConfigured(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
 /**
- * Writes an uploaded file under a per-course directory and returns the
- * random on-disk name it was stored as. The caller is responsible for
- * validating `file.type` against {@link ALLOWED_FILE_TYPES} and size
- * against {@link MAX_FILE_SIZE_BYTES} first.
+ * Writes an uploaded file to Vercel Blob (when configured) or a per-course
+ * local directory otherwise, and returns the random name it was stored as
+ * plus its Blob URL if applicable. The caller is responsible for validating
+ * `file.type` against {@link ALLOWED_FILE_TYPES} and size against
+ * {@link MAX_FILE_SIZE_BYTES} first.
  */
 export async function saveUploadedFile(
   courseId: string,
   file: File,
-): Promise<string> {
+): Promise<StoredFile> {
   const extension = ALLOWED_FILE_TYPES[file.type].extension;
   const storedName = `${randomUUID()}.${extension}`;
+  const bytes = Buffer.from(await file.arrayBuffer());
+
+  if (blobStorageConfigured()) {
+    const { put } = await import("@vercel/blob");
+    const blob = await put(`${courseId}/${storedName}`, bytes, {
+      access: "public",
+      contentType: file.type,
+    });
+    return { storedName, storageUrl: blob.url };
+  }
 
   const courseDir = path.join(UPLOAD_ROOT, courseId);
   await mkdir(courseDir, { recursive: true });
-
-  const bytes = Buffer.from(await file.arrayBuffer());
   await writeFile(path.join(courseDir, storedName), bytes);
 
-  return storedName;
+  return { storedName, storageUrl: null };
 }
 
 export function getUploadedFilePath(courseId: string, storedName: string) {
   return path.join(UPLOAD_ROOT, courseId, storedName);
 }
 
-/** Best-effort delete — a missing file on disk shouldn't fail the request. */
-export async function deleteUploadedFile(
-  courseId: string,
-  storedName: string,
-) {
+/** Reads an uploaded file's bytes back, regardless of storage backend. */
+export async function readUploadedFile(document: UploadedFileRef): Promise<Buffer> {
+  if (document.storageUrl) {
+    const response = await fetch(document.storageUrl);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch uploaded file (${response.status})`);
+    }
+
+    return Buffer.from(await response.arrayBuffer());
+  }
+
+  return readFile(getUploadedFilePath(document.courseId, document.storedName));
+}
+
+/** Best-effort delete — a missing file shouldn't fail the request. */
+export async function deleteUploadedFile(document: UploadedFileRef) {
+  if (document.storageUrl) {
+    const { del } = await import("@vercel/blob");
+    await del(document.storageUrl).catch(() => {});
+    return;
+  }
+
   try {
-    await unlink(getUploadedFilePath(courseId, storedName));
+    await unlink(getUploadedFilePath(document.courseId, document.storedName));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
       throw error;

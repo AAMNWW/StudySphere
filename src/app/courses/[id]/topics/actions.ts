@@ -1,14 +1,12 @@
 "use server";
 
-import { readFile } from "node:fs/promises";
-
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { suggestCourseTopics, type SuggestedTopic } from "@/lib/ai/suggest-topics";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getUploadedFilePath } from "@/lib/uploads";
+import { readUploadedFile } from "@/lib/uploads";
 import { topicSchema } from "@/lib/validations/topic";
 
 import type { TopicFormState } from "./topic-form-state";
@@ -103,7 +101,7 @@ export async function suggestTopics(
 
   const sourceDocuments = await Promise.all(
     documents.map(async (document) => ({
-      bytes: await readFile(getUploadedFilePath(document.courseId, document.storedName)),
+      bytes: await readUploadedFile(document),
       mimeType: document.mimeType,
       fileName: document.fileName,
     })),
