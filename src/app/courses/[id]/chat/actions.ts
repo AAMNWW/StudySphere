@@ -7,6 +7,8 @@ import { z } from "zod";
 import { answerChatMessage } from "@/lib/ai/chat";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { answerFromChunks } from "@/lib/rag/answer";
+import { retrieveRelevantChunks } from "@/lib/rag/retrieve";
 import { readUploadedFile } from "@/lib/uploads";
 import { generateChatSchema } from "@/lib/validations/generate-content";
 
@@ -24,6 +26,7 @@ export async function createChatThread(
   const values = {
     documentIds: formData.getAll("documentIds").map(String),
     topic: String(formData.get("topic") ?? ""),
+    ragMode: formData.get("ragMode") === "on",
   };
 
   const parsed = generateChatSchema.safeParse(values);
@@ -45,7 +48,10 @@ export async function createChatThread(
 
   let documents: { id: string; fileName: string }[] = [];
 
-  if (parsed.data.documentIds.length > 0) {
+  // RAG mode searches across every indexed document automatically, so a
+  // hand-picked document selection doesn't apply — skip resolving it even
+  // if the (now-hidden) picker somehow still submitted values.
+  if (!parsed.data.ragMode && parsed.data.documentIds.length > 0) {
     documents = await db.document.findMany({
       where: { id: { in: parsed.data.documentIds }, courseId, course: { userId } },
       select: { id: true, fileName: true },
@@ -61,13 +67,15 @@ export async function createChatThread(
     }
   }
 
-  const title = parsed.data.topic
-    ? `Chat — ${parsed.data.topic}`
-    : documents.length === 1
-      ? `Chat — ${documents[0].fileName}`
-      : documents.length > 1
-        ? `Chat — ${documents.length} documents`
-        : `Chat — ${course.title}`;
+  const title = parsed.data.ragMode
+    ? `Ask across ${course.title}`
+    : parsed.data.topic
+      ? `Chat — ${parsed.data.topic}`
+      : documents.length === 1
+        ? `Chat — ${documents[0].fileName}`
+        : documents.length > 1
+          ? `Chat — ${documents.length} documents`
+          : `Chat — ${course.title}`;
 
   const thread = await db.chatThread.create({
     data: {
@@ -75,6 +83,7 @@ export async function createChatThread(
       documentId: documents.length === 1 ? documents[0].id : null,
       sourceDocumentIds: documents.map((document) => document.id),
       topic: parsed.data.topic || null,
+      ragMode: parsed.data.ragMode,
       title,
     },
   });
@@ -116,37 +125,61 @@ export async function sendChatMessage(
   });
 
   try {
-    const sourceDocumentIds = thread.documentId
-      ? [thread.documentId]
-      : (thread.sourceDocumentIds as string[]);
+    let answer: string;
 
-    const documents =
-      sourceDocumentIds.length > 0
-        ? await db.document.findMany({ where: { id: { in: sourceDocumentIds }, courseId } })
-        : [];
+    if (thread.ragMode) {
+      // RAG path: search by meaning across every chunk indexed for this
+      // course (src/lib/rag/retrieve.ts), instead of reading whole
+      // documents the user picked ahead of time.
+      const chunks = await retrieveRelevantChunks(courseId, message);
+      const documentIds = [...new Set(chunks.map((chunk) => chunk.documentId))];
+      const documents = await db.document.findMany({
+        where: { id: { in: documentIds } },
+        select: { id: true, fileName: true },
+      });
+      const fileNameByDocumentId = new Map(documents.map((d) => [d.id, d.fileName]));
 
-    const sourceDocuments = await Promise.all(
-      documents.map(async (document) => ({
-        bytes: await readUploadedFile(document),
-        mimeType: document.mimeType,
-        fileName: document.fileName,
-      })),
-    );
+      answer = await answerFromChunks(
+        chunks.map((chunk) => ({
+          content: chunk.content,
+          fileName: fileNameByDocumentId.get(chunk.documentId) ?? "document",
+          pageNumber: chunk.pageNumber,
+        })),
+        message,
+      );
+    } else {
+      const sourceDocumentIds = thread.documentId
+        ? [thread.documentId]
+        : (thread.sourceDocumentIds as string[]);
 
-    // The message just inserted is the last row, so everything before it is
-    // "prior" history and the new question is passed separately.
-    const history = priorMessages.slice(0, -1).map((entry) => ({
-      role: entry.role as "user" | "assistant",
-      content: entry.content,
-    }));
+      const documents =
+        sourceDocumentIds.length > 0
+          ? await db.document.findMany({ where: { id: { in: sourceDocumentIds }, courseId } })
+          : [];
 
-    const answer = await answerChatMessage(
-      sourceDocuments,
-      thread.course.title,
-      history,
-      message,
-      thread.topic ?? undefined,
-    );
+      const sourceDocuments = await Promise.all(
+        documents.map(async (document) => ({
+          bytes: await readUploadedFile(document),
+          mimeType: document.mimeType,
+          fileName: document.fileName,
+        })),
+      );
+
+      // The message just inserted is the last row, so everything before it
+      // is "prior" history and the new question is passed separately.
+      const history = priorMessages.slice(0, -1).map((entry) => ({
+        role: entry.role as "user" | "assistant",
+        content: entry.content,
+      }));
+
+      answer = await answerChatMessage(
+        sourceDocuments,
+        thread.course.title,
+        history,
+        message,
+        thread.topic ?? undefined,
+      );
+    }
 
     await db.chatMessage.create({
       data: { threadId: thread.id, role: "assistant", content: answer },

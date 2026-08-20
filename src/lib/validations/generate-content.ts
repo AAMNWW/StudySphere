@@ -34,7 +34,10 @@ export type GenerateFlashcardsInput = z.infer<typeof generateFlashcardsSchema>;
 export const generateChatSchema = z.object({
   // Empty selection is valid here — it means a general, ungrounded chat
   // ("AI tutor" style) rather than one grounded in specific documents.
+  // Ignored entirely when ragMode is true (RAG search spans every indexed
+  // document in the course, not a hand-picked subset).
   documentIds: documentIdsField,
   topic: topicField,
+  ragMode: z.boolean(),
 });
 export type GenerateChatInput = z.infer<typeof generateChatSchema>;

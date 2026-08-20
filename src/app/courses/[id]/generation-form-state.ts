@@ -21,6 +21,7 @@ export interface GenerationFormState {
     documentIds?: string[];
     topic?: string;
     difficulty?: string;
+    ragMode?: boolean;
   };
 }
 
