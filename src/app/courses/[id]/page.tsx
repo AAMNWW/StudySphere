@@ -1,4 +1,4 @@
-import { CalendarDays, FileText, ListTodo, MessageCircle, SquareStack, StickyNote, Layers3 } from "lucide-react";
+import { CalendarDays, FileText, ListTodo, MessageCircle, Sparkles, SquareStack, StickyNote, Layers3 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -130,6 +130,15 @@ export default async function CoursePage({
               title="Assignments"
               description="Everything due for this course."
               count={assignmentCount}
+            />
+          </li>
+          <li>
+            <FeatureTile
+              href={`/courses/${course.id}/planner`}
+              color="gray"
+              icon={<Sparkles className="size-6" />}
+              title="Study planner"
+              description="An agent checks what's due and what to review."
             />
           </li>
         </ul>

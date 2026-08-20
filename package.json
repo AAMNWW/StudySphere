@@ -18,6 +18,9 @@
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@google/genai": "^2.17.1",
+    "@langchain/core": "^1.2.9",
+    "@langchain/google": "^0.2.3",
+    "@langchain/langgraph": "^1.4.12",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@tiptap/extension-placeholder": "^3.30.2",
