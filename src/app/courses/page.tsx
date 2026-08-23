@@ -2,6 +2,7 @@ import { BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ICON_TILE_COLOR_CYCLE, IconTile } from "@/components/icon-tile";
 import {
@@ -29,6 +30,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
 
 export default async function CoursesPage() {
   const userId = await requireUserId();
+  const session = await auth();
 
   // This is a Server Component, so it can query the database directly.
   const courses = await db.course.findMany({
@@ -38,7 +40,7 @@ export default async function CoursesPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10 md:flex-row md:gap-8">
-      <AppSidebar />
+      <AppSidebar isAdmin={session?.user?.role === "ADMIN"} />
       <main className="min-w-0 flex-1">
         <header className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Your courses</h1>

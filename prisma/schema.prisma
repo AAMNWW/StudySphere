@@ -12,6 +12,24 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+/// A student's chosen accent color for buttons, focus rings and the active
+/// nav highlight (src/app/globals.css's `[data-accent]` blocks). GRAPHITE is
+/// the app's original grayscale look and needs no override — every other
+/// value is applied via a `data-accent` attribute set in src/app/layout.tsx.
+enum AccentColor {
+  GRAPHITE
+  PURPLE
+  BLUE
+  GREEN
+  ORANGE
+  PINK
+}
+
 /// A student. Owns every course (and, through courses, every note and
 /// assignment) they create.
 model User {
@@ -20,6 +38,18 @@ model User {
   email          String          @unique
   /// bcrypt hash, never the plaintext password.
   password       String
+  /// STUDENT for every account except the one that runs the admin panel
+  /// (src/app/admin). There's no self-serve promotion path — the one admin
+  /// is bootstrapped by the add_user_role_and_prefs migration.
+  role           UserRole        @default(STUDENT)
+  /// Whether this student gets the deadline-reminder digest email (see
+  /// src/app/api/cron/deadline-reminders). The in-app notification created
+  /// alongside it is unaffected by this — it only controls the email.
+  emailRemindersEnabled Boolean  @default(true)
+  /// Customized from /settings; read server-side in the root layout and
+  /// applied as a `data-accent` attribute so there's no flash of the
+  /// default color on first paint.
+  accentColor    AccentColor     @default(GRAPHITE)
   courses        Course[]
   quizAnswerLogs QuizAnswerLog[]
   notifications  Notification[]

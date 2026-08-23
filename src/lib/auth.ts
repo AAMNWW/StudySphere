@@ -18,3 +18,24 @@ export async function requireUserId(): Promise<string> {
 
   return session.user.id;
 }
+
+/**
+ * Gate for src/app/admin — the actual security boundary (the Admin nav item
+ * being conditionally rendered in AppSidebar is just a UX nicety on top of
+ * this, not a substitute for it). Non-admins are bounced to the dashboard
+ * rather than shown a 404, matching how signed-out visitors are bounced to
+ * /login rather than seeing a broken page.
+ */
+export async function requireAdmin(): Promise<string> {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  if (session.user.role !== "ADMIN") {
+    redirect("/");
+  }
+
+  return session.user.id;
+}

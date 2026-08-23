@@ -2,6 +2,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
 import { IconTile } from "@/components/icon-tile";
 import { requireUserId } from "@/lib/auth";
@@ -51,6 +52,7 @@ export default async function CalendarPage({
   searchParams,
 }: PageProps<"/calendar">) {
   const userId = await requireUserId();
+  const session = await auth();
   const { month: monthQuery } = await searchParams;
 
   const today = new Date();
@@ -90,7 +92,7 @@ export default async function CalendarPage({
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10 md:flex-row md:gap-8">
-      <AppSidebar />
+      <AppSidebar isAdmin={session?.user?.role === "ADMIN"} />
       <main className="min-w-0 flex-1">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">

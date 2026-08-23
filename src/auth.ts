@@ -2,18 +2,20 @@ import bcrypt from "bcryptjs";
 import NextAuth, { type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
+import type { UserRole } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { loginSchema } from "@/lib/validations/auth";
 
-// Auth.js's default Session shape doesn't carry the database id — this
-// augmentation makes `session.user.id` available and typed. The JWT type
-// already has a `Record<string, unknown>` index signature (see
-// @auth/core/jwt), so `token.id` needs a cast on read but not its own
-// augmentation.
+// Auth.js's default Session shape doesn't carry the database id or role —
+// this augmentation makes `session.user.id`/`session.user.role` available
+// and typed. The JWT type already has a `Record<string, unknown>` index
+// signature (see @auth/core/jwt), so `token.id`/`token.role` need a cast on
+// read but not their own augmentation.
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
+      role: UserRole;
     } & DefaultSession["user"];
   }
 }
@@ -51,7 +53,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        return { id: user.id, name: user.name, email: user.email };
+        return { id: user.id, name: user.name, email: user.email, role: user.role };
       },
     }),
   ],
@@ -63,16 +65,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return Boolean(session?.user);
     },
     // The default JWT/session only carry what the provider returns from
-    // `authorize`, plus name/email/image. The database id has to be copied
-    // across explicitly to be available on `session.user.id`.
+    // `authorize`, plus name/email/image. The database id and role have to
+    // be copied across explicitly to be available on `session.user`.
     async jwt({ token, user }) {
       if (user?.id) {
         token.id = user.id;
+        token.role = (user as { role: UserRole }).role;
       }
       return token;
     },
     async session({ session, token }) {
       session.user.id = token.id as string;
+      session.user.role = token.role as UserRole;
       return session;
     },
   },

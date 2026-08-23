@@ -115,7 +115,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10 md:flex-row md:gap-8">
-      <AppSidebar />
+      <AppSidebar isAdmin={session.user.role === "ADMIN"} />
       <main className="min-w-0 flex-1">
         <Reveal>
           <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
