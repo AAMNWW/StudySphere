@@ -11,6 +11,7 @@ import { MainNav } from "@/components/main-nav";
 import { NavUser } from "@/components/nav-user";
 import { NotificationBell } from "@/components/notification-bell";
 import { SiteFooter } from "@/components/site-footer";
+import { ThemeDecor } from "@/components/theme-decor";
 import { db } from "@/lib/db";
 
 // Named "--font-sans" (rather than e.g. "--font-inter") so it lands
@@ -72,6 +73,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeDecor />
           <header className="border-b">
             <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
               <div className="flex items-center gap-6">

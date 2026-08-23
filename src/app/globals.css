@@ -431,6 +431,222 @@
   }
 }
 
+/* Ambient background motion for the themed palettes — markup always renders
+   (src/components/theme-decor.tsx), these rules just decide which group is
+   visible for the active `data-palette` and animate it. Fixed + negative
+   z-index keeps it behind normal page content (still painted above the
+   plain body background) without needing z-index on anything else. */
+.theme-decor {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.theme-decor > div {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+[data-palette="hello-kitty"] .theme-decor-hello-kitty,
+[data-palette="spider-man"] .theme-decor-spider-man,
+[data-palette="ocean"] .theme-decor-ocean,
+[data-palette="forest"] .theme-decor-forest {
+  display: block;
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-decor * {
+    animation: none !important;
+  }
+}
+
+/* Hello Kitty: bows and hearts drifting up from the bottom of the screen. */
+.decor-float {
+  position: absolute;
+  bottom: -8%;
+  opacity: 0;
+  animation: decor-float-up var(--decor-duration, 15s) linear infinite;
+  animation-delay: var(--decor-delay, 0s);
+}
+@keyframes decor-float-up {
+  0% {
+    transform: translateY(0) rotate(-8deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.85;
+  }
+  92% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-115vh) rotate(12deg);
+    opacity: 0;
+  }
+}
+
+/* Spider-Man: a web in two corners, and a spider dangling from a thread in
+   each — not the character himself, just the motifs. */
+.decor-web {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+}
+.decor-web--top-left {
+  top: 0;
+  left: 0;
+}
+.decor-web--bottom-right {
+  bottom: 0;
+  right: 0;
+}
+.decor-spider-drop {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: decor-spider-bob 4.5s ease-in-out infinite;
+}
+.decor-spider-drop--a {
+  left: 15%;
+  height: 30vh;
+}
+.decor-spider-drop--b {
+  right: 20%;
+  height: 45vh;
+  animation-duration: 5.5s;
+  animation-delay: -2s;
+}
+.decor-spider__thread {
+  width: 1px;
+  flex: 1;
+  background: currentColor;
+  opacity: 0.35;
+}
+@keyframes decor-spider-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(16px);
+  }
+}
+
+/* Ocean: rolling waves at the bottom, rising bubbles, a couple of fish. */
+.decor-wave-layer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 90px;
+  animation: decor-wave-scroll 14s linear infinite;
+}
+.decor-wave-layer--front {
+  height: 70px;
+  animation-duration: 9s;
+  animation-direction: reverse;
+  opacity: 0.9;
+}
+.decor-wave {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+@keyframes decor-wave-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.decor-bubble {
+  position: absolute;
+  bottom: -5%;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0;
+  animation: decor-bubble-rise var(--decor-duration, 15s) ease-in infinite;
+  animation-delay: var(--decor-delay, 0s);
+}
+@keyframes decor-bubble-rise {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.45;
+  }
+  90% {
+    opacity: 0.45;
+  }
+  100% {
+    transform: translateY(-70vh);
+    opacity: 0;
+  }
+}
+.decor-fish {
+  position: absolute;
+  left: -10%;
+  animation: decor-fish-swim 26s linear infinite;
+}
+.decor-fish--slow {
+  animation-duration: 34s;
+  animation-delay: -12s;
+}
+@keyframes decor-fish-swim {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  50% {
+    transform: translateX(60vw) translateY(-10px);
+  }
+  100% {
+    transform: translateX(120vw) translateY(0);
+  }
+}
+
+/* Forest: swaying trees along the edges, birds crossing overhead. */
+.decor-trees {
+  position: absolute;
+  inset: 0;
+}
+.decor-tree {
+  position: absolute;
+  bottom: -4px;
+  transform-origin: bottom center;
+  animation: decor-tree-sway 6s ease-in-out infinite;
+  animation-delay: var(--decor-sway-delay, 0s);
+}
+@keyframes decor-tree-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+.decor-bird {
+  position: absolute;
+  left: -8%;
+  animation: decor-bird-fly var(--decor-duration, 24s) linear infinite;
+  animation-delay: var(--decor-delay, 0s);
+}
+@keyframes decor-bird-fly {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  50% {
+    transform: translateX(60vw) translateY(-14px);
+  }
+  100% {
+    transform: translateX(120vw) translateY(0);
+  }
+}
+
 /* Content styling for Tiptap-authored note bodies, both in the editor and
    in the read-only rendered view (note-card.tsx uses the same `.tiptap`
    class on its dangerouslySetInnerHTML wrapper). */
