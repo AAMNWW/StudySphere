@@ -12,20 +12,24 @@
 // those get literal waves/fish and trees/birds.
 
 const HELLO_KITTY_BOWS = [
-  { left: "6%", size: 34, duration: 16, delay: -2 },
-  { left: "18%", size: 22, duration: 12, delay: -7 },
-  { left: "32%", size: 40, duration: 19, delay: -4 },
-  { left: "48%", size: 26, duration: 14, delay: -10 },
-  { left: "63%", size: 30, duration: 17, delay: -1 },
-  { left: "78%", size: 20, duration: 11, delay: -6 },
-  { left: "90%", size: 36, duration: 20, delay: -13 },
+  { left: "4%", size: 30, duration: 16, delay: -2 },
+  { left: "14%", size: 20, duration: 12, delay: -7 },
+  { left: "24%", size: 38, duration: 19, delay: -4 },
+  { left: "36%", size: 24, duration: 14, delay: -10 },
+  { left: "48%", size: 32, duration: 17, delay: -1 },
+  { left: "58%", size: 18, duration: 11, delay: -6 },
+  { left: "68%", size: 36, duration: 20, delay: -13 },
+  { left: "80%", size: 22, duration: 13, delay: -9 },
+  { left: "92%", size: 34, duration: 18, delay: -5 },
 ];
 
 const HELLO_KITTY_HEARTS = [
-  { left: "12%", size: 16, duration: 13, delay: -3 },
-  { left: "40%", size: 12, duration: 10, delay: -8 },
-  { left: "58%", size: 18, duration: 15, delay: -5 },
-  { left: "85%", size: 14, duration: 11, delay: -9 },
+  { left: "10%", size: 16, duration: 13, delay: -3 },
+  { left: "30%", size: 12, duration: 10, delay: -8 },
+  { left: "44%", size: 18, duration: 15, delay: -5 },
+  { left: "63%", size: 14, duration: 11, delay: -9 },
+  { left: "75%", size: 20, duration: 16, delay: -2 },
+  { left: "88%", size: 13, duration: 12, delay: -12 },
 ];
 
 const FOREST_TREES = [
@@ -62,6 +66,24 @@ function Bow({ size }: { size: number }) {
       />
       <circle cx="12" cy="12" r="2.6" fill="currentColor" fillOpacity={0.75} />
     </svg>
+  );
+}
+
+/** A little ribbon bouquet anchored in a corner — three overlapping bows
+ * with a gentle idle sway, instead of one lone bow drifting past. */
+function BowCluster() {
+  return (
+    <div className="decor-bow-cluster">
+      <span className="decor-bow-cluster__item decor-bow-cluster__item--1">
+        <Bow size={54} />
+      </span>
+      <span className="decor-bow-cluster__item decor-bow-cluster__item--2">
+        <Bow size={38} />
+      </span>
+      <span className="decor-bow-cluster__item decor-bow-cluster__item--3">
+        <Bow size={30} />
+      </span>
+    </div>
   );
 }
 
@@ -104,6 +126,44 @@ function CornerWeb({ corner }: { corner: "top-left" | "bottom-right" }) {
             d={`M ${r} 0 Q ${r * 0.78} ${r * 0.78} 0 ${r}`}
             fill="none"
           />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/** A heart traced in web strands — concentric heart-shaped rings plus
+ * spokes radiating from the center, the way an orb web radiates from its
+ * hub. An original geometric mashup, not anyone's character art. */
+function HeartWeb() {
+  const heartPath =
+    "M50 82 12 46C-2 32 2 10 20 4 34 -1 46 6 50 18 54 6 66 -1 80 4 98 10 102 32 88 46Z";
+  const spokes: [number, number][] = [
+    [50, 8],
+    [26, 14],
+    [10, 34],
+    [8, 50],
+    [20, 66],
+    [50, 82],
+    [80, 66],
+    [92, 50],
+    [90, 34],
+    [74, 14],
+  ];
+
+  return (
+    <svg viewBox="0 0 100 90" width={130} height={117} fill="none" className="decor-heart-web">
+      <g stroke="currentColor" strokeWidth={1} strokeLinecap="round">
+        {[1, 0.72, 0.44].map((scale, i) => (
+          <path
+            key={scale}
+            d={heartPath}
+            strokeOpacity={0.45 - i * 0.08}
+            transform={`translate(50 45) scale(${scale}) translate(-50 -45)`}
+          />
+        ))}
+        {spokes.map(([x, y]) => (
+          <line key={`${x}-${y}`} x1="50" y1="45" x2={x} y2={y} strokeOpacity={0.3} />
         ))}
       </g>
     </svg>
@@ -189,6 +249,7 @@ export function ThemeDecor() {
   return (
     <div className="theme-decor" aria-hidden="true">
       <div className="theme-decor-hello-kitty text-[oklch(0.6_0.2_10)]">
+        <BowCluster />
         {HELLO_KITTY_BOWS.map((bow, i) => (
           <span
             key={i}
@@ -224,10 +285,19 @@ export function ThemeDecor() {
       <div className="theme-decor-spider-man text-[oklch(0.15_0_0)]">
         <CornerWeb corner="top-left" />
         <CornerWeb corner="bottom-right" />
+        <div className="decor-heart-web-wrap text-[oklch(0.5_0.21_25)]">
+          <HeartWeb />
+        </div>
         <div className="decor-spider-drop decor-spider-drop--a">
           <Spider />
         </div>
         <div className="decor-spider-drop decor-spider-drop--b">
+          <Spider />
+        </div>
+        <div className="decor-spider-drop decor-spider-drop--c">
+          <Spider />
+        </div>
+        <div className="decor-spider-drop decor-spider-drop--d">
           <Spider />
         </div>
       </div>

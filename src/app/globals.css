@@ -208,11 +208,11 @@
   --sidebar-ring: oklch(0.5 0.21 25);
 }
 .dark[data-palette="spider-man"] {
-  --background: oklch(0.13 0.02 255);
+  --background: oklch(0.08 0.012 255);
   --foreground: oklch(0.96 0.01 240);
-  --card: oklch(0.19 0.03 255);
+  --card: oklch(0.15 0.025 255);
   --card-foreground: oklch(0.96 0.01 240);
-  --popover: oklch(0.19 0.03 255);
+  --popover: oklch(0.15 0.025 255);
   --popover-foreground: oklch(0.96 0.01 240);
   --primary: oklch(0.6 0.22 25);
   --primary-foreground: oklch(0.99 0 0);
@@ -225,7 +225,7 @@
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.6 0.22 25);
-  --sidebar: oklch(0.16 0.025 255);
+  --sidebar: oklch(0.12 0.02 255);
   --sidebar-foreground: oklch(0.96 0.01 240);
   --sidebar-primary: oklch(0.6 0.22 25);
   --sidebar-primary-foreground: oklch(0.99 0 0);
@@ -460,7 +460,48 @@
   }
 }
 
-/* Hello Kitty: bows and hearts drifting up from the bottom of the screen. */
+/* Hello Kitty: a ribbon bouquet parked in the corner, plus bows and hearts
+   drifting up from the bottom of the screen. */
+.decor-bow-cluster {
+  position: absolute;
+  top: 4%;
+  right: 5%;
+  width: 90px;
+  height: 90px;
+}
+.decor-bow-cluster__item {
+  position: absolute;
+  transform-origin: center;
+  animation: decor-bow-sway 5s ease-in-out infinite;
+}
+.decor-bow-cluster__item--1 {
+  top: 0;
+  right: 0;
+  opacity: 0.7;
+}
+.decor-bow-cluster__item--2 {
+  top: 28px;
+  right: 38px;
+  opacity: 0.55;
+  animation-duration: 6s;
+  animation-delay: -2s;
+}
+.decor-bow-cluster__item--3 {
+  top: 8px;
+  right: 60px;
+  opacity: 0.45;
+  animation-duration: 4.2s;
+  animation-delay: -1s;
+}
+@keyframes decor-bow-sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
 .decor-float {
   position: absolute;
   bottom: -8%;
@@ -518,6 +559,18 @@
   animation-duration: 5.5s;
   animation-delay: -2s;
 }
+.decor-spider-drop--c {
+  left: 46%;
+  height: 62vh;
+  animation-duration: 6.5s;
+  animation-delay: -4s;
+}
+.decor-spider-drop--d {
+  right: 6%;
+  height: 20vh;
+  animation-duration: 3.8s;
+  animation-delay: -1s;
+}
 .decor-spider__thread {
   width: 1px;
   flex: 1;
@@ -531,6 +584,27 @@
   }
   50% {
     transform: translateY(16px);
+  }
+}
+
+/* A web woven into a heart, breathing gently — the safe version of that
+   heart-web reference image. */
+.decor-heart-web-wrap {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: decor-heart-web-pulse 5s ease-in-out infinite;
+}
+@keyframes decor-heart-web-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.04);
   }
 }
 
