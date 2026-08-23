@@ -50,26 +50,14 @@ export default async function CoursesPage() {
           </p>
         </header>
 
-        <Card className="mb-10 max-w-xl">
-          <CardHeader>
-            <CardTitle>Add a course</CardTitle>
-            <CardDescription>
-              Start with the subject you are studying right now.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CreateCourseForm />
-          </CardContent>
-        </Card>
-
-        <section aria-labelledby="course-list-heading">
+        <section aria-labelledby="course-list-heading" className="mb-10">
           <h2 id="course-list-heading" className="mb-4 text-lg font-bold">
             {courses.length} {courses.length === 1 ? "course" : "courses"}
           </h2>
 
           {courses.length === 0 ? (
             <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
-              No courses yet. Add your first one above.
+              No courses yet. Add your first one below.
             </p>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -102,6 +90,18 @@ export default async function CoursesPage() {
             </ul>
           )}
         </section>
+
+        <Card className="max-w-xl">
+          <CardHeader>
+            <CardTitle>Add a course</CardTitle>
+            <CardDescription>
+              Start with the subject you are studying right now.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CreateCourseForm />
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
