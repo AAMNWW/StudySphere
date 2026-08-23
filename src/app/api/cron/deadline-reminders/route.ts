@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getMailTransporter, REMINDER_FROM_ADDRESS } from "@/lib/email/client";
 import { buildDeadlineReminderEmail, type ReminderCourseGroup } from "@/lib/email/deadline-reminders";
 import { db } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
 
 // Wide window rather than "due tomorrow" — Vercel Cron's free tier only
 // runs once daily, so a narrower window could skip a deadline that falls
@@ -82,9 +83,10 @@ export async function GET(request: Request) {
 
   // Only mark assignments whose owner's email actually succeeded — a failed
   // send should be retried on the next cron run, not silently dropped.
-  const remindedAssignmentIds = dueAssignments
-    .filter((assignment) => successfulUserIds.has(assignment.course.user.id))
-    .map((assignment) => assignment.id);
+  const remindedAssignments = dueAssignments.filter((assignment) =>
+    successfulUserIds.has(assignment.course.user.id),
+  );
+  const remindedAssignmentIds = remindedAssignments.map((assignment) => assignment.id);
   const assignmentsReminded = remindedAssignmentIds.length;
 
   if (remindedAssignmentIds.length > 0) {
@@ -92,6 +94,18 @@ export async function GET(request: Request) {
       where: { id: { in: remindedAssignmentIds } },
       data: { reminderSentAt: new Date() },
     });
+
+    // In-app counterpart to the email above, one per reminded assignment.
+    await Promise.all(
+      remindedAssignments.map((assignment) =>
+        createNotification({
+          userId: assignment.course.user.id,
+          type: "ASSIGNMENT_DUE_SOON",
+          title: `${assignment.title} is due soon`,
+          link: `/courses/${assignment.courseId}/assignments`,
+        }),
+      ),
+    );
   }
 
   return NextResponse.json({ ok: true, usersNotified, assignmentsReminded });

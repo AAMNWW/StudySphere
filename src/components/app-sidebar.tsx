@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, LayoutDashboard } from "lucide-react";
+import { BookOpen, Calendar, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard, color: "gray" as const },
   { label: "Courses", href: "/courses", icon: BookOpen, color: "purple" as const },
+  { label: "Calendar", href: "/calendar", icon: Calendar, color: "green" as const },
 ];
 
 /**

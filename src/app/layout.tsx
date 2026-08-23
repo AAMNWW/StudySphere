@@ -7,6 +7,7 @@ import "./globals.css";
 import { IconTile } from "@/components/icon-tile";
 import { MainNav } from "@/components/main-nav";
 import { NavUser } from "@/components/nav-user";
+import { NotificationBell } from "@/components/notification-bell";
 import { SiteFooter } from "@/components/site-footer";
 
 // Named "--font-sans" (rather than e.g. "--font-inter") so it lands
@@ -58,7 +59,10 @@ export default function RootLayout({
               </Link>
               <MainNav />
             </div>
-            <NavUser />
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+              <NavUser />
+            </div>
           </div>
         </header>
         <div className="flex flex-1 flex-col">{children}</div>

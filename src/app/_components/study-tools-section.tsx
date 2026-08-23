@@ -61,7 +61,7 @@ const TOOLS: {
     description: "A suggested schedule built around your deadlines.",
     icon: Calendar,
     color: "gray",
-    live: false,
+    live: true,
   },
 ];
 

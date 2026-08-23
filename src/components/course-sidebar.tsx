@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BarChart3,
   CalendarDays,
   FileText,
   History,
@@ -50,6 +51,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Topics", href: (id) => `/courses/${id}/topics`, icon: CalendarDays, color: "green", countKey: "topics" },
   { label: "Study planner", href: (id) => `/courses/${id}/planner`, icon: Sparkles, color: "gray" },
   { label: "History", href: (id) => `/courses/${id}/history`, icon: History, color: "red" },
+  { label: "Analytics", href: (id) => `/courses/${id}/analytics`, icon: BarChart3, color: "purple" },
 ];
 
 const SETTINGS_ITEM: NavItem = {

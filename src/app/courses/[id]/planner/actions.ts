@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import { generateStudyPlan } from "@/lib/agent/study-planner";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { generateStudyPlan } from "@/lib/agent/study-planner";
+import { createNotification } from "@/lib/notifications";
 
 import type { StudyPlanFormState } from "./study-plan-form-state";
 
@@ -33,6 +34,13 @@ export async function generateStudyPlanAction(
       message: "Could not generate a study plan. Please try again.",
     };
   }
+
+  await createNotification({
+    userId,
+    type: "STUDY_PLAN_READY",
+    title: `Your study plan for ${course.title} is ready`,
+    link: `/courses/${courseId}/topics`,
+  });
 
   // The agent may have added Topic rows — the Topics page needs to reflect
   // that on next visit.
