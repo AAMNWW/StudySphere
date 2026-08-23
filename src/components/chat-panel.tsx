@@ -97,7 +97,11 @@ export function ChatPanel({
     if (!SpeechRecognitionCtor) return;
 
     const recognition = new SpeechRecognitionCtor();
-    recognition.continuous = false;
+    // continuous: true — otherwise the browser finalizes and stops
+    // recognition at the first natural pause (e.g. between sentences),
+    // cutting the user off mid-answer instead of waiting for them to
+    // press stop or fall silent for good.
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-US";
 
