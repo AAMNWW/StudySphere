@@ -1,20 +1,19 @@
-import { CalendarDays, FileText, ListTodo, MessageCircle, Sparkles, SquareStack, StickyNote, Layers3 } from "lucide-react";
+import { FileText, ListTodo, StickyNote } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { FeatureTile } from "@/components/feature-tile";
 import { IconTile } from "@/components/icon-tile";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
 
-import { CreateNoteForm } from "./_components/create-note-form";
-import { DeleteCourseButton } from "./_components/delete-course-button";
-import { DocumentRow } from "./_components/document-row";
-import { EditCourseForm } from "./_components/edit-course-form";
-import { NoteCard } from "./_components/note-card";
-import { UploadDocumentForm } from "./_components/upload-document-form";
+import { AssignmentCard } from "./_components/assignment-card";
+
+const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeZone: "UTC",
+});
 
 export async function generateMetadata({
   params,
@@ -34,187 +33,151 @@ export default async function CoursePage({
 }: PageProps<"/courses/[id]">) {
   const userId = await requireUserId();
   const { id } = await params;
-  const course = await db.course.findFirst({
-    where: { id, userId },
-    include: {
-      notes: { orderBy: { createdAt: "desc" } },
-      documents: { orderBy: { createdAt: "desc" } },
-    },
-  });
+  const course = await db.course.findFirst({ where: { id, userId } });
 
   if (!course) {
     notFound();
   }
 
-  const [quizCount, flashcardSetCount, chatThreadCount, topicCount, assignmentCount] =
-    await Promise.all([
-      db.quiz.count({ where: { courseId: course.id } }),
-      db.flashcardSet.count({ where: { courseId: course.id } }),
-      db.chatThread.count({ where: { courseId: course.id } }),
-      db.topic.count({ where: { courseId: course.id } }),
-      db.assignment.count({ where: { courseId: course.id } }),
-    ]);
+  const [dueSoon, recentDocuments, recentNotes] = await Promise.all([
+    db.assignment.findMany({
+      where: { courseId: course.id, completed: false },
+      orderBy: { dueDate: { sort: "asc", nulls: "last" } },
+      take: 5,
+    }),
+    db.document.findMany({
+      where: { courseId: course.id },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+      select: { id: true, fileName: true, createdAt: true },
+    }),
+    db.note.findMany({
+      where: { courseId: course.id },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+      select: { id: true, title: true, createdAt: true },
+    }),
+  ]);
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-12">
-      <Link
-        href="/courses"
-        className="text-muted-foreground text-sm hover:underline"
-      >
-        ← Back to courses
-      </Link>
+    <main>
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight">{course.title}</h1>
+        {course.description ? (
+          <p className="text-muted-foreground mt-2 text-sm">{course.description}</p>
+        ) : null}
+      </header>
 
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>Edit course</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <EditCourseForm course={course} />
-        </CardContent>
-      </Card>
+      <section aria-labelledby="due-soon-heading" className="mb-10">
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <h2 id="due-soon-heading" className="flex items-center gap-2 text-lg font-bold">
+            <IconTile color="yellow" size="sm">
+              <ListTodo className="size-4" />
+            </IconTile>
+            Due soon
+          </h2>
+          <Link
+            href={`/courses/${course.id}/assignments`}
+            className="text-muted-foreground text-sm hover:underline"
+          >
+            See all assignments
+          </Link>
+        </div>
 
-      <div className="mt-6 flex justify-end">
-        <DeleteCourseButton courseId={course.id} courseTitle={course.title} />
+        {dueSoon.length === 0 ? (
+          <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
+            Nothing due — add an assignment to start tracking deadlines.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {dueSoon.map((assignment) => (
+              <li key={assignment.id}>
+                <AssignmentCard
+                  courseId={course.id}
+                  assignment={assignment}
+                  isOverdue={isAssignmentOverdue(assignment)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <div className="grid gap-8 sm:grid-cols-2">
+        <section aria-labelledby="recent-documents-heading">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <h2 id="recent-documents-heading" className="flex items-center gap-2 text-lg font-bold">
+              <IconTile color="blue" size="sm">
+                <FileText className="size-4" />
+              </IconTile>
+              Documents
+            </h2>
+            <Link
+              href={`/courses/${course.id}/documents`}
+              className="text-muted-foreground text-sm hover:underline"
+            >
+              See all
+            </Link>
+          </div>
+
+          {recentDocuments.length === 0 ? (
+            <p className="text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm">
+              No documents yet.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {recentDocuments.map((document) => (
+                <li
+                  key={document.id}
+                  className="bg-card flex items-center justify-between gap-2 rounded-xl border border-black/5 px-4 py-3 text-sm shadow-sm"
+                >
+                  <span className="truncate">{document.fileName}</span>
+                  <span className="text-muted-foreground shrink-0 text-xs">
+                    {dateFormatter.format(document.createdAt)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="recent-notes-heading">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <h2 id="recent-notes-heading" className="flex items-center gap-2 text-lg font-bold">
+              <IconTile color="yellow" size="sm">
+                <StickyNote className="size-4" />
+              </IconTile>
+              Notes
+            </h2>
+            <Link
+              href={`/courses/${course.id}/notes`}
+              className="text-muted-foreground text-sm hover:underline"
+            >
+              See all
+            </Link>
+          </div>
+
+          {recentNotes.length === 0 ? (
+            <p className="text-muted-foreground rounded-2xl border border-dashed p-6 text-center text-sm">
+              No notes yet.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {recentNotes.map((note) => (
+                <li
+                  key={note.id}
+                  className="bg-card flex items-center justify-between gap-2 rounded-xl border border-black/5 px-4 py-3 text-sm shadow-sm"
+                >
+                  <span className="truncate">{note.title}</span>
+                  <span className="text-muted-foreground shrink-0 text-xs">
+                    {dateFormatter.format(note.createdAt)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
-
-      <section aria-labelledby="feature-grid-heading" className="mt-10">
-        <h2 id="feature-grid-heading" className="sr-only">
-          Study tools
-        </h2>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <li>
-            <FeatureTile
-              href={`/courses/${course.id}/quiz`}
-              color="purple"
-              icon={<SquareStack className="size-6" />}
-              title="Quiz"
-              description="Test yourself, with a difficulty you pick."
-              count={quizCount}
-            />
-          </li>
-          <li>
-            <FeatureTile
-              href={`/courses/${course.id}/flashcards`}
-              color="blue"
-              icon={<Layers3 className="size-6" />}
-              title="Flashcards"
-              description="Flip through key terms and concepts."
-              count={flashcardSetCount}
-            />
-          </li>
-          <li>
-            <FeatureTile
-              href={`/courses/${course.id}/chat`}
-              color="pink"
-              icon={<MessageCircle className="size-6" />}
-              title="Chat"
-              description="Ask the AI tutor about this course."
-              count={chatThreadCount}
-            />
-          </li>
-          <li>
-            <FeatureTile
-              href={`/courses/${course.id}/topics`}
-              color="green"
-              icon={<CalendarDays className="size-6" />}
-              title="Topics"
-              description="What to study this week."
-              count={topicCount}
-            />
-          </li>
-          <li>
-            <FeatureTile
-              href={`/courses/${course.id}/assignments`}
-              color="yellow"
-              icon={<ListTodo className="size-6" />}
-              title="Assignments"
-              description="Everything due for this course."
-              count={assignmentCount}
-            />
-          </li>
-          <li>
-            <FeatureTile
-              href={`/courses/${course.id}/planner`}
-              color="gray"
-              icon={<Sparkles className="size-6" />}
-              title="Study planner"
-              description="An agent checks what's due and what to review."
-            />
-          </li>
-        </ul>
-      </section>
-
-      <Card className="mt-10">
-        <CardHeader>
-          <CardTitle>Add a document</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <UploadDocumentForm courseId={course.id} />
-        </CardContent>
-      </Card>
-
-      <section aria-labelledby="document-list-heading" className="mt-8">
-        <h2
-          id="document-list-heading"
-          className="mb-4 flex items-center gap-2 text-lg font-bold"
-        >
-          <IconTile color="blue" size="sm">
-            <FileText className="size-4" />
-          </IconTile>
-          {course.documents.length}{" "}
-          {course.documents.length === 1 ? "document" : "documents"}
-        </h2>
-
-        {course.documents.length === 0 ? (
-          <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
-            No documents yet. Upload your first one above.
-          </p>
-        ) : (
-          <ul className="space-y-4">
-            {course.documents.map((document) => (
-              <li key={document.id}>
-                <DocumentRow courseId={course.id} document={document} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <Card className="mt-10">
-        <CardHeader>
-          <CardTitle>Add a note</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CreateNoteForm courseId={course.id} />
-        </CardContent>
-      </Card>
-
-      <section aria-labelledby="note-list-heading" className="mt-8">
-        <h2
-          id="note-list-heading"
-          className="mb-4 flex items-center gap-2 text-lg font-bold"
-        >
-          <IconTile color="yellow" size="sm">
-            <StickyNote className="size-4" />
-          </IconTile>
-          {course.notes.length}{" "}
-          {course.notes.length === 1 ? "note" : "notes"}
-        </h2>
-
-        {course.notes.length === 0 ? (
-          <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
-            No notes yet. Add your first one above.
-          </p>
-        ) : (
-          <ul className="space-y-4">
-            {course.notes.map((note) => (
-              <li key={note.id}>
-                <NoteCard courseId={course.id} note={note} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </main>
   );
 }

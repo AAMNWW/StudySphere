@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { BackLink } from "@/components/back-link";
 import { IconTile } from "@/components/icon-tile";
 import { Button } from "@/components/ui/button";
 import { requireUserId } from "@/lib/auth";
@@ -45,13 +46,8 @@ export default async function DocumentWorkspacePage({
   const docQuery = `?documentIds=${document.id}`;
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-12">
-      <Link
-        href={`/courses/${courseId}`}
-        className="text-muted-foreground text-sm hover:underline"
-      >
-        ← Back to course
-      </Link>
+    <main className="max-w-2xl">
+      <BackLink href={`/courses/${courseId}/documents`}>Back to documents</BackLink>
 
       <header className="mt-4 mb-10 flex items-center gap-3">
         <IconTile color="red">

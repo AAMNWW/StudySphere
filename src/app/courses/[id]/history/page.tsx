@@ -54,15 +54,8 @@ export default async function HistoryPage({
   });
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-12">
-      <Link
-        href={`/courses/${courseId}`}
-        className="text-muted-foreground text-sm hover:underline"
-      >
-        ← Back to {course.title}
-      </Link>
-
-      <header className="mt-4 mb-8 flex items-center gap-3">
+    <main className="max-w-2xl">
+      <header className="mb-8 flex items-center gap-3">
         <IconTile color="red">
           <History className="size-5" />
         </IconTile>

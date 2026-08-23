@@ -2,7 +2,6 @@ import { createUserContent, type Content, type Part } from "@google/genai";
 
 import { getClient, MODEL } from "./client";
 import { getDocumentsContent, type SourceDocument } from "./document-content";
-import { requireText } from "./summarize-document";
 
 export interface ChatTurn {
   role: "user" | "assistant";
@@ -29,20 +28,22 @@ function turnsToContents(history: ChatTurn[]): Content[] {
 /**
  * Answers a chat message, either grounded in one or more documents ("chat
  * about these documents") or, when `documents` is empty, as a general study
- * tutor for the course ("AI tutor").
+ * tutor for the course ("AI tutor"). Streamed token-by-token (rather than
+ * one blocking call) so the UI can render the reply as it arrives instead
+ * of waiting for the whole answer to finish generating.
  *
  * There's no persistent chat session on Gemini's side — each call resends
  * any grounding documents plus the full prior conversation, since the API
  * is stateless per request. Fine at the current per-thread document cap; a
  * longer history or many large files would need the Files API instead.
  */
-export async function answerChatMessage(
+export async function* answerChatMessageStream(
   documents: SourceDocument[],
   courseTitle: string,
   history: ChatTurn[],
   question: string,
   topic?: string,
-): Promise<string> {
+): AsyncGenerator<string> {
   const ai = getClient();
   const topicClause = topic ? ` The student wants to focus on: "${topic}".` : "";
 
@@ -69,6 +70,9 @@ export async function answerChatMessage(
     createUserContent([question]),
   ];
 
-  const response = await ai.models.generateContent({ model: MODEL, contents });
-  return requireText(response);
+  const stream = await ai.models.generateContentStream({ model: MODEL, contents });
+
+  for await (const chunk of stream) {
+    if (chunk.text) yield chunk.text;
+  }
 }

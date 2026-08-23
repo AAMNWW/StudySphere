@@ -1,6 +1,5 @@
 import { Sparkles } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { IconTile } from "@/components/icon-tile";
@@ -30,15 +29,8 @@ export default async function PlannerPage({ params }: PageProps<"/courses/[id]/p
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-12">
-      <Link
-        href={`/courses/${courseId}`}
-        className="text-muted-foreground text-sm hover:underline"
-      >
-        ← Back to {course.title}
-      </Link>
-
-      <header className="mt-4 mb-8 flex items-center gap-3">
+    <main className="max-w-2xl">
+      <header className="mb-8 flex items-center gap-3">
         <IconTile color="gray">
           <Sparkles className="size-5" />
         </IconTile>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { BackLink } from "@/components/back-link";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -48,13 +48,8 @@ export default async function QuizPage({
     questions.length > 0 && questions.every((question) => question.selectedIndex !== null);
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-12">
-      <Link
-        href={`/courses/${courseId}/quiz`}
-        className="text-muted-foreground text-sm hover:underline"
-      >
-        ← Back to quizzes
-      </Link>
+    <main className="max-w-2xl">
+      <BackLink href={`/courses/${courseId}/quiz`}>Back to quizzes</BackLink>
       <h1 className="mt-4 mb-8 text-2xl font-bold tracking-tight">{quiz.title}</h1>
 
       {allAnswered ? (

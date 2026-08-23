@@ -36,20 +36,10 @@ export async function MainNav() {
     );
   }
 
-  return (
-    <nav className="flex items-center gap-5 text-sm font-medium">
-      <Link
-        href="/"
-        className="text-foreground/70 transition-colors hover:text-foreground"
-      >
-        Dashboard
-      </Link>
-      <Link
-        href="/courses"
-        className="text-foreground/70 transition-colors hover:text-foreground"
-      >
-        Courses
-      </Link>
-    </nav>
-  );
+  // Signed-in navigation now lives in the page-level sidebar (AppSidebar on
+  // Dashboard/Courses, CourseSidebar inside a course) instead of here, so it
+  // reads as one consistent nav pattern rather than two competing ones. The
+  // header brand link (see layout.tsx) still doubles as a "go to Dashboard"
+  // shortcut from anywhere.
+  return null;
 }

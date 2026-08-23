@@ -1,5 +1,4 @@
 import { getClient, MODEL } from "@/lib/ai/client";
-import { requireText } from "@/lib/ai/summarize-document";
 
 export interface AnswerChunk {
   content: string;
@@ -20,12 +19,13 @@ const SYSTEM_PROMPT =
  * retrieval pipeline (chunking, embedding, vector search) is what actually
  * defines "RAG"; the generation call at the end is provider-agnostic and
  * could just as easily be swapped for any other chat-completion API by
- * changing only this one file.
+ * changing only this one file. Streamed for the same reason as
+ * src/lib/ai/chat.ts — so the UI can render tokens as they arrive.
  */
-export async function answerFromChunks(
+export async function* answerFromChunksStream(
   chunks: AnswerChunk[],
   question: string,
-): Promise<string> {
+): AsyncGenerator<string> {
   const ai = getClient();
 
   const context = chunks
@@ -37,6 +37,9 @@ export async function answerFromChunks(
 
   const prompt = `${SYSTEM_PROMPT}\n\n${context}\n\n---\n\nQuestion: ${question}`;
 
-  const response = await ai.models.generateContent({ model: MODEL, contents: prompt });
-  return requireText(response);
+  const stream = await ai.models.generateContentStream({ model: MODEL, contents: prompt });
+
+  for await (const chunk of stream) {
+    if (chunk.text) yield chunk.text;
+  }
 }
