@@ -17,17 +17,19 @@ enum UserRole {
   ADMIN
 }
 
-/// A student's chosen accent color for buttons, focus rings and the active
-/// nav highlight (src/app/globals.css's `[data-accent]` blocks). GRAPHITE is
-/// the app's original grayscale look and needs no override — every other
-/// value is applied via a `data-accent` attribute set in src/app/layout.tsx.
-enum AccentColor {
+/// A student's chosen full-app color theme — background, cards, buttons and
+/// the active nav highlight, not just one accent (src/app/globals.css's
+/// `[data-palette]` blocks). GRAPHITE is the app's original grayscale look
+/// and needs no override — every other value is applied via a
+/// `data-palette` attribute set in src/app/layout.tsx, and each has its own
+/// light- and dark-mode colors so it still looks intentional either way.
+enum ColorPalette {
   GRAPHITE
-  PURPLE
-  BLUE
-  GREEN
-  ORANGE
-  PINK
+  HELLO_KITTY
+  SPIDER_MAN
+  GALAXY
+  OCEAN
+  FOREST
 }
 
 /// A student. Owns every course (and, through courses, every note and
@@ -47,9 +49,9 @@ model User {
   /// alongside it is unaffected by this — it only controls the email.
   emailRemindersEnabled Boolean  @default(true)
   /// Customized from /settings; read server-side in the root layout and
-  /// applied as a `data-accent` attribute so there's no flash of the
-  /// default color on first paint.
-  accentColor    AccentColor     @default(GRAPHITE)
+  /// applied as a `data-palette` attribute so there's no flash of the
+  /// default colors on first paint.
+  colorPalette   ColorPalette    @default(GRAPHITE)
   courses        Course[]
   quizAnswerLogs QuizAnswerLog[]
   notifications  Notification[]

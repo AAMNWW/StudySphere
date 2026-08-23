@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { accentColorSchema, type AccentColorValue } from "@/lib/validations/accent-color";
+import { colorPaletteSchema, type ColorPaletteValue } from "@/lib/validations/color-palette";
 import { updateProfileSchema } from "@/lib/validations/profile";
 
 import type { ProfileFormState } from "./settings-form-state";
@@ -44,17 +44,17 @@ export async function updateEmailReminders(enabled: boolean): Promise<void> {
   revalidatePath("/settings");
 }
 
-export async function updateAccentColor(accentColor: AccentColorValue): Promise<void> {
+export async function updateColorPalette(colorPalette: ColorPaletteValue): Promise<void> {
   const userId = await requireUserId();
-  const parsed = accentColorSchema.safeParse(accentColor);
+  const parsed = colorPaletteSchema.safeParse(colorPalette);
 
   if (!parsed.success) {
     return;
   }
 
-  await db.user.update({ where: { id: userId }, data: { accentColor: parsed.data } });
+  await db.user.update({ where: { id: userId }, data: { colorPalette: parsed.data } });
 
-  // "layout" so the data-accent attribute set in the root layout picks up
+  // "layout" so the data-palette attribute set in the root layout picks up
   // the change immediately, not just the /settings page itself.
   revalidatePath("/", "layout");
 }

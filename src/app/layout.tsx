@@ -45,23 +45,29 @@ export default async function RootLayout({
 }>) {
   const session = await auth();
 
-  // GRAPHITE (the app's original grayscale look) needs no data-accent
+  // GRAPHITE (the app's original grayscale look) needs no data-palette
   // override, so the attribute is only set once a student has picked
-  // something else — see the `[data-accent]` blocks in globals.css.
-  const accentColor = session?.user?.id
+  // something else — see the `[data-palette]` blocks in globals.css. Value
+  // is kebab-cased ("SPIDER_MAN" -> "spider-man") to match CSS attribute
+  // selector convention.
+  const colorPalette = session?.user?.id
     ? (
         await db.user.findUnique({
           where: { id: session.user.id },
-          select: { accentColor: true },
+          select: { colorPalette: true },
         })
-      )?.accentColor
+      )?.colorPalette
     : null;
+  const paletteAttr =
+    colorPalette && colorPalette !== "GRAPHITE"
+      ? colorPalette.toLowerCase().replace(/_/g, "-")
+      : undefined;
 
   return (
     <html
       lang="en"
       suppressHydrationWarning
-      data-accent={accentColor && accentColor !== "GRAPHITE" ? accentColor.toLowerCase() : undefined}
+      data-palette={paletteAttr}
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

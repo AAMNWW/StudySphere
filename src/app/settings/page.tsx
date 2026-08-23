@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-import { AccentColorPicker } from "./_components/accent-color-picker";
+import { ColorPalettePicker } from "./_components/color-palette-picker";
 import { NotificationPreferencesToggle } from "./_components/notification-preferences-toggle";
 import { ProfileForm } from "./_components/profile-form";
 
@@ -23,7 +23,7 @@ export default async function SettingsPage() {
 
   const user = await db.user.findUniqueOrThrow({
     where: { id: userId },
-    select: { name: true, email: true, emailRemindersEnabled: true, accentColor: true },
+    select: { name: true, email: true, emailRemindersEnabled: true, colorPalette: true },
   });
 
   return (
@@ -48,12 +48,16 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             <div>
-              <p className="mb-2 text-sm font-medium">Theme</p>
+              <p className="mb-2 text-sm font-medium">Mode</p>
               <ThemeToggle />
             </div>
             <div>
-              <p className="mb-2 text-sm font-medium">Accent color</p>
-              <AccentColorPicker accentColor={user.accentColor} />
+              <p className="mb-2 text-sm font-medium">Theme</p>
+              <p className="text-muted-foreground mb-3 text-xs">
+                Changes the whole app&apos;s colors, not just buttons — pick whatever feels like
+                you.
+              </p>
+              <ColorPalettePicker colorPalette={user.colorPalette} />
             </div>
           </CardContent>
         </Card>
