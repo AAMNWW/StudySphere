@@ -12,9 +12,11 @@ const DUE_SOON_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 /**
  * Sends one digest email per student listing every assignment of theirs
- * due within the next 48h that hasn't been reminded about yet. Triggered
- * daily by Vercel Cron (see vercel.json); protected by CRON_SECRET so only
- * Vercel's scheduler can invoke it.
+ * due within the next 48h that hasn't been reminded about yet (skipping
+ * anyone who's turned email reminders off in Settings), and creates the
+ * in-app counterpart notification for everyone regardless of that
+ * preference. Triggered daily by Vercel Cron (see vercel.json); protected
+ * by CRON_SECRET so only Vercel's scheduler can invoke it.
  */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -30,9 +32,18 @@ export async function GET(request: Request) {
     include: { course: { include: { user: true } } },
   });
 
+  if (dueAssignments.length === 0) {
+    return NextResponse.json({ ok: true, usersNotified: 0, assignmentsReminded: 0 });
+  }
+
   const byUser = new Map<
     string,
-    { name: string | null; email: string; groups: Map<string, ReminderCourseGroup> }
+    {
+      name: string | null;
+      email: string;
+      emailRemindersEnabled: boolean;
+      groups: Map<string, ReminderCourseGroup>;
+    }
   >();
 
   for (const assignment of dueAssignments) {
@@ -42,7 +53,12 @@ export async function GET(request: Request) {
     let entry = byUser.get(user.id);
 
     if (!entry) {
-      entry = { name: user.name, email: user.email, groups: new Map() };
+      entry = {
+        name: user.name,
+        email: user.email,
+        emailRemindersEnabled: user.emailRemindersEnabled,
+        groups: new Map(),
+      };
       byUser.set(user.id, entry);
     }
 
@@ -57,56 +73,53 @@ export async function GET(request: Request) {
   }
 
   let usersNotified = 0;
-  const successfulUserIds = new Set<string>();
+  const transporter = getMailTransporter();
 
-  if (byUser.size > 0) {
-    const transporter = getMailTransporter();
+  for (const [, { name, email, emailRemindersEnabled, groups }] of byUser) {
+    if (!emailRemindersEnabled) continue;
 
-    for (const [userId, { name, email, groups }] of byUser) {
-      const digest = buildDeadlineReminderEmail(name, [...groups.values()]);
+    const digest = buildDeadlineReminderEmail(name, [...groups.values()]);
 
-      try {
-        await transporter.sendMail({
-          from: REMINDER_FROM_ADDRESS,
-          to: email,
-          subject: digest.subject,
-          html: digest.html,
-          text: digest.text,
-        });
-        usersNotified += 1;
-        successfulUserIds.add(userId);
-      } catch (error) {
-        console.error(`Failed to send deadline reminder to ${email}`, error);
-      }
+    try {
+      await transporter.sendMail({
+        from: REMINDER_FROM_ADDRESS,
+        to: email,
+        subject: digest.subject,
+        html: digest.html,
+        text: digest.text,
+      });
+      usersNotified += 1;
+    } catch (error) {
+      // Logged, not fatal to the rest of this run — the in-app notification
+      // below is a second, independent channel, so a failed send no longer
+      // means this student was never told at all.
+      console.error(`Failed to send deadline reminder to ${email}`, error);
     }
   }
 
-  // Only mark assignments whose owner's email actually succeeded — a failed
-  // send should be retried on the next cron run, not silently dropped.
-  const remindedAssignments = dueAssignments.filter((assignment) =>
-    successfulUserIds.has(assignment.course.user.id),
+  // reminderSentAt and the in-app notification apply to every due
+  // assignment regardless of email outcome or preference — the in-app
+  // notification is the guaranteed channel now; email is best-effort on
+  // top of it, not a prerequisite for "this student was reminded."
+  await db.assignment.updateMany({
+    where: { id: { in: dueAssignments.map((assignment) => assignment.id) } },
+    data: { reminderSentAt: new Date() },
+  });
+
+  await Promise.all(
+    dueAssignments.map((assignment) =>
+      createNotification({
+        userId: assignment.course.user.id,
+        type: "ASSIGNMENT_DUE_SOON",
+        title: `${assignment.title} is due soon`,
+        link: `/courses/${assignment.courseId}/assignments`,
+      }),
+    ),
   );
-  const remindedAssignmentIds = remindedAssignments.map((assignment) => assignment.id);
-  const assignmentsReminded = remindedAssignmentIds.length;
 
-  if (remindedAssignmentIds.length > 0) {
-    await db.assignment.updateMany({
-      where: { id: { in: remindedAssignmentIds } },
-      data: { reminderSentAt: new Date() },
-    });
-
-    // In-app counterpart to the email above, one per reminded assignment.
-    await Promise.all(
-      remindedAssignments.map((assignment) =>
-        createNotification({
-          userId: assignment.course.user.id,
-          type: "ASSIGNMENT_DUE_SOON",
-          title: `${assignment.title} is due soon`,
-          link: `/courses/${assignment.courseId}/assignments`,
-        }),
-      ),
-    );
-  }
-
-  return NextResponse.json({ ok: true, usersNotified, assignmentsReminded });
+  return NextResponse.json({
+    ok: true,
+    usersNotified,
+    assignmentsReminded: dueAssignments.length,
+  });
 }
