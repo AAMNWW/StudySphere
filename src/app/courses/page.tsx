@@ -1,4 +1,13 @@
-import { BookOpen } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  FileText,
+  GraduationCap,
+  Layers3,
+  MessageCircle,
+  SquareStack,
+  StickyNote,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -29,6 +38,56 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
+/**
+ * A quiet preview of what's inside a course — documents, notes, quizzes,
+ * flashcards, chats, topics — shown right on the card so students see the
+ * full toolset at a glance instead of having to open a course to discover
+ * it. Always shows every icon (even at 0) so it reads as "here's what this
+ * course offers", not just a count.
+ */
+function FeatureCounts({
+  documents,
+  notes,
+  exams,
+  quizzes,
+  flashcardSets,
+  chatThreads,
+  topics,
+}: {
+  documents: number;
+  notes: number;
+  exams: number;
+  quizzes: number;
+  flashcardSets: number;
+  chatThreads: number;
+  topics: number;
+}) {
+  const items = [
+    { icon: FileText, count: documents, label: "Documents" },
+    { icon: StickyNote, count: notes, label: "Notes" },
+    { icon: GraduationCap, count: exams, label: "Exams" },
+    { icon: SquareStack, count: quizzes, label: "Quizzes" },
+    { icon: Layers3, count: flashcardSets, label: "Flashcard sets" },
+    { icon: MessageCircle, count: chatThreads, label: "Chats" },
+    { icon: CalendarDays, count: topics, label: "Topics" },
+  ];
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-t pt-3">
+      {items.map(({ icon: Icon, count, label }) => (
+        <span
+          key={label}
+          title={label}
+          className="text-muted-foreground inline-flex items-center gap-1 text-xs tabular-nums"
+        >
+          <Icon className="size-3.5" />
+          {count}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default async function CoursesPage() {
   const userId = await requireUserId();
   const session = await auth();
@@ -37,7 +96,20 @@ export default async function CoursesPage() {
   const courses = await db.course.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    include: { assignments: { select: { completed: true } } },
+    include: {
+      assignments: { select: { completed: true } },
+      _count: {
+        select: {
+          documents: true,
+          notes: true,
+          exams: true,
+          quizzes: true,
+          flashcardSets: true,
+          chatThreads: true,
+          topics: true,
+        },
+      },
+    },
   });
 
   return (
@@ -87,6 +159,15 @@ export default async function CoursesPage() {
                         <CourseProgressBar
                           completed={course.assignments.filter((a) => a.completed).length}
                           total={course.assignments.length}
+                        />
+                        <FeatureCounts
+                          documents={course._count.documents}
+                          notes={course._count.notes}
+                          exams={course._count.exams}
+                          quizzes={course._count.quizzes}
+                          flashcardSets={course._count.flashcardSets}
+                          chatThreads={course._count.chatThreads}
+                          topics={course._count.topics}
                         />
                       </CardContent>
                     </Card>
