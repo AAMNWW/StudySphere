@@ -11,6 +11,8 @@ export type AssignmentFormState = {
     description?: string[];
     dueDate?: string[];
     priority?: string[];
+    earnedPoints?: string[];
+    maxPoints?: string[];
   };
   /** Echoed back on failure so the user does not lose what they typed. */
   values?: {
@@ -18,6 +20,8 @@ export type AssignmentFormState = {
     description: string;
     dueDate: string;
     priority: string;
+    earnedPoints: string;
+    maxPoints: string;
   };
 };
 

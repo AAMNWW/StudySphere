@@ -14,8 +14,16 @@ export async function GET(
 
   const { id } = await params;
 
+  // The owner can always download; anyone else needs the course's sharing
+  // to be turned on (see src/app/courses/[id]/actions.ts's
+  // enable/disableCourseShare) — the specific share token isn't checked
+  // here, since a cuid document id is already effectively a bearer secret,
+  // same trust model as the share link itself.
   const document = await db.document.findFirst({
-    where: { id, course: { userId: session.user.id } },
+    where: {
+      id,
+      course: { OR: [{ userId: session.user.id }, { share: { isNot: null } }] },
+    },
   });
 
   if (!document) {

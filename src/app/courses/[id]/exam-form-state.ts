@@ -10,12 +10,16 @@ export type ExamFormState = {
     title?: string[];
     examDate?: string[];
     notes?: string[];
+    earnedPoints?: string[];
+    maxPoints?: string[];
   };
   /** Echoed back on failure so the user does not lose what they typed. */
   values?: {
     title: string;
     examDate: string;
     notes: string;
+    earnedPoints: string;
+    maxPoints: string;
   };
 };
 

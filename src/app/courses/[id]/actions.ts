@@ -1,5 +1,7 @@
 "use server";
 
+import crypto from "node:crypto";
+
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -16,6 +18,7 @@ import {
 } from "@/lib/uploads";
 import { assignmentSchema } from "@/lib/validations/assignment";
 import { examSchema } from "@/lib/validations/exam";
+import { parseGradeFields } from "@/lib/validations/grade";
 import { noteSchema } from "@/lib/validations/note";
 
 import type { AssignmentFormState } from "./assignment-form-state";
@@ -180,6 +183,8 @@ export async function createAssignment(
     description: String(formData.get("description") ?? ""),
     dueDate: String(formData.get("dueDate") ?? ""),
     priority: String(formData.get("priority") ?? "MEDIUM"),
+    earnedPoints: String(formData.get("earnedPoints") ?? ""),
+    maxPoints: String(formData.get("maxPoints") ?? ""),
   };
 
   const parsed = assignmentSchema.safeParse(values);
@@ -215,6 +220,7 @@ export async function createAssignment(
         description: parsed.data.description || null,
         dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
         priority: parsed.data.priority,
+        ...parseGradeFields(parsed.data),
       },
     });
   } catch (error) {
@@ -246,6 +252,8 @@ export async function updateAssignment(
     description: String(formData.get("description") ?? ""),
     dueDate: String(formData.get("dueDate") ?? ""),
     priority: String(formData.get("priority") ?? "MEDIUM"),
+    earnedPoints: String(formData.get("earnedPoints") ?? ""),
+    maxPoints: String(formData.get("maxPoints") ?? ""),
   };
 
   const parsed = assignmentSchema.safeParse(values);
@@ -267,6 +275,7 @@ export async function updateAssignment(
         description: parsed.data.description || null,
         dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
         priority: parsed.data.priority,
+        ...parseGradeFields(parsed.data),
       },
     });
 
@@ -289,6 +298,7 @@ export async function updateAssignment(
   }
 
   revalidatePath(`/courses/${courseId}`);
+  revalidatePath("/grades");
 
   // Unlike creating an assignment, editing should leave the saved values
   // visible rather than clearing the form.
@@ -392,6 +402,8 @@ export async function createExam(
     title: String(formData.get("title") ?? ""),
     examDate: String(formData.get("examDate") ?? ""),
     notes: String(formData.get("notes") ?? ""),
+    earnedPoints: String(formData.get("earnedPoints") ?? ""),
+    maxPoints: String(formData.get("maxPoints") ?? ""),
   };
 
   const parsed = examSchema.safeParse(values);
@@ -427,6 +439,7 @@ export async function createExam(
         title: parsed.data.title,
         examDate: new Date(parsed.data.examDate),
         notes: parsed.data.notes || null,
+        ...parseGradeFields(parsed.data),
       },
     });
   } catch (error) {
@@ -440,6 +453,7 @@ export async function createExam(
   }
 
   revalidatePath(`/courses/${courseId}`);
+  revalidatePath("/grades");
 
   return { submission, status: "success" };
 }
@@ -457,6 +471,8 @@ export async function updateExam(
     title: String(formData.get("title") ?? ""),
     examDate: String(formData.get("examDate") ?? ""),
     notes: String(formData.get("notes") ?? ""),
+    earnedPoints: String(formData.get("earnedPoints") ?? ""),
+    maxPoints: String(formData.get("maxPoints") ?? ""),
   };
 
   const parsed = examSchema.safeParse(values);
@@ -477,6 +493,7 @@ export async function updateExam(
         title: parsed.data.title,
         examDate: new Date(parsed.data.examDate),
         notes: parsed.data.notes || null,
+        ...parseGradeFields(parsed.data),
       },
     });
 
@@ -499,6 +516,7 @@ export async function updateExam(
   }
 
   revalidatePath(`/courses/${courseId}`);
+  revalidatePath("/grades");
 
   return { submission, status: "success", values };
 }
@@ -511,6 +529,67 @@ export async function deleteExam(courseId: string, examId: string): Promise<void
   });
 
   revalidatePath(`/courses/${courseId}`);
+}
+
+function generateShareToken(): string {
+  return crypto.randomBytes(24).toString("hex");
+}
+
+/** Turns on the read-only share link for a course, if it isn't already on.
+ * Idempotent — calling this on an already-shared course is a no-op rather
+ * than an error, since the UI just shows one enabled/disabled state. */
+export async function enableCourseShare(courseId: string): Promise<void> {
+  const userId = await requireUserId();
+
+  const course = await db.course.findFirst({
+    where: { id: courseId, userId },
+    select: { id: true },
+  });
+
+  if (!course) {
+    return;
+  }
+
+  await db.courseShare.upsert({
+    where: { courseId },
+    update: {},
+    create: { courseId, token: generateShareToken() },
+  });
+
+  revalidatePath(`/courses/${courseId}/settings`);
+}
+
+/** Invalidates the existing link (if any) and issues a new one — for when
+ * a student wants to revoke access without turning sharing off entirely. */
+export async function regenerateCourseShare(courseId: string): Promise<void> {
+  const userId = await requireUserId();
+
+  const course = await db.course.findFirst({
+    where: { id: courseId, userId },
+    select: { id: true },
+  });
+
+  if (!course) {
+    return;
+  }
+
+  await db.courseShare.upsert({
+    where: { courseId },
+    update: { token: generateShareToken() },
+    create: { courseId, token: generateShareToken() },
+  });
+
+  revalidatePath(`/courses/${courseId}/settings`);
+}
+
+export async function disableCourseShare(courseId: string): Promise<void> {
+  const userId = await requireUserId();
+
+  await db.courseShare.deleteMany({
+    where: { courseId, course: { userId } },
+  });
+
+  revalidatePath(`/courses/${courseId}/settings`);
 }
 
 export async function uploadDocument(

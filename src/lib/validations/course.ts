@@ -17,3 +17,14 @@ export const createCourseSchema = z.object({
 });
 
 export type CreateCourseInput = z.infer<typeof createCourseSchema>;
+
+/** For the standalone "credit hours" control in course settings — separate
+ * from createCourseSchema since credit hours are set once a student starts
+ * caring about grades, not required just to create a course. */
+export const creditHoursSchema = z
+  .string()
+  .trim()
+  .refine(
+    (value) => value === "" || (!Number.isNaN(Number(value)) && Number(value) >= 0),
+    "Enter a valid number of credit hours.",
+  );

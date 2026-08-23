@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { createCourseSchema } from "@/lib/validations/course";
+import { createCourseSchema, creditHoursSchema } from "@/lib/validations/course";
 
 import type { CourseFormState } from "./course-form-state";
 
@@ -122,6 +122,24 @@ export async function updateCourse(
   // Unlike creating a course, editing should leave the saved values visible
   // rather than clearing the form.
   return { submission, status: "success", values };
+}
+
+export async function updateCreditHours(courseId: string, formData: FormData): Promise<void> {
+  const userId = await requireUserId();
+
+  const parsed = creditHoursSchema.safeParse(String(formData.get("creditHours") ?? ""));
+
+  if (!parsed.success) {
+    return;
+  }
+
+  await db.course.updateMany({
+    where: { id: courseId, userId },
+    data: { creditHours: parsed.data === "" ? null : Number(parsed.data) },
+  });
+
+  revalidatePath(`/courses/${courseId}/settings`);
+  revalidatePath("/grades");
 }
 
 export async function deleteCourse(courseId: string): Promise<void> {

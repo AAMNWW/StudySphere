@@ -13,9 +13,10 @@ export function NoteContent({ content }: { content: string }) {
     return (
       <div
         className="tiptap text-sm"
-        // Safe here: this HTML was produced by our own Tiptap editor (a
-        // fixed schema, not arbitrary markup), and is only ever rendered
-        // back to the account that authored it.
+        // Safe here regardless of viewer: this HTML was produced by our own
+        // Tiptap editor (a fixed schema, not arbitrary markup) — never
+        // attacker-controlled, whether rendered back to the author or to a
+        // read-only shared-course viewer (src/app/shared/[token]/page.tsx).
         dangerouslySetInnerHTML={{ __html: content }}
       />
     );

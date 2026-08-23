@@ -94,6 +94,11 @@ model Course {
   id             String          @id @default(cuid())
   title          String
   description    String?
+  /// How much this course counts toward overall GPA (e.g. 3 for a standard
+  /// 3-credit class). Null means "don't include this course's grade in the
+  /// GPA average" — set once a student starts entering grades, not
+  /// required just to create a course.
+  creditHours    Float?
   userId         String
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   notes          Note[]
@@ -107,10 +112,25 @@ model Course {
   studySessions  StudySession[]
   tasks          Task[]
   exams          Exam[]
+  share          CourseShare?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
   @@index([userId])
+}
+
+/// A read-only shareable link for a course — "study groups" in practice:
+/// anyone signed in (not specifically invited) who has the link can view
+/// notes, documents, assignments, exams and topics, but never edit
+/// anything, and never trigger an AI feature that would burn the owner's
+/// Gemini quota or bill their account. One link per course; regenerating
+/// `token` invalidates the old one instead of tracking per-viewer state.
+model CourseShare {
+  id        String   @id @default(cuid())
+  courseId  String   @unique
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now())
 }
 
 /// A timed block of studying, started and stopped from the dashboard or a
@@ -153,15 +173,20 @@ model Task {
 /// single high-stakes event to count down to and prepare for, not
 /// something you mark complete piece by piece.
 model Exam {
-  id        String   @id @default(cuid())
-  title     String
-  examDate  DateTime
-  notes     String?
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  title        String
+  examDate     DateTime
+  notes        String?
+  /// Both null until graded; set together. Percent score is
+  /// earnedPoints / maxPoints — see src/lib/grades.ts, which also computes
+  /// Assignment grades the same way so the two feed one course grade.
+  earnedPoints Float?
+  maxPoints    Float?
+  courseId     String
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
 
   @@index([courseId])
   @@index([userId, examDate])
@@ -210,6 +235,10 @@ model Assignment {
   /// Document.summaryError, so the UI can show why and offer a retry.
   /// Cleared on the next successful attempt.
   aiHelpError    String?
+  /// Both null until graded — see Exam.earnedPoints for the shared
+  /// percent-score convention both models use.
+  earnedPoints   Float?
+  maxPoints      Float?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 

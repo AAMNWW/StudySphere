@@ -3,6 +3,7 @@
 import { Pencil } from "lucide-react";
 import { useActionState, useState, useTransition } from "react";
 
+import { GradeBadge } from "@/components/grade-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +64,8 @@ export function AssignmentCard({
           ? toDateInputValue(assignment.dueDate)
           : "",
         priority: assignment.priority,
+        earnedPoints: assignment.earnedPoints?.toString() ?? "",
+        maxPoints: assignment.maxPoints?.toString() ?? "",
       },
     },
   );
@@ -132,6 +135,45 @@ export function AssignmentCard({
             <div className="space-y-2">
               <Label>Priority</Label>
               <PriorityPicker defaultValue={state.values?.priority} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor={`assignment-earned-${assignment.id}`}>
+                  Grade — earned (optional)
+                </Label>
+                <Input
+                  id={`assignment-earned-${assignment.id}`}
+                  name="earnedPoints"
+                  type="number"
+                  step="any"
+                  min="0"
+                  defaultValue={state.values?.earnedPoints}
+                  aria-invalid={Boolean(state.errors?.earnedPoints)}
+                />
+                {state.errors?.earnedPoints ? (
+                  <p className="text-destructive text-sm">
+                    {state.errors.earnedPoints[0]}
+                  </p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`assignment-max-${assignment.id}`}>Out of</Label>
+                <Input
+                  id={`assignment-max-${assignment.id}`}
+                  name="maxPoints"
+                  type="number"
+                  step="any"
+                  min="0"
+                  defaultValue={state.values?.maxPoints}
+                  aria-invalid={Boolean(state.errors?.maxPoints)}
+                />
+                {state.errors?.maxPoints ? (
+                  <p className="text-destructive text-sm">
+                    {state.errors.maxPoints[0]}
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -204,6 +246,7 @@ export function AssignmentCard({
                 {assignment.title}
               </CardTitle>
               <PriorityBadge priority={assignment.priority} hideMedium />
+              <GradeBadge earnedPoints={assignment.earnedPoints} maxPoints={assignment.maxPoints} />
             </div>
             {assignment.dueDate ? (
               <p

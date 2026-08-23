@@ -1,14 +1,18 @@
 import { Settings } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { IconTile } from "@/components/icon-tile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getSiteUrl } from "@/lib/site-url";
 
+import { CreditHoursForm } from "../_components/credit-hours-form";
 import { DeleteCourseButton } from "../_components/delete-course-button";
 import { EditCourseForm } from "../_components/edit-course-form";
+import { ShareCourseControls } from "../_components/share-course-controls";
 
 export async function generateMetadata({
   params,
@@ -26,11 +30,16 @@ export default async function CourseSettingsPage({
   const userId = await requireUserId();
   const { id: courseId } = await params;
 
-  const course = await db.course.findFirst({ where: { id: courseId, userId } });
+  const course = await db.course.findFirst({
+    where: { id: courseId, userId },
+    include: { share: { select: { token: true } } },
+  });
 
   if (!course) {
     notFound();
   }
+
+  const shareUrl = course.share ? `${getSiteUrl()}/shared/${course.share.token}` : null;
 
   return (
     <main className="max-w-2xl">
@@ -50,6 +59,36 @@ export default async function CourseSettingsPage({
         </CardHeader>
         <CardContent>
           <EditCourseForm course={course} />
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Grades</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4 text-sm">
+            Set how many credit hours this course is worth to include it in your{" "}
+            <Link href="/grades" className="underline underline-offset-4">
+              overall GPA
+            </Link>
+            . Enter grades on individual assignments and exams to see this course&apos;s grade.
+          </p>
+          <CreditHoursForm courseId={course.id} creditHours={course.creditHours} />
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Study group sharing</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4 text-sm">
+            Anyone signed in with this link can view your notes, documents, assignments,
+            exams and topics for this course — read-only, no editing, and no chat, quizzes,
+            flashcards or study planner access.
+          </p>
+          <ShareCourseControls courseId={course.id} shareUrl={shareUrl} />
         </CardContent>
       </Card>
 

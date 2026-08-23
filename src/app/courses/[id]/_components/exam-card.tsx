@@ -3,6 +3,7 @@
 import { Pencil } from "lucide-react";
 import { useActionState, useState } from "react";
 
+import { GradeBadge } from "@/components/grade-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,6 +48,8 @@ export function ExamCard({
         title: exam.title,
         examDate: toDateInputValue(exam.examDate),
         notes: exam.notes ?? "",
+        earnedPoints: exam.earnedPoints?.toString() ?? "",
+        maxPoints: exam.maxPoints?.toString() ?? "",
       },
     },
   );
@@ -97,6 +100,39 @@ export function ExamCard({
               {state.errors?.examDate ? (
                 <p className="text-destructive text-sm">{state.errors.examDate[0]}</p>
               ) : null}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor={`exam-earned-${exam.id}`}>Grade — earned (optional)</Label>
+                <Input
+                  id={`exam-earned-${exam.id}`}
+                  name="earnedPoints"
+                  type="number"
+                  step="any"
+                  min="0"
+                  defaultValue={state.values?.earnedPoints}
+                  aria-invalid={Boolean(state.errors?.earnedPoints)}
+                />
+                {state.errors?.earnedPoints ? (
+                  <p className="text-destructive text-sm">{state.errors.earnedPoints[0]}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`exam-max-${exam.id}`}>Out of</Label>
+                <Input
+                  id={`exam-max-${exam.id}`}
+                  name="maxPoints"
+                  type="number"
+                  step="any"
+                  min="0"
+                  defaultValue={state.values?.maxPoints}
+                  aria-invalid={Boolean(state.errors?.maxPoints)}
+                />
+                {state.errors?.maxPoints ? (
+                  <p className="text-destructive text-sm">{state.errors.maxPoints[0]}</p>
+                ) : null}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -155,6 +191,7 @@ export function ExamCard({
               >
                 {countdownLabel(days)}
               </span>
+              <GradeBadge earnedPoints={exam.earnedPoints} maxPoints={exam.maxPoints} />
             </div>
             <p className="text-muted-foreground mt-1 text-xs">
               {dateFormatter.format(exam.examDate)}
