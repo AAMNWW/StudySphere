@@ -13,6 +13,6 @@ export { auth as proxy } from "@/auth";
 // either that landing page or the real dashboard.
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|login|signup|$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|login|signup|forgot-password|reset-password|$).*)",
   ],
 };

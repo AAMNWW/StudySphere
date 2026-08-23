@@ -14,3 +14,19 @@ export const initialProfileFormState: ProfileFormState = {
   submission: 0,
   status: "idle",
 };
+
+export interface ChangePasswordFormState {
+  submission: number;
+  status: "idle" | "error" | "success";
+  message?: string;
+  errors?: {
+    currentPassword?: string[];
+    newPassword?: string[];
+    confirmNewPassword?: string[];
+  };
+}
+
+export const initialChangePasswordFormState: ChangePasswordFormState = {
+  submission: 0,
+  status: "idle",
+};

@@ -35,36 +35,57 @@ enum ColorPalette {
 /// A student. Owns every course (and, through courses, every note and
 /// assignment) they create.
 model User {
-  id                    String          @id @default(cuid())
+  id                    String               @id @default(cuid())
   name                  String?
-  email                 String          @unique
+  email                 String               @unique
   /// bcrypt hash, never the plaintext password.
   password              String
   /// STUDENT for every account except the one that runs the admin panel
   /// (src/app/admin). There's no self-serve promotion path — the one admin
   /// is bootstrapped by the add_user_role_and_prefs migration.
-  role                  UserRole        @default(STUDENT)
+  role                  UserRole             @default(STUDENT)
   /// Whether this student gets the deadline-reminder digest email (see
   /// src/app/api/cron/deadline-reminders). The in-app notification created
   /// alongside it is unaffected by this — it only controls the email.
-  emailRemindersEnabled Boolean         @default(true)
+  emailRemindersEnabled Boolean              @default(true)
   /// Customized from /settings; read server-side in the root layout and
   /// applied as a `data-palette` attribute so there's no flash of the
   /// default colors on first paint.
-  colorPalette          ColorPalette    @default(GRAPHITE)
+  colorPalette          ColorPalette         @default(GRAPHITE)
   courses               Course[]
   quizAnswerLogs        QuizAnswerLog[]
   notifications         Notification[]
   studySessions         StudySession[]
+  tasks                 Task[]
+  passwordResetTokens   PasswordResetToken[]
   /// Consecutive days (including today) the dashboard has been visited.
   /// Updated in src/lib/streak.ts whenever the dashboard loads.
-  currentStreak         Int             @default(0)
-  longestStreak         Int             @default(0)
+  currentStreak         Int                  @default(0)
+  longestStreak         Int                  @default(0)
   /// UTC calendar date of the last dashboard visit that counted toward the
   /// streak. Null until the first visit.
   lastVisitAt           DateTime?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  exams                 Exam[]
+}
+
+/// A one-time link sent to a student's email to let them set a new
+/// password without knowing the old one. `tokenHash` is the SHA-256 hash of
+/// the random value actually emailed — mirroring how User.password only
+/// ever stores a bcrypt hash, never a usable secret in plain form.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  /// Null until the token is redeemed; a used token is never valid again
+  /// even if it hasn't expired yet.
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 /// A subject the student is studying. Notes, assignments and uploaded
@@ -84,6 +105,8 @@ model Course {
   topics         Topic[]
   quizAnswerLogs QuizAnswerLog[]
   studySessions  StudySession[]
+  tasks          Task[]
+  exams          Exam[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
@@ -106,6 +129,42 @@ model StudySession {
 
   @@index([userId, startedAt])
   @@index([courseId])
+}
+
+/// A small personal to-do item — "email professor", "print slides", "buy a
+/// calculator" — as opposed to an Assignment, which is graded coursework
+/// with its own deadline tracking, priority and AI help. `courseId` is
+/// optional since most tasks aren't really about one specific course.
+model Task {
+  id        String   @id @default(cuid())
+  title     String
+  completed Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String?
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId, completed])
+  @@index([courseId])
+}
+
+/// A dated exam for a course — distinct from Assignment because it's a
+/// single high-stakes event to count down to and prepare for, not
+/// something you mark complete piece by piece.
+model Exam {
+  id        String   @id @default(cuid())
+  title     String
+  examDate  DateTime
+  notes     String?
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([courseId])
+  @@index([userId, examDate])
 }
 
 /// A piece of writing a student keeps against a course: a lecture summary,

@@ -1,4 +1,4 @@
-import { Bell, Palette, User as UserIcon } from "lucide-react";
+import { Bell, KeyRound, Palette, User as UserIcon } from "lucide-react";
 import type { Metadata } from "next";
 
 import { auth } from "@/auth";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+import { ChangePasswordForm } from "./_components/change-password-form";
 import { ColorPalettePicker } from "./_components/color-palette-picker";
 import { NotificationPreferencesToggle } from "./_components/notification-preferences-toggle";
 import { ProfileForm } from "./_components/profile-form";
@@ -74,6 +75,20 @@ export default async function SettingsPage() {
           <CardContent>
             <p className="text-muted-foreground mb-4 text-sm">{user.email}</p>
             <ProfileForm name={user.name} />
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <IconTile color="red" size="sm">
+                <KeyRound className="size-4" />
+              </IconTile>
+              <CardTitle>Password</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ChangePasswordForm />
           </CardContent>
         </Card>
 

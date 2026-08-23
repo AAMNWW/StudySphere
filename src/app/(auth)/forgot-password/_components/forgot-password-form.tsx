@@ -1,24 +1,31 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { login } from "../actions";
-import { initialLoginFormState } from "../login-form-state";
+import { requestPasswordReset } from "../actions";
+import { initialForgotPasswordFormState } from "../forgot-password-form-state";
 
-export function LoginForm() {
+export function ForgotPasswordForm() {
   const [state, formAction, isPending] = useActionState(
-    login,
-    initialLoginFormState,
+    requestPasswordReset,
+    initialForgotPasswordFormState,
   );
+
+  if (state.status === "success") {
+    return (
+      <p role="status" className="text-sm">
+        {state.message}
+      </p>
+    );
+  }
 
   return (
     <form
-      // Remounting on each submission lets the inputs pick up `defaultValue`
+      // Remounting on each submission lets the input pick up `defaultValue`
       // again after a validation error.
       key={state.submission}
       action={formAction}
@@ -44,33 +51,6 @@ export function LoginForm() {
         ) : null}
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
-          <Link
-            href="/forgot-password"
-            className="text-muted-foreground text-xs underline underline-offset-4"
-          >
-            Forgot password?
-          </Link>
-        </div>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          aria-invalid={Boolean(state.errors?.password)}
-          aria-describedby={
-            state.errors?.password ? "password-error" : undefined
-          }
-        />
-        {state.errors?.password ? (
-          <p id="password-error" className="text-destructive text-sm">
-            {state.errors.password[0]}
-          </p>
-        ) : null}
-      </div>
-
       {state.message ? (
         <p role="alert" className="text-destructive text-sm">
           {state.message}
@@ -78,7 +58,7 @@ export function LoginForm() {
       ) : null}
 
       <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Signing in…" : "Sign in"}
+        {isPending ? "Sending…" : "Send reset link"}
       </Button>
     </form>
   );
