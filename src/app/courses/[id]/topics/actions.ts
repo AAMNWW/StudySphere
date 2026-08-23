@@ -80,15 +80,25 @@ export async function deleteTopic(courseId: string, topicId: string): Promise<vo
   revalidatePath(`/courses/${courseId}/topics`);
 }
 
+export type SuggestTopicsResult =
+  | { status: "success"; topics: SuggestedTopic[] }
+  | { status: "error"; message: string };
+
 /**
  * Proposes topics from a course's documents via Gemini. Purely a
  * suggestion — returns data for the client to preview, nothing is
  * persisted until {@link addSuggestedTopics} is called.
+ *
+ * Returns a result object rather than throwing: a thrown Server Action
+ * error has its message redacted by Next.js in production builds (only
+ * visible in dev), so a validation message like "choose a document" would
+ * arrive at the client as a generic "An error occurred" instead of
+ * something a student can act on.
  */
 export async function suggestTopics(
   courseId: string,
   documentIds: string[],
-): Promise<SuggestedTopic[]> {
+): Promise<SuggestTopicsResult> {
   const userId = await requireUserId();
 
   const documents = await db.document.findMany({
@@ -96,18 +106,24 @@ export async function suggestTopics(
   });
 
   if (documents.length === 0) {
-    throw new Error("Choose at least one document.");
+    return { status: "error", message: "Choose at least one document." };
   }
 
-  const sourceDocuments = await Promise.all(
-    documents.map(async (document) => ({
-      bytes: await readUploadedFile(document),
-      mimeType: document.mimeType,
-      fileName: document.fileName,
-    })),
-  );
+  try {
+    const sourceDocuments = await Promise.all(
+      documents.map(async (document) => ({
+        bytes: await readUploadedFile(document),
+        mimeType: document.mimeType,
+        fileName: document.fileName,
+      })),
+    );
 
-  return suggestCourseTopics(sourceDocuments);
+    const topics = await suggestCourseTopics(sourceDocuments);
+    return { status: "success", topics };
+  } catch (error) {
+    console.error("Failed to suggest topics", error);
+    return { status: "error", message: "Could not suggest topics. Please try again." };
+  }
 }
 
 /** Persists AI-suggested topics the student chose to keep. */

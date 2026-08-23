@@ -30,17 +30,15 @@ export function SuggestTopicsPanel({
       : [];
 
     startSuggestTransition(async () => {
-      try {
-        const result = await suggestTopics(courseId, documentIds);
-        setSuggestions(result);
-        setAdded(new Set());
-      } catch (caught) {
-        setError(
-          caught instanceof Error
-            ? caught.message
-            : "Could not suggest topics. Please try again.",
-        );
+      const result = await suggestTopics(courseId, documentIds);
+
+      if (result.status === "error") {
+        setError(result.message);
+        return;
       }
+
+      setSuggestions(result.topics);
+      setAdded(new Set());
     });
   }
 
