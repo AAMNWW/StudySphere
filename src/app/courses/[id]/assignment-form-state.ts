@@ -10,12 +10,14 @@ export type AssignmentFormState = {
     title?: string[];
     description?: string[];
     dueDate?: string[];
+    priority?: string[];
   };
   /** Echoed back on failure so the user does not lose what they typed. */
   values?: {
     title: string;
     description: string;
     dueDate: string;
+    priority: string;
   };
 };
 

@@ -3,6 +3,7 @@
 import { Pencil } from "lucide-react";
 import { useActionState, useState, useTransition } from "react";
 
+import { PriorityBadge } from "@/components/priority-badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,7 +21,9 @@ import { cn } from "@/lib/utils";
 
 import { setAssignmentCompleted, updateAssignment } from "../actions";
 import { initialAssignmentFormState } from "../assignment-form-state";
+import { AssignmentAiHelpButton } from "./assignment-ai-help-button";
 import { DeleteAssignmentButton } from "./delete-assignment-button";
+import { PriorityPicker } from "./priority-picker";
 
 // Fixed locale and time zone so the server always renders the same string a
 // user would see, regardless of where the server happens to run.
@@ -59,6 +62,7 @@ export function AssignmentCard({
         dueDate: assignment.dueDate
           ? toDateInputValue(assignment.dueDate)
           : "",
+        priority: assignment.priority,
       },
     },
   );
@@ -126,6 +130,11 @@ export function AssignmentCard({
             </div>
 
             <div className="space-y-2">
+              <Label>Priority</Label>
+              <PriorityPicker defaultValue={state.values?.priority} />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor={`assignment-description-${assignment.id}`}>
                 Description (optional)
               </Label>
@@ -188,11 +197,14 @@ export function AssignmentCard({
             className="mt-1"
           />
           <div className="min-w-0 flex-1">
-            <CardTitle
-              className={cn(assignment.completed && "text-muted-foreground line-through")}
-            >
-              {assignment.title}
-            </CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle
+                className={cn(assignment.completed && "text-muted-foreground line-through")}
+              >
+                {assignment.title}
+              </CardTitle>
+              <PriorityBadge priority={assignment.priority} hideMedium />
+            </div>
             {assignment.dueDate ? (
               <p
                 className={cn(
@@ -223,11 +235,33 @@ export function AssignmentCard({
           />
         </CardAction>
       </CardHeader>
-      {assignment.description ? (
-        <CardContent>
-          <p className="text-sm whitespace-pre-wrap">
-            {assignment.description}
-          </p>
+      {assignment.description || assignment.aiHelp || assignment.aiHelpError || !assignment.completed ? (
+        <CardContent className="space-y-3">
+          {assignment.description ? (
+            <p className="text-sm whitespace-pre-wrap">
+              {assignment.description}
+            </p>
+          ) : null}
+
+          {assignment.aiHelp ? (
+            <p className="text-muted-foreground border-l-2 pl-3 text-sm whitespace-pre-wrap">
+              {assignment.aiHelp}
+            </p>
+          ) : null}
+
+          {assignment.aiHelpError ? (
+            <p role="alert" className="text-destructive text-xs">
+              {assignment.aiHelpError}
+            </p>
+          ) : null}
+
+          {!assignment.completed ? (
+            <AssignmentAiHelpButton
+              courseId={courseId}
+              assignmentId={assignment.id}
+              hasHelp={Boolean(assignment.aiHelp)}
+            />
+          ) : null}
         </CardContent>
       ) : null}
     </Card>

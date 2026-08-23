@@ -35,35 +35,36 @@ enum ColorPalette {
 /// A student. Owns every course (and, through courses, every note and
 /// assignment) they create.
 model User {
-  id             String          @id @default(cuid())
-  name           String?
-  email          String          @unique
+  id                    String          @id @default(cuid())
+  name                  String?
+  email                 String          @unique
   /// bcrypt hash, never the plaintext password.
-  password       String
+  password              String
   /// STUDENT for every account except the one that runs the admin panel
   /// (src/app/admin). There's no self-serve promotion path — the one admin
   /// is bootstrapped by the add_user_role_and_prefs migration.
-  role           UserRole        @default(STUDENT)
+  role                  UserRole        @default(STUDENT)
   /// Whether this student gets the deadline-reminder digest email (see
   /// src/app/api/cron/deadline-reminders). The in-app notification created
   /// alongside it is unaffected by this — it only controls the email.
-  emailRemindersEnabled Boolean  @default(true)
+  emailRemindersEnabled Boolean         @default(true)
   /// Customized from /settings; read server-side in the root layout and
   /// applied as a `data-palette` attribute so there's no flash of the
   /// default colors on first paint.
-  colorPalette   ColorPalette    @default(GRAPHITE)
-  courses        Course[]
-  quizAnswerLogs QuizAnswerLog[]
-  notifications  Notification[]
+  colorPalette          ColorPalette    @default(GRAPHITE)
+  courses               Course[]
+  quizAnswerLogs        QuizAnswerLog[]
+  notifications         Notification[]
+  studySessions         StudySession[]
   /// Consecutive days (including today) the dashboard has been visited.
   /// Updated in src/lib/streak.ts whenever the dashboard loads.
-  currentStreak  Int             @default(0)
-  longestStreak  Int             @default(0)
+  currentStreak         Int             @default(0)
+  longestStreak         Int             @default(0)
   /// UTC calendar date of the last dashboard visit that counted toward the
   /// streak. Null until the first visit.
-  lastVisitAt    DateTime?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  lastVisitAt           DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 }
 
 /// A subject the student is studying. Notes, assignments and uploaded
@@ -82,10 +83,29 @@ model Course {
   quizzes        Quiz[]
   topics         Topic[]
   quizAnswerLogs QuizAnswerLog[]
+  studySessions  StudySession[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
   @@index([userId])
+}
+
+/// A timed block of studying, started and stopped from the dashboard or a
+/// course page. `courseId` is null for a general session not tied to one
+/// course. At most one row per user should have `endedAt` null at a time —
+/// enforced in application code (src/app/_components/study-timer-actions.ts),
+/// not a DB constraint.
+model StudySession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String?
+  course    Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  @@index([userId, startedAt])
+  @@index([courseId])
 }
 
 /// A piece of writing a student keeps against a course: a lecture summary,
@@ -102,22 +122,37 @@ model Note {
   @@index([courseId])
 }
 
+enum AssignmentPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 /// Something with a deadline the student owes for a course: a problem set,
 /// an essay, a reading due before the next class.
 model Assignment {
-  id             String    @id @default(cuid())
+  id             String             @id @default(cuid())
   title          String
   description    String?
   dueDate        DateTime?
-  completed      Boolean   @default(false)
+  completed      Boolean            @default(false)
+  priority       AssignmentPriority @default(MEDIUM)
   courseId       String
-  course         Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course         Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
   /// Set once a deadline-reminder email has gone out for this assignment,
   /// so the daily cron (src/app/api/cron/deadline-reminders) never sends a
   /// duplicate. Not cleared if the due date later moves.
   reminderSentAt DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  /// AI-generated "how to get started" breakdown, produced on demand via
+  /// Gemini (see src/lib/ai/assignment-help.ts). Null until a student
+  /// requests it, and cached rather than regenerated on every view.
+  aiHelp         String?
+  /// Set when the most recent aiHelp attempt failed, mirroring
+  /// Document.summaryError, so the UI can show why and offer a retry.
+  /// Cleared on the next successful attempt.
+  aiHelpError    String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   @@index([courseId])
 }

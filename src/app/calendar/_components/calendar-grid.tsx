@@ -3,6 +3,8 @@
 import Link from "next/link";
 
 import { RevealGroup, RevealItem } from "@/app/_components/reveal";
+import { PriorityDot } from "@/components/priority-badge";
+import type { AssignmentPriority } from "@/generated/prisma/enums";
 import { dateKey, type CalendarDay } from "@/lib/calendar-grid";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +16,7 @@ export interface CalendarAssignmentItem {
   id: string;
   title: string;
   completed: boolean;
+  priority: AssignmentPriority;
   isOverdue: boolean;
   courseId: string;
 }
@@ -71,7 +74,7 @@ export function CalendarGrid({
                     href={`/courses/${assignment.courseId}/assignments`}
                     title={assignment.title}
                     className={cn(
-                      "block truncate rounded-md px-1.5 py-0.5 text-xs transition-colors",
+                      "flex items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-xs transition-colors",
                       assignment.completed
                         ? "text-muted-foreground bg-muted line-through"
                         : assignment.isOverdue
@@ -79,7 +82,8 @@ export function CalendarGrid({
                           : "bg-muted text-foreground hover:bg-muted/70",
                     )}
                   >
-                    {assignment.title}
+                    <PriorityDot priority={assignment.priority} />
+                    <span className="truncate">{assignment.title}</span>
                   </Link>
                 ))}
                 {overflow > 0 ? (

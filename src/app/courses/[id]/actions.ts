@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { getAssignmentHelp } from "@/lib/ai/assignment-help";
 import { summarizeDocument } from "@/lib/ai/summarize-document";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -17,6 +18,7 @@ import { assignmentSchema } from "@/lib/validations/assignment";
 import { noteSchema } from "@/lib/validations/note";
 
 import type { AssignmentFormState } from "./assignment-form-state";
+import type { AssignmentHelpFormState } from "./assignment-help-form-state";
 import type { DocumentFormState } from "./document-form-state";
 import type { NoteFormState } from "./note-form-state";
 import type { SummarizeDocumentFormState } from "./summarize-document-form-state";
@@ -175,6 +177,7 @@ export async function createAssignment(
     title: String(formData.get("title") ?? ""),
     description: String(formData.get("description") ?? ""),
     dueDate: String(formData.get("dueDate") ?? ""),
+    priority: String(formData.get("priority") ?? "MEDIUM"),
   };
 
   const parsed = assignmentSchema.safeParse(values);
@@ -209,6 +212,7 @@ export async function createAssignment(
         title: parsed.data.title,
         description: parsed.data.description || null,
         dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+        priority: parsed.data.priority,
       },
     });
   } catch (error) {
@@ -239,6 +243,7 @@ export async function updateAssignment(
     title: String(formData.get("title") ?? ""),
     description: String(formData.get("description") ?? ""),
     dueDate: String(formData.get("dueDate") ?? ""),
+    priority: String(formData.get("priority") ?? "MEDIUM"),
   };
 
   const parsed = assignmentSchema.safeParse(values);
@@ -259,6 +264,7 @@ export async function updateAssignment(
         title: parsed.data.title,
         description: parsed.data.description || null,
         dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+        priority: parsed.data.priority,
       },
     });
 
@@ -316,6 +322,60 @@ export async function setAssignmentCompleted(
   // The dashboard's "Due soon" list can also toggle completion, so it needs
   // to drop out of that list in place rather than on next full navigation.
   revalidatePath("/");
+}
+
+export async function getAssignmentAiHelp(
+  courseId: string,
+  assignmentId: string,
+  previousState: AssignmentHelpFormState,
+): Promise<AssignmentHelpFormState> {
+  const userId = await requireUserId();
+  const submission = previousState.submission + 1;
+
+  const assignment = await db.assignment.findFirst({
+    where: { id: assignmentId, courseId, course: { userId } },
+    include: { course: { select: { title: true } } },
+  });
+
+  if (!assignment) {
+    return {
+      submission,
+      status: "error",
+      message: "Could not get help for this assignment. Please try again.",
+    };
+  }
+
+  try {
+    const aiHelp = await getAssignmentHelp(
+      assignment.course.title,
+      assignment.title,
+      assignment.description,
+    );
+
+    await db.assignment.update({
+      where: { id: assignment.id },
+      data: { aiHelp, aiHelpError: null },
+    });
+  } catch (error) {
+    console.error("Failed to get AI help for assignment", error);
+
+    await db.assignment.update({
+      where: { id: assignment.id },
+      data: { aiHelpError: "Could not get AI help right now. Please try again." },
+    });
+
+    revalidatePath(`/courses/${courseId}`);
+
+    return {
+      submission,
+      status: "error",
+      message: "Could not get AI help right now. Please try again.",
+    };
+  }
+
+  revalidatePath(`/courses/${courseId}`);
+
+  return { submission, status: "success" };
 }
 
 export async function uploadDocument(

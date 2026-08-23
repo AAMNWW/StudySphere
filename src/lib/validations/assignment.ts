@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { AssignmentPriority } from "@/generated/prisma/enums";
+
 /**
  * Shared validation rules for assignment input. Defined once so the same
  * limits apply everywhere an assignment can be created or edited.
@@ -23,6 +25,7 @@ export const assignmentSchema = z.object({
       (value) => value === "" || !Number.isNaN(Date.parse(value)),
       "Enter a valid date.",
     ),
+  priority: z.enum(AssignmentPriority),
 });
 
 export type AssignmentInput = z.infer<typeof assignmentSchema>;

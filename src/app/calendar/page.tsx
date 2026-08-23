@@ -81,6 +81,7 @@ export default async function CalendarPage({
       id: assignment.id,
       title: assignment.title,
       completed: assignment.completed,
+      priority: assignment.priority,
       isOverdue: isAssignmentOverdue(assignment),
       courseId: assignment.course.id,
     };

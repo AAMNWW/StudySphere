@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useTransition } from "react";
 
 import { setAssignmentCompleted } from "@/app/courses/[id]/actions";
+import { PriorityDot } from "@/components/priority-badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { AssignmentPriority } from "@/generated/prisma/enums";
 import { cn } from "@/lib/utils";
 
 // Fixed locale and time zone so the server always renders the same string a
@@ -20,6 +22,7 @@ export function DashboardAssignmentRow({
   assignmentId,
   title,
   dueDate,
+  priority,
   isOverdue,
 }: {
   courseId: string;
@@ -27,6 +30,7 @@ export function DashboardAssignmentRow({
   assignmentId: string;
   title: string;
   dueDate: Date | null;
+  priority: AssignmentPriority;
   isOverdue: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -44,7 +48,10 @@ export function DashboardAssignmentRow({
         className="mt-1"
       />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{title}</p>
+        <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+          <PriorityDot priority={priority} />
+          {title}
+        </p>
         <p className="text-muted-foreground text-xs">
           <Link href={`/courses/${courseId}`} className="hover:underline">
             {courseTitle}

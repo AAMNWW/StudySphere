@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { createAssignment } from "../actions";
 import { initialAssignmentFormState } from "../assignment-form-state";
+import { PriorityPicker } from "./priority-picker";
 
 export function CreateAssignmentForm({ courseId }: { courseId: string }) {
   const [state, formAction, isPending] = useActionState(
@@ -62,6 +63,11 @@ export function CreateAssignmentForm({ courseId }: { courseId: string }) {
             {state.errors.dueDate[0]}
           </p>
         ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Priority</Label>
+        <PriorityPicker defaultValue={state.values?.priority} />
       </div>
 
       <div className="space-y-2">
