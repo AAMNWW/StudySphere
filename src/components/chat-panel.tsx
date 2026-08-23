@@ -24,10 +24,11 @@ const getSupportsSpeechSynthesis = () => "speechSynthesis" in window;
 const getFalse = () => false;
 
 /**
- * Fetches from the streaming route (src/app/api/courses/[id]/chat/
- * [threadId]/message/route.ts) instead of calling a Server Action, since a
- * Server Action can only return once at the end — it can't relay Gemini's
- * reply token-by-token the way a streamed HTTP response can. `streamingReply`
+ * Fetches from a streaming message route (passed in as `endpoint`, e.g.
+ * src/app/api/courses/[id]/chat/[threadId]/message/route.ts or its career-
+ * chat equivalent) instead of calling a Server Action, since a Server
+ * Action can only return once at the end — it can't relay Gemini's reply
+ * token-by-token the way a streamed HTTP response can. `streamingReply`
  * holds the in-progress assistant bubble; it's committed into `messages`
  * once the stream ends.
  *
@@ -37,13 +38,13 @@ const getFalse = () => false;
  * `supportsSpeechRecognition` is confirmed client-side.
  */
 export function ChatPanel({
-  courseId,
-  threadId,
+  endpoint,
   messages: initialMessages,
   emptyHint,
 }: {
-  courseId: string;
-  threadId: string;
+  /** The streaming message route to POST to, e.g.
+   * `/api/courses/${courseId}/chat/${threadId}/message`. */
+  endpoint: string;
   messages: ChatMessageItem[];
   emptyHint: string;
 }) {
@@ -159,7 +160,7 @@ export function ChatPanel({
     setStreamingReply("");
 
     try {
-      const response = await fetch(`/api/courses/${courseId}/chat/${threadId}/message`, {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),

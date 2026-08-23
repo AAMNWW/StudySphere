@@ -1,6 +1,6 @@
 "use client";
 
-import { Briefcase, FileText, LayoutDashboard } from "lucide-react";
+import { Briefcase, FileText, LayoutDashboard, Mic, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 export interface CareerSidebarCounts {
   resumes: number;
   jobApplications: number;
+  careerChatThreads: number;
+  interviewSessions: number;
 }
 
 interface NavItem {
@@ -31,6 +33,20 @@ const NAV_ITEMS: NavItem[] = [
     icon: Briefcase,
     color: "purple",
     countKey: "jobApplications",
+  },
+  {
+    label: "Chat",
+    href: "/career/chat",
+    icon: MessageCircle,
+    color: "pink",
+    countKey: "careerChatThreads",
+  },
+  {
+    label: "Mock Interviews",
+    href: "/career/interviews",
+    icon: Mic,
+    color: "red",
+    countKey: "interviewSessions",
   },
 ];
 

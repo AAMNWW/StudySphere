@@ -1,4 +1,4 @@
-import { Briefcase, FileText, Send, Trophy } from "lucide-react";
+import { Briefcase, FileText, Mic, MessageCircle, Send, Trophy } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -80,6 +80,38 @@ export default async function CareerPage() {
                 <p className="font-medium">Job Tracker</p>
                 <p className="text-muted-foreground text-sm">
                   Track applications from saved to offer.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/career/chat" className="block h-full">
+          <Card className="h-full transition-colors hover:bg-muted/50">
+            <CardContent className="flex items-center gap-4">
+              <IconTile color="pink">
+                <MessageCircle className="size-5" />
+              </IconTile>
+              <div>
+                <p className="font-medium">Chat</p>
+                <p className="text-muted-foreground text-sm">
+                  Get feedback on a resume, or talk to an AI career coach.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/career/interviews" className="block h-full">
+          <Card className="h-full transition-colors hover:bg-muted/50">
+            <CardContent className="flex items-center gap-4">
+              <IconTile color="red">
+                <Mic className="size-5" />
+              </IconTile>
+              <div>
+                <p className="font-medium">Mock Interviews</p>
+                <p className="text-muted-foreground text-sm">
+                  Practice with an AI interviewer, then get feedback.
                 </p>
               </div>
             </CardContent>

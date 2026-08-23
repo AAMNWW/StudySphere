@@ -9,25 +9,25 @@ import { ChatPanel } from "@/components/chat-panel";
 
 export async function generateMetadata({
   params,
-}: PageProps<"/courses/[id]/chat/[threadId]">): Promise<Metadata> {
+}: PageProps<"/career/chat/[threadId]">): Promise<Metadata> {
   const userId = await requireUserId();
-  const { id, threadId } = await params;
-  const thread = await db.chatThread.findFirst({
-    where: { id: threadId, courseId: id, course: { userId } },
+  const { threadId } = await params;
+  const thread = await db.careerChatThread.findFirst({
+    where: { id: threadId, userId },
     select: { title: true },
   });
 
   return { title: thread?.title ?? "Chat not found" };
 }
 
-export default async function ChatThreadPage({
+export default async function CareerChatThreadPage({
   params,
-}: PageProps<"/courses/[id]/chat/[threadId]">) {
+}: PageProps<"/career/chat/[threadId]">) {
   const userId = await requireUserId();
-  const { id: courseId, threadId } = await params;
+  const { threadId } = await params;
 
-  const thread = await db.chatThread.findFirst({
-    where: { id: threadId, courseId, course: { userId } },
+  const thread = await db.careerChatThread.findFirst({
+    where: { id: threadId, userId },
     include: { messages: { orderBy: { createdAt: "asc" } } },
   });
 
@@ -37,11 +37,11 @@ export default async function ChatThreadPage({
 
   return (
     <main className="max-w-3xl">
-      <BackLink href={`/courses/${courseId}/chat`}>Back to chats</BackLink>
+      <BackLink href="/career/chat">Back to chats</BackLink>
       <h1 className="mt-4 mb-8 text-2xl font-bold tracking-tight">{thread.title}</h1>
 
       <ChatPanel
-        endpoint={`/api/courses/${courseId}/chat/${thread.id}/message`}
+        endpoint={`/api/career/chat/${thread.id}/message`}
         messages={thread.messages}
         emptyHint="Ask your first question to get started."
       />
