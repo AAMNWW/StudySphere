@@ -58,6 +58,8 @@ model User {
   studySessions         StudySession[]
   tasks                 Task[]
   passwordResetTokens   PasswordResetToken[]
+  resumes               Resume[]
+  jobApplications       JobApplication[]
   /// Consecutive days (including today) the dashboard has been visited.
   /// Updated in src/lib/streak.ts whenever the dashboard loads.
   currentStreak         Int                  @default(0)
@@ -491,4 +493,58 @@ model Notification {
   createdAt DateTime         @default(now())
 
   @@index([userId, readAt])
+}
+
+/// A resume a student has uploaded — user-level, not tied to any course,
+/// since job hunting isn't specific to one subject. A student can keep
+/// several (e.g. one per role type); files live on the same storage
+/// backend as Documents (see src/lib/uploads.ts's resume-specific
+/// helpers), namespaced by userId instead of courseId.
+model Resume {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  fileName        String
+  storedName      String
+  storageUrl      String?
+  mimeType        String
+  sizeBytes       Int
+  jobApplications JobApplication[]
+  createdAt       DateTime         @default(now())
+
+  @@index([userId])
+}
+
+enum JobApplicationStatus {
+  SAVED
+  APPLIED
+  INTERVIEWING
+  OFFER
+  REJECTED
+}
+
+/// One row per job a student is tracking, from "saved to apply later"
+/// through an outcome. `resumeId` is optional and nullable-on-delete —
+/// losing the resume that was used shouldn't take the application history
+/// with it.
+model JobApplication {
+  id             String               @id @default(cuid())
+  userId         String
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company        String
+  role           String
+  status         JobApplicationStatus @default(SAVED)
+  jobUrl         String?
+  jobDescription String?
+  notes          String?
+  /// Null while status is SAVED; set once a student marks it APPLIED (or
+  /// later) — see src/app/career/jobs/actions.ts.
+  appliedAt      DateTime?
+  resumeId       String?
+  resume         Resume?              @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([userId, status])
 }

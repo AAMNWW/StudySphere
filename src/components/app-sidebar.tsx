@@ -2,6 +2,7 @@
 
 import {
   BookOpen,
+  Briefcase,
   Calendar,
   GraduationCap,
   LayoutDashboard,
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { label: "Courses", href: "/courses", icon: BookOpen, color: "purple" as const },
   { label: "Calendar", href: "/calendar", icon: Calendar, color: "green" as const },
   { label: "Grades", href: "/grades", icon: GraduationCap, color: "blue" as const },
+  { label: "Career", href: "/career", icon: Briefcase, color: "yellow" as const },
 ];
 
 const SETTINGS_ITEM = { label: "Settings", href: "/settings", icon: Settings, color: "gray" as const };
@@ -36,7 +38,7 @@ const ADMIN_ITEM = { label: "Admin", href: "/admin", icon: ShieldCheck, color: "
 export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
 
-  function renderItem(item: { label: string; href: string; icon: typeof LayoutDashboard; color: "gray" | "purple" | "green" | "blue" | "red" }) {
+  function renderItem(item: { label: string; href: string; icon: typeof LayoutDashboard; color: "gray" | "purple" | "green" | "blue" | "yellow" | "red" }) {
     const Icon = item.icon;
     const active = pathname === item.href;
 

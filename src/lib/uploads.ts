@@ -105,6 +105,72 @@ export async function deleteUploadedFile(document: UploadedFileRef) {
   }
 }
 
+/** The subset of a Resume row needed to locate its bytes — same shape as
+ * {@link UploadedFileRef}, just keyed by userId instead of courseId, since
+ * a resume isn't scoped to a course. */
+export interface UploadedResumeRef {
+  userId: string;
+  storedName: string;
+  storageUrl: string | null;
+}
+
+/** Resume equivalent of {@link saveUploadedFile} — same storage backend
+ * and validation contract, namespaced by userId under `uploads/resumes/`
+ * rather than by courseId, so a resume's directory never collides with a
+ * course id. */
+export async function saveResumeFile(userId: string, file: File): Promise<StoredFile> {
+  const extension = ALLOWED_FILE_TYPES[file.type].extension;
+  const storedName = `${randomUUID()}.${extension}`;
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const namespace = `resumes/${userId}`;
+
+  if (blobStorageConfigured()) {
+    const { put } = await import("@vercel/blob");
+    const blob = await put(`${namespace}/${storedName}`, bytes, {
+      access: "public",
+      contentType: file.type,
+    });
+    return { storedName, storageUrl: blob.url };
+  }
+
+  const resumeDir = path.join(UPLOAD_ROOT, namespace);
+  await mkdir(resumeDir, { recursive: true });
+  await writeFile(path.join(resumeDir, storedName), bytes);
+
+  return { storedName, storageUrl: null };
+}
+
+export async function readResumeFile(resume: UploadedResumeRef): Promise<Buffer> {
+  if (resume.storageUrl) {
+    const response = await fetch(resume.storageUrl);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch uploaded file (${response.status})`);
+    }
+
+    return Buffer.from(await response.arrayBuffer());
+  }
+
+  return readFile(path.join(UPLOAD_ROOT, "resumes", resume.userId, resume.storedName));
+}
+
+/** Best-effort delete — a missing file shouldn't fail the request. */
+export async function deleteResumeFile(resume: UploadedResumeRef) {
+  if (resume.storageUrl) {
+    const { del } = await import("@vercel/blob");
+    await del(resume.storageUrl).catch(() => {});
+    return;
+  }
+
+  try {
+    await unlink(path.join(UPLOAD_ROOT, "resumes", resume.userId, resume.storedName));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
+    }
+  }
+}
+
 export function formatFileSize(sizeBytes: number) {
   if (sizeBytes < 1024 * 1024) {
     return `${Math.max(1, Math.round(sizeBytes / 1024))} KB`;
