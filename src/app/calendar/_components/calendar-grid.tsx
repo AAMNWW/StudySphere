@@ -1,5 +1,6 @@
 "use client";
 
+import { GraduationCap } from "lucide-react";
 import Link from "next/link";
 
 import { RevealGroup, RevealItem } from "@/app/_components/reveal";
@@ -21,12 +22,20 @@ export interface CalendarAssignmentItem {
   courseId: string;
 }
 
+export interface CalendarExamItem {
+  id: string;
+  title: string;
+  courseId: string;
+}
+
 export function CalendarGrid({
   days,
   assignmentsByDay,
+  examsByDay,
 }: {
   days: CalendarDay[];
   assignmentsByDay: Map<string, CalendarAssignmentItem[]>;
+  examsByDay: Map<string, CalendarExamItem[]>;
 }) {
   return (
     <div className="overflow-x-auto">
@@ -42,6 +51,7 @@ export function CalendarGrid({
 
         {days.map((day) => {
           const key = dateKey(day.date);
+          const exams = examsByDay.get(key) ?? [];
           const assignments = assignmentsByDay.get(key) ?? [];
           const visible = assignments.slice(0, MAX_VISIBLE_PER_DAY);
           const overflow = assignments.length - visible.length;
@@ -51,7 +61,8 @@ export function CalendarGrid({
               key={key}
               className={cn(
                 "min-h-24 space-y-1 rounded-xl border p-2 transition-transform duration-200",
-                assignments.length > 0 && "hover:-translate-y-0.5 hover:shadow-sm",
+                (assignments.length > 0 || exams.length > 0) &&
+                  "hover:-translate-y-0.5 hover:shadow-sm",
                 !day.inCurrentMonth && "bg-muted/30",
                 day.isToday && "border-primary",
               )}
@@ -68,6 +79,17 @@ export function CalendarGrid({
               </p>
 
               <div className="space-y-1">
+                {exams.map((exam) => (
+                  <Link
+                    key={exam.id}
+                    href={`/courses/${exam.courseId}/exams`}
+                    title={exam.title}
+                    className="flex items-center gap-1 truncate rounded-md bg-red-100 px-1.5 py-0.5 text-xs text-red-700 transition-colors hover:bg-red-200"
+                  >
+                    <GraduationCap className="size-3 shrink-0" />
+                    <span className="truncate">{exam.title}</span>
+                  </Link>
+                ))}
                 {visible.map((assignment) => (
                   <Link
                     key={assignment.id}

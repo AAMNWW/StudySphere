@@ -1,15 +1,22 @@
-import { FileText, ListTodo, StickyNote } from "lucide-react";
+import { FileText, GraduationCap, ListTodo, StickyNote } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { IconTile } from "@/components/icon-tile";
+import { Card, CardContent } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
+import { countdownLabel, daysUntil } from "@/lib/days-until";
 import { db } from "@/lib/db";
 import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
 
 import { AssignmentCard } from "./_components/assignment-card";
 import { StudyTimer } from "./_components/study-timer";
+
+const examDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeZone: "UTC",
+});
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",
@@ -40,7 +47,7 @@ export default async function CoursePage({
     notFound();
   }
 
-  const [dueSoon, recentDocuments, recentNotes, activeStudySession] = await Promise.all([
+  const [dueSoon, recentDocuments, recentNotes, activeStudySession, nextExam] = await Promise.all([
     db.assignment.findMany({
       where: { courseId: course.id, completed: false },
       orderBy: { dueDate: { sort: "asc", nulls: "last" } },
@@ -62,6 +69,11 @@ export default async function CoursePage({
       where: { userId, courseId: course.id, endedAt: null },
       select: { id: true, startedAt: true },
     }),
+    db.exam.findFirst({
+      where: { courseId: course.id, examDate: { gte: new Date() } },
+      orderBy: { examDate: "asc" },
+      select: { id: true, title: true, examDate: true },
+    }),
   ]);
 
   return (
@@ -73,7 +85,7 @@ export default async function CoursePage({
         ) : null}
       </header>
 
-      <div className="mb-8">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2">
         <StudyTimer
           courseId={course.id}
           activeSession={
@@ -82,6 +94,24 @@ export default async function CoursePage({
               : null
           }
         />
+        {nextExam ? (
+          <Link href={`/courses/${course.id}/exams`}>
+            <Card className="h-full transition-colors hover:bg-muted/50">
+              <CardContent className="flex items-center gap-3">
+                <IconTile color="red">
+                  <GraduationCap className="size-5" />
+                </IconTile>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">Next exam: {nextExam.title}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {examDateFormatter.format(nextExam.examDate)} ·{" "}
+                    {countdownLabel(daysUntil(nextExam.examDate))}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ) : null}
       </div>
 
       <section aria-labelledby="due-soon-heading" className="mb-10">

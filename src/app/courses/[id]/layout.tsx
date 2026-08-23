@@ -25,6 +25,7 @@ export default async function CourseLayout({
     notes,
     assignments,
     completedAssignments,
+    exams,
     quizzes,
     flashcardSets,
     chatThreads,
@@ -34,6 +35,7 @@ export default async function CourseLayout({
     db.note.count({ where: { courseId } }),
     db.assignment.count({ where: { courseId } }),
     db.assignment.count({ where: { courseId, completed: true } }),
+    db.exam.count({ where: { courseId } }),
     db.quiz.count({ where: { courseId } }),
     db.flashcardSet.count({ where: { courseId } }),
     db.chatThread.count({ where: { courseId } }),
@@ -45,7 +47,7 @@ export default async function CourseLayout({
       <CourseSidebar
         courseId={course.id}
         courseTitle={course.title}
-        counts={{ documents, notes, assignments, quizzes, flashcardSets, chatThreads, topics }}
+        counts={{ documents, notes, assignments, exams, quizzes, flashcardSets, chatThreads, topics }}
         progress={{ completed: completedAssignments, total: assignments }}
       />
       <div className="min-w-0 flex-1">{children}</div>

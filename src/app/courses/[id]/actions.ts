@@ -15,11 +15,13 @@ import {
   saveUploadedFile,
 } from "@/lib/uploads";
 import { assignmentSchema } from "@/lib/validations/assignment";
+import { examSchema } from "@/lib/validations/exam";
 import { noteSchema } from "@/lib/validations/note";
 
 import type { AssignmentFormState } from "./assignment-form-state";
 import type { AssignmentHelpFormState } from "./assignment-help-form-state";
 import type { DocumentFormState } from "./document-form-state";
+import type { ExamFormState } from "./exam-form-state";
 import type { NoteFormState } from "./note-form-state";
 import type { SummarizeDocumentFormState } from "./summarize-document-form-state";
 
@@ -376,6 +378,139 @@ export async function getAssignmentAiHelp(
   revalidatePath(`/courses/${courseId}`);
 
   return { submission, status: "success" };
+}
+
+export async function createExam(
+  courseId: string,
+  previousState: ExamFormState,
+  formData: FormData,
+): Promise<ExamFormState> {
+  const userId = await requireUserId();
+  const submission = previousState.submission + 1;
+
+  const values = {
+    title: String(formData.get("title") ?? ""),
+    examDate: String(formData.get("examDate") ?? ""),
+    notes: String(formData.get("notes") ?? ""),
+  };
+
+  const parsed = examSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return {
+      submission,
+      status: "error",
+      errors: z.flattenError(parsed.error).fieldErrors,
+      values,
+    };
+  }
+
+  const course = await db.course.findFirst({
+    where: { id: courseId, userId },
+    select: { id: true },
+  });
+
+  if (!course) {
+    return {
+      submission,
+      status: "error",
+      message: "Could not save the exam. Please try again.",
+      values,
+    };
+  }
+
+  try {
+    await db.exam.create({
+      data: {
+        courseId,
+        userId,
+        title: parsed.data.title,
+        examDate: new Date(parsed.data.examDate),
+        notes: parsed.data.notes || null,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to create exam", error);
+    return {
+      submission,
+      status: "error",
+      message: "Could not save the exam. Please try again.",
+      values,
+    };
+  }
+
+  revalidatePath(`/courses/${courseId}`);
+
+  return { submission, status: "success" };
+}
+
+export async function updateExam(
+  courseId: string,
+  examId: string,
+  previousState: ExamFormState,
+  formData: FormData,
+): Promise<ExamFormState> {
+  const userId = await requireUserId();
+  const submission = previousState.submission + 1;
+
+  const values = {
+    title: String(formData.get("title") ?? ""),
+    examDate: String(formData.get("examDate") ?? ""),
+    notes: String(formData.get("notes") ?? ""),
+  };
+
+  const parsed = examSchema.safeParse(values);
+
+  if (!parsed.success) {
+    return {
+      submission,
+      status: "error",
+      errors: z.flattenError(parsed.error).fieldErrors,
+      values,
+    };
+  }
+
+  try {
+    const { count } = await db.exam.updateMany({
+      where: { id: examId, courseId, userId },
+      data: {
+        title: parsed.data.title,
+        examDate: new Date(parsed.data.examDate),
+        notes: parsed.data.notes || null,
+      },
+    });
+
+    if (count === 0) {
+      return {
+        submission,
+        status: "error",
+        message: "Could not save the exam. Please try again.",
+        values,
+      };
+    }
+  } catch (error) {
+    console.error("Failed to update exam", error);
+    return {
+      submission,
+      status: "error",
+      message: "Could not save the exam. Please try again.",
+      values,
+    };
+  }
+
+  revalidatePath(`/courses/${courseId}`);
+
+  return { submission, status: "success", values };
+}
+
+export async function deleteExam(courseId: string, examId: string): Promise<void> {
+  const userId = await requireUserId();
+
+  await db.exam.deleteMany({
+    where: { id: examId, courseId, userId },
+  });
+
+  revalidatePath(`/courses/${courseId}`);
 }
 
 export async function uploadDocument(

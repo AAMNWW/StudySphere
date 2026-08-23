@@ -11,7 +11,11 @@ import { db } from "@/lib/db";
 import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
 
 import { Reveal } from "../_components/reveal";
-import { CalendarGrid, type CalendarAssignmentItem } from "./_components/calendar-grid";
+import {
+  CalendarGrid,
+  type CalendarAssignmentItem,
+  type CalendarExamItem,
+} from "./_components/calendar-grid";
 
 export const metadata: Metadata = {
   title: "Calendar",
@@ -68,11 +72,18 @@ export default async function CalendarPage({
   const gridEnd = new Date(days[days.length - 1].date);
   gridEnd.setUTCDate(gridEnd.getUTCDate() + 1);
 
-  const assignments = await db.assignment.findMany({
-    where: { course: { userId }, dueDate: { gte: gridStart, lt: gridEnd } },
-    include: { course: { select: { id: true, title: true } } },
-    orderBy: { dueDate: "asc" },
-  });
+  const [assignments, exams] = await Promise.all([
+    db.assignment.findMany({
+      where: { course: { userId }, dueDate: { gte: gridStart, lt: gridEnd } },
+      include: { course: { select: { id: true, title: true } } },
+      orderBy: { dueDate: "asc" },
+    }),
+    db.exam.findMany({
+      where: { userId, examDate: { gte: gridStart, lt: gridEnd } },
+      include: { course: { select: { id: true, title: true } } },
+      orderBy: { examDate: "asc" },
+    }),
+  ]);
 
   const assignmentsByDay = new Map<string, CalendarAssignmentItem[]>();
   for (const assignment of assignments) {
@@ -86,6 +97,17 @@ export default async function CalendarPage({
       courseId: assignment.course.id,
     };
     assignmentsByDay.set(key, [...(assignmentsByDay.get(key) ?? []), item]);
+  }
+
+  const examsByDay = new Map<string, CalendarExamItem[]>();
+  for (const exam of exams) {
+    const key = dateKey(exam.examDate);
+    const item: CalendarExamItem = {
+      id: exam.id,
+      title: exam.title,
+      courseId: exam.course.id,
+    };
+    examsByDay.set(key, [...(examsByDay.get(key) ?? []), item]);
   }
 
   const isCurrentMonth = year === current.year && month === current.month;
@@ -105,7 +127,9 @@ export default async function CalendarPage({
               <h1 className="text-2xl font-bold tracking-tight">
                 {monthLabelFormatter.format(new Date(Date.UTC(year, month, 1)))}
               </h1>
-              <p className="text-muted-foreground text-sm">Assignments due across every course.</p>
+              <p className="text-muted-foreground text-sm">
+                Assignments and exams across every course.
+              </p>
             </div>
           </Reveal>
 
@@ -134,6 +158,7 @@ export default async function CalendarPage({
           key={monthParam(year, month)}
           days={days}
           assignmentsByDay={assignmentsByDay}
+          examsByDay={examsByDay}
         />
       </main>
     </div>

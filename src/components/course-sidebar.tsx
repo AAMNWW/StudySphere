@@ -4,6 +4,7 @@ import {
   BarChart3,
   CalendarDays,
   FileText,
+  GraduationCap,
   History,
   Layers3,
   LayoutDashboard,
@@ -26,6 +27,7 @@ export interface CourseSidebarCounts {
   documents: number;
   notes: number;
   assignments: number;
+  exams: number;
   quizzes: number;
   flashcardSets: number;
   chatThreads: number;
@@ -46,6 +48,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Documents", href: (id) => `/courses/${id}/documents`, icon: FileText, color: "blue", countKey: "documents" },
   { label: "Notes", href: (id) => `/courses/${id}/notes`, icon: StickyNote, color: "yellow", countKey: "notes" },
   { label: "Assignments", href: (id) => `/courses/${id}/assignments`, icon: ListTodo, color: "yellow", countKey: "assignments" },
+  { label: "Exams", href: (id) => `/courses/${id}/exams`, icon: GraduationCap, color: "red", countKey: "exams" },
   { label: "Quiz", href: (id) => `/courses/${id}/quiz`, icon: SquareStack, color: "purple", countKey: "quizzes" },
   { label: "Flashcards", href: (id) => `/courses/${id}/flashcards`, icon: Layers3, color: "blue", countKey: "flashcardSets" },
   { label: "Chat", href: (id) => `/courses/${id}/chat`, icon: MessageCircle, color: "pink", countKey: "chatThreads" },
