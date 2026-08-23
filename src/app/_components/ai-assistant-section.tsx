@@ -48,7 +48,7 @@ const WORKFLOW = [
   { label: "AI processes it", description: "Gemini reads the content", live: true },
   { label: "Ask questions", description: "Chat with the material", live: true },
   { label: "Study material", description: "Quizzes & flashcards", live: true },
-  { label: "Track progress", description: "See what you've covered", live: false },
+  { label: "Track progress", description: "Completion & quiz analytics", live: true },
 ];
 
 export function AiAssistantSection() {

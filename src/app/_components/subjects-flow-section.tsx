@@ -11,7 +11,7 @@ const NODES = [
   { label: "Documents", live: true },
   { label: "Assignments", live: true },
   { label: "AI summary", live: true },
-  { label: "Progress", live: false },
+  { label: "Progress", live: true },
 ];
 
 export function SubjectsFlowSection() {

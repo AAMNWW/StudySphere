@@ -8,9 +8,9 @@ const ITEMS = [
   { label: "Notes", live: true },
   { label: "Documents", live: true },
   { label: "Assignments", live: true },
+  { label: "Study sessions", live: true },
   { label: "Tasks", live: false },
   { label: "Exams", live: false },
-  { label: "Study sessions", live: false },
 ];
 
 export function WorkspaceSection() {

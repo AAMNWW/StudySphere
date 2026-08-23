@@ -1,6 +1,5 @@
 import { Check, Clock, FileText, Flame, TrendingUp } from "lucide-react";
 
-import { ComingSoonBadge } from "@/components/coming-soon-badge";
 import { IconTile } from "@/components/icon-tile";
 
 import { Reveal } from "./reveal";
@@ -72,12 +71,15 @@ export function DashboardPreviewSection() {
               </div>
             </div>
 
-            <div className="relative flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-black/10 p-6 text-center">
-              <IconTile color="gray">
-                <TrendingUp className="size-5" />
-              </IconTile>
-              <p className="text-sm font-medium">Subject progress</p>
-              <ComingSoonBadge />
+            <div className="flex flex-col justify-center gap-2 rounded-2xl border border-black/5 p-4">
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <TrendingUp className="text-muted-foreground size-4" />
+                Subject progress
+              </p>
+              <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
+                <div className="h-full w-2/3 rounded-full bg-purple-400" />
+              </div>
+              <p className="text-muted-foreground text-xs">67% of assignments done</p>
             </div>
           </div>
         </div>
