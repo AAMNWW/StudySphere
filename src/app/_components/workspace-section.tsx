@@ -1,17 +1,6 @@
-import { ComingSoonBadge } from "@/components/coming-soon-badge";
-import { cn } from "@/lib/utils";
-
 import { Reveal, RevealGroup, RevealItem } from "./reveal";
 
-const ITEMS = [
-  { label: "Subjects", live: true },
-  { label: "Notes", live: true },
-  { label: "Documents", live: true },
-  { label: "Assignments", live: true },
-  { label: "Study sessions", live: true },
-  { label: "Tasks", live: false },
-  { label: "Exams", live: false },
-];
+const ITEMS = ["Subjects", "Notes", "Documents", "Assignments", "Exams", "Tasks", "Study sessions"];
 
 export function WorkspaceSection() {
   return (
@@ -27,18 +16,10 @@ export function WorkspaceSection() {
       </Reveal>
 
       <RevealGroup className="mt-8 flex flex-wrap items-center justify-center gap-3" stagger={0.05}>
-        {ITEMS.map(({ label, live }) => (
+        {ITEMS.map((label) => (
           <RevealItem key={label}>
-            <span
-              className={cn(
-                "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium",
-                live
-                  ? "bg-purple-100 text-purple-700"
-                  : "bg-muted text-muted-foreground",
-              )}
-            >
+            <span className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-medium text-purple-700">
               {label}
-              {!live && <ComingSoonBadge className="bg-transparent p-0" />}
             </span>
           </RevealItem>
         ))}
