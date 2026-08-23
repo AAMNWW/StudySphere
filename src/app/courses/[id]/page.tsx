@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
 
 import { AssignmentCard } from "./_components/assignment-card";
+import { StudyTimer } from "./_components/study-timer";
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",
@@ -39,7 +40,7 @@ export default async function CoursePage({
     notFound();
   }
 
-  const [dueSoon, recentDocuments, recentNotes] = await Promise.all([
+  const [dueSoon, recentDocuments, recentNotes, activeStudySession] = await Promise.all([
     db.assignment.findMany({
       where: { courseId: course.id, completed: false },
       orderBy: { dueDate: { sort: "asc", nulls: "last" } },
@@ -57,6 +58,10 @@ export default async function CoursePage({
       take: 3,
       select: { id: true, title: true, createdAt: true },
     }),
+    db.studySession.findFirst({
+      where: { userId, courseId: course.id, endedAt: null },
+      select: { id: true, startedAt: true },
+    }),
   ]);
 
   return (
@@ -67,6 +72,17 @@ export default async function CoursePage({
           <p className="text-muted-foreground mt-2 text-sm">{course.description}</p>
         ) : null}
       </header>
+
+      <div className="mb-8">
+        <StudyTimer
+          courseId={course.id}
+          activeSession={
+            activeStudySession
+              ? { id: activeStudySession.id, startedAt: activeStudySession.startedAt.toISOString() }
+              : null
+          }
+        />
+      </div>
 
       <section aria-labelledby="due-soon-heading" className="mb-10">
         <div className="mb-4 flex items-center justify-between gap-2">

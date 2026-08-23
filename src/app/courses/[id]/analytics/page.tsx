@@ -1,4 +1,4 @@
-import { BarChart3, ListChecks, Percent, TrendingDown } from "lucide-react";
+import { BarChart3, Clock4, ListChecks, Percent, TrendingDown } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -41,11 +41,28 @@ export default async function AnalyticsPage({
     notFound();
   }
 
-  const logs = await db.quizAnswerLog.findMany({
-    where: { courseId, userId },
-    select: { createdAt: true, isCorrect: true, topic: true, difficulty: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const [logs, studySessions] = await Promise.all([
+    db.quizAnswerLog.findMany({
+      where: { courseId, userId },
+      select: { createdAt: true, isCorrect: true, topic: true, difficulty: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    db.studySession.findMany({
+      where: { courseId, userId, endedAt: { not: null } },
+      select: { startedAt: true, endedAt: true },
+    }),
+  ]);
+
+  const studyMinutes = Math.round(
+    studySessions.reduce(
+      (total, session) => total + (session.endedAt!.getTime() - session.startedAt.getTime()),
+      0,
+    ) / 60_000,
+  );
+  const studyTimeLabel =
+    studyMinutes >= 60
+      ? `${Math.floor(studyMinutes / 60)}h ${studyMinutes % 60}m`
+      : `${studyMinutes}m`;
 
   // Accuracy over time: group by UTC day.
   const byDay = new Map<string, { correct: number; total: number }>();
@@ -105,7 +122,18 @@ export default async function AnalyticsPage({
         </div>
       </header>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Card size="sm">
+          <CardContent className="flex items-center gap-3">
+            <IconTile color="blue" size="sm">
+              <Clock4 className="size-4" />
+            </IconTile>
+            <div>
+              <p className="text-xl leading-none font-bold">{studyTimeLabel}</p>
+              <p className="text-muted-foreground mt-1 text-xs">Study time</p>
+            </div>
+          </CardContent>
+        </Card>
         <Card size="sm">
           <CardContent className="flex items-center gap-3">
             <IconTile color="purple" size="sm">
