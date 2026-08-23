@@ -1,4 +1,4 @@
-import { BookOpen, Clock, FileText, Sparkles, StickyNote } from "lucide-react";
+import { BookOpen, CheckSquare, Clock, FileText, Sparkles, StickyNote } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -24,6 +24,7 @@ import { DashboardAssignmentRow } from "./_components/dashboard-assignment-row";
 import { LandingHero } from "./_components/landing-hero";
 import { Reveal, RevealGroup, RevealItem } from "./_components/reveal";
 import { StreakCard } from "./_components/streak-card";
+import { TaskList } from "./_components/task-list";
 
 // Signed-out visitors get the marketing title from the layout default
 // ("StudySphere AI"); only the authenticated dashboard needs its own.
@@ -64,6 +65,7 @@ export default async function HomePage() {
     recentNotes,
     recentDocuments,
     courses,
+    tasks,
   ] = await Promise.all([
     recordDashboardVisit(userId),
     db.course.count({ where: { userId } }),
@@ -95,6 +97,11 @@ export default async function HomePage() {
       orderBy: { createdAt: "desc" },
       take: COURSES_SHOWN,
       include: { assignments: { select: { completed: true } } },
+    }),
+    db.task.findMany({
+      where: { userId },
+      orderBy: [{ completed: "asc" }, { createdAt: "desc" }],
+      select: { id: true, title: true, completed: true },
     }),
   ]);
 
@@ -203,8 +210,20 @@ export default async function HomePage() {
           </section>
         </Reveal>
 
-        <div className="mb-10 grid gap-8 sm:grid-cols-2">
+        <div className="mb-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <Reveal>
+            <section aria-labelledby="tasks-heading">
+              <h2 id="tasks-heading" className="mb-4 flex items-center gap-2 text-lg font-bold">
+                <IconTile color="green" size="sm">
+                  <CheckSquare className="size-4" />
+                </IconTile>
+                Tasks
+              </h2>
+              <TaskList tasks={tasks} />
+            </section>
+          </Reveal>
+
+          <Reveal delay={0.03}>
             <section aria-labelledby="recent-notes-heading">
               <h2
                 id="recent-notes-heading"
