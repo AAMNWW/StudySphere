@@ -31,3 +31,17 @@ export const initialJobApplicationFormState: JobApplicationFormState = {
   submission: 0,
   status: "idle",
 };
+
+/** Minimal shape for the ATS-check and cover-letter buttons — the actual
+ * result/error is persisted on the JobApplication row and rendered by the
+ * page after revalidation (mirrors SummarizeDocumentButton), so this only
+ * needs to drive the pending label. */
+export type AiActionFormState = {
+  submission: number;
+  status: "idle" | "success" | "error";
+};
+
+export const initialAiActionFormState: AiActionFormState = {
+  submission: 0,
+  status: "idle",
+};

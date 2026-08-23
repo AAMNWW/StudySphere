@@ -529,22 +529,39 @@ enum JobApplicationStatus {
 /// losing the resume that was used shouldn't take the application history
 /// with it.
 model JobApplication {
-  id             String               @id @default(cuid())
-  userId         String
-  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company        String
-  role           String
-  status         JobApplicationStatus @default(SAVED)
-  jobUrl         String?
-  jobDescription String?
-  notes          String?
+  id                 String               @id @default(cuid())
+  userId             String
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company            String
+  role               String
+  status             JobApplicationStatus @default(SAVED)
+  jobUrl             String?
+  jobDescription     String?
+  notes              String?
   /// Null while status is SAVED; set once a student marks it APPLIED (or
   /// later) — see src/app/career/jobs/actions.ts.
-  appliedAt      DateTime?
-  resumeId       String?
-  resume         Resume?              @relation(fields: [resumeId], references: [id], onDelete: SetNull)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  appliedAt          DateTime?
+  resumeId           String?
+  resume             Resume?              @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  /// The four ats* fields are set together by src/lib/ai/ats-check.ts,
+  /// comparing the linked resume against jobDescription — null until a
+  /// student runs the check, and requires both a resume and a job
+  /// description to be set first.
+  atsScore           Int?
+  atsFeedback        String?
+  atsMatchedKeywords String[]
+  atsMissingKeywords String[]
+  /// Mirrors Document.summaryError — set when the most recent ATS check
+  /// attempt failed (including "no resume attached yet"), so the UI can
+  /// show why and offer a retry. Cleared on the next successful attempt.
+  atsError           String?
+  /// AI-generated draft, produced on demand via
+  /// src/lib/ai/cover-letter.ts. Null until requested, cached rather than
+  /// regenerated on every view.
+  coverLetter        String?
+  coverLetterError   String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
   @@index([userId, status])
 }

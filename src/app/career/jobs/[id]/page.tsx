@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+import { AtsCheckCard } from "../_components/ats-check-card";
+import { CoverLetterCard } from "../_components/cover-letter-card";
 import { DeleteJobApplicationButton } from "../_components/delete-job-application-button";
 import { JobApplicationForm } from "../_components/job-application-form";
 import { updateJobApplication } from "../actions";
@@ -92,6 +94,21 @@ export default async function JobApplicationPage({
           />
         </CardContent>
       </Card>
+
+      <AtsCheckCard
+        jobId={job.id}
+        atsScore={job.atsScore}
+        atsFeedback={job.atsFeedback}
+        atsMatchedKeywords={job.atsMatchedKeywords}
+        atsMissingKeywords={job.atsMissingKeywords}
+        atsError={job.atsError}
+      />
+
+      <CoverLetterCard
+        jobId={job.id}
+        coverLetter={job.coverLetter}
+        coverLetterError={job.coverLetterError}
+      />
 
       <Card>
         <CardHeader>
