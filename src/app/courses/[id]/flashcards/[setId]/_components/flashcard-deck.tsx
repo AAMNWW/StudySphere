@@ -4,6 +4,7 @@ import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { ChevronLeft, ChevronRight, RotateCw } from "lucide-react";
 import { useState } from "react";
 
+import { MotionPop } from "@/app/_components/reveal";
 import { ICON_TILE_COLOR_CYCLE, getTileColorClasses } from "@/components/icon-tile";
 import { Button } from "@/components/ui/button";
 
@@ -63,6 +64,8 @@ export function FlashcardDeck({ cards }: { cards: FlashcardItem[] }) {
             animate="center"
             exit="exit"
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            whileHover={{ scale: 1.015 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setFlipped((value) => !value)}
             aria-label="Flip card"
             className="absolute inset-0 h-full w-full"
@@ -104,29 +107,42 @@ export function FlashcardDeck({ cards }: { cards: FlashcardItem[] }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          disabled={index === 0}
-          onClick={() => go(-1)}
-          aria-label="Previous card"
-        >
-          <ChevronLeft />
-        </Button>
-        <p className="text-muted-foreground text-sm">
+        <MotionPop>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={index === 0}
+            onClick={() => go(-1)}
+            aria-label="Previous card"
+          >
+            <ChevronLeft />
+          </Button>
+        </MotionPop>
+        <p className="text-muted-foreground text-sm tabular-nums">
           {index + 1} / {sorted.length}
         </p>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          disabled={index === sorted.length - 1}
-          onClick={() => go(1)}
-          aria-label="Next card"
-        >
-          <ChevronRight />
-        </Button>
+        <MotionPop>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={index === sorted.length - 1}
+            onClick={() => go(1)}
+            aria-label="Next card"
+          >
+            <ChevronRight />
+          </Button>
+        </MotionPop>
+      </div>
+
+      <div className="bg-muted h-1.5 w-full max-w-md overflow-hidden rounded-full">
+        <motion.div
+          className={`h-full rounded-full ${colorClasses.split(" ")[0]}`}
+          initial={false}
+          animate={{ width: `${((index + 1) / sorted.length) * 100}%` }}
+          transition={{ type: "spring", stiffness: 200, damping: 30 }}
+        />
       </div>
     </div>
   );

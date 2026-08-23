@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 
+import { RevealGroup, RevealItem } from "@/app/_components/reveal";
 import { dateKey, type CalendarDay } from "@/lib/calendar-grid";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +27,7 @@ export function CalendarGrid({
 }) {
   return (
     <div className="overflow-x-auto">
-      <div className="grid min-w-[640px] grid-cols-7 gap-2">
+      <RevealGroup className="grid min-w-[640px] grid-cols-7 gap-2" stagger={0.012}>
         {WEEKDAY_LABELS.map((label) => (
           <div
             key={label}
@@ -41,10 +44,11 @@ export function CalendarGrid({
           const overflow = assignments.length - visible.length;
 
           return (
-            <div
+            <RevealItem
               key={key}
               className={cn(
-                "min-h-24 space-y-1 rounded-xl border p-2",
+                "min-h-24 space-y-1 rounded-xl border p-2 transition-transform duration-200",
+                assignments.length > 0 && "hover:-translate-y-0.5 hover:shadow-sm",
                 !day.inCurrentMonth && "bg-muted/30",
                 day.isToday && "border-primary",
               )}
@@ -82,10 +86,10 @@ export function CalendarGrid({
                   <p className="text-muted-foreground px-1.5 text-xs">+{overflow} more</p>
                 ) : null}
               </div>
-            </div>
+            </RevealItem>
           );
         })}
-      </div>
+      </RevealGroup>
     </div>
   );
 }

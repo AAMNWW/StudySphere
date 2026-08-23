@@ -2,6 +2,7 @@ import { StickyNote } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { RevealGroup, RevealItem } from "@/app/_components/reveal";
 import { IconTile } from "@/components/icon-tile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
@@ -66,13 +67,13 @@ export default async function NotesPage({ params }: PageProps<"/courses/[id]/not
             No notes yet. Add your first one above.
           </p>
         ) : (
-          <ul className="space-y-4">
+          <RevealGroup className="space-y-4" stagger={0.06}>
             {course.notes.map((note) => (
-              <li key={note.id}>
+              <RevealItem key={note.id}>
                 <NoteCard courseId={course.id} note={note} />
-              </li>
+              </RevealItem>
             ))}
-          </ul>
+          </RevealGroup>
         )}
       </section>
     </main>

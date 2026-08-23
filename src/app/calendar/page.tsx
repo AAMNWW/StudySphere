@@ -10,6 +10,7 @@ import { dateKey, getMonthGrid } from "@/lib/calendar-grid";
 import { db } from "@/lib/db";
 import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
 
+import { Reveal } from "../_components/reveal";
 import { CalendarGrid, type CalendarAssignmentItem } from "./_components/calendar-grid";
 
 export const metadata: Metadata = {
@@ -95,7 +96,7 @@ export default async function CalendarPage({
       <AppSidebar isAdmin={session?.user?.role === "ADMIN"} />
       <main className="min-w-0 flex-1">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <Reveal key={monthParam(year, month)} className="flex items-center gap-3">
             <IconTile color="green">
               <CalendarIcon className="size-5" />
             </IconTile>
@@ -105,7 +106,7 @@ export default async function CalendarPage({
               </h1>
               <p className="text-muted-foreground text-sm">Assignments due across every course.</p>
             </div>
-          </div>
+          </Reveal>
 
           <div className="flex gap-2 text-sm">
             <Link
@@ -128,7 +129,11 @@ export default async function CalendarPage({
           </div>
         </header>
 
-        <CalendarGrid days={days} assignmentsByDay={assignmentsByDay} />
+        <CalendarGrid
+          key={monthParam(year, month)}
+          days={days}
+          assignmentsByDay={assignmentsByDay}
+        />
       </main>
     </div>
   );

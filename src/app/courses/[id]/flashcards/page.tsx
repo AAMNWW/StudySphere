@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { RevealGroup, RevealItem } from "@/app/_components/reveal";
 import { IconTile } from "@/components/icon-tile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
@@ -91,11 +92,11 @@ export default async function FlashcardsHubPage({
             No flashcard sets yet. Generate your first one above.
           </p>
         ) : (
-          <ul className="space-y-3">
+          <RevealGroup className="space-y-3" stagger={0.06}>
             {sets.map((set) => (
-              <li key={set.id}>
+              <RevealItem key={set.id}>
                 <Link href={`/courses/${courseId}/flashcards/${set.id}`} className="block">
-                  <Card className="transition-colors hover:bg-muted/50">
+                  <Card className="transition-transform duration-200 hover:-translate-y-0.5 hover:bg-muted/50">
                     <CardHeader>
                       <div className="flex items-center justify-between gap-2">
                         <CardTitle className="text-base">{set.title}</CardTitle>
@@ -109,9 +110,9 @@ export default async function FlashcardsHubPage({
                     </CardHeader>
                   </Card>
                 </Link>
-              </li>
+              </RevealItem>
             ))}
-          </ul>
+          </RevealGroup>
         )}
       </section>
     </main>

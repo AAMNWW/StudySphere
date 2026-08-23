@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { Pencil } from "lucide-react";
 import { useActionState, useState } from "react";
 
@@ -27,6 +28,8 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",
   timeZone: "UTC",
 });
+
+const SWAP_TRANSITION = { duration: 0.15 };
 
 export function NoteCard({
   courseId,
@@ -60,102 +63,118 @@ export function NoteCard({
     setIsEditing(false);
   }
 
-  if (isEditing) {
-    return (
-      <Card>
-        <CardContent>
-          <form
-            key={state.submission}
-            action={formAction}
-            className="space-y-4"
-            noValidate
-          >
-            <div className="space-y-2">
-              <Label htmlFor={`note-title-${note.id}`}>Title</Label>
-              <Input
-                id={`note-title-${note.id}`}
-                name="title"
-                defaultValue={state.values?.title}
-                maxLength={100}
-                aria-invalid={Boolean(state.errors?.title)}
-              />
-              {state.errors?.title ? (
-                <p className="text-destructive text-sm">
-                  {state.errors.title[0]}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor={`note-content-${note.id}`}>
-                Content (optional)
-              </Label>
-              <RichTextEditor
-                id={`note-content-${note.id}`}
-                name="content"
-                defaultValue={state.values?.content}
-                ariaInvalid={Boolean(state.errors?.content)}
-              />
-              {state.errors?.content ? (
-                <p className="text-destructive text-sm">
-                  {state.errors.content[0]}
-                </p>
-              ) : null}
-            </div>
-
-            {state.message ? (
-              <p role="alert" className="text-destructive text-sm">
-                {state.message}
-              </p>
-            ) : null}
-
-            <div className="flex gap-2">
-              <Button type="submit" disabled={isPending}>
-                {isPending ? "Saving…" : "Save"}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsEditing(false)}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{note.title}</CardTitle>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Added {dateFormatter.format(note.createdAt)}
-        </p>
-        <CardAction className="flex gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`Edit ${note.title}`}
-            onClick={() => setIsEditing(true)}
-          >
-            <Pencil />
-          </Button>
-          <DeleteNoteButton
-            courseId={courseId}
-            noteId={note.id}
-            noteTitle={note.title}
-          />
-        </CardAction>
-      </CardHeader>
-      {note.content ? (
-        <CardContent>
-          <NoteContent content={note.content} />
-        </CardContent>
-      ) : null}
-    </Card>
+    <AnimatePresence mode="wait" initial={false}>
+      {isEditing ? (
+        <motion.div
+          key="edit"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={SWAP_TRANSITION}
+        >
+          <Card>
+            <CardContent>
+              <form
+                key={state.submission}
+                action={formAction}
+                className="space-y-4"
+                noValidate
+              >
+                <div className="space-y-2">
+                  <Label htmlFor={`note-title-${note.id}`}>Title</Label>
+                  <Input
+                    id={`note-title-${note.id}`}
+                    name="title"
+                    defaultValue={state.values?.title}
+                    maxLength={100}
+                    aria-invalid={Boolean(state.errors?.title)}
+                  />
+                  {state.errors?.title ? (
+                    <p className="text-destructive text-sm">
+                      {state.errors.title[0]}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor={`note-content-${note.id}`}>
+                    Content (optional)
+                  </Label>
+                  <RichTextEditor
+                    id={`note-content-${note.id}`}
+                    name="content"
+                    defaultValue={state.values?.content}
+                    ariaInvalid={Boolean(state.errors?.content)}
+                  />
+                  {state.errors?.content ? (
+                    <p className="text-destructive text-sm">
+                      {state.errors.content[0]}
+                    </p>
+                  ) : null}
+                </div>
+
+                {state.message ? (
+                  <p role="alert" className="text-destructive text-sm">
+                    {state.message}
+                  </p>
+                ) : null}
+
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Saving…" : "Save"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsEditing(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="view"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={SWAP_TRANSITION}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>{note.title}</CardTitle>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Added {dateFormatter.format(note.createdAt)}
+              </p>
+              <CardAction className="flex gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Edit ${note.title}`}
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Pencil />
+                </Button>
+                <DeleteNoteButton
+                  courseId={courseId}
+                  noteId={note.id}
+                  noteTitle={note.title}
+                />
+              </CardAction>
+            </CardHeader>
+            {note.content ? (
+              <CardContent>
+                <NoteContent content={note.content} />
+              </CardContent>
+            ) : null}
+          </Card>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
