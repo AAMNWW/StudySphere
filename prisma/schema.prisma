@@ -60,6 +60,8 @@ model User {
   passwordResetTokens   PasswordResetToken[]
   resumes               Resume[]
   jobApplications       JobApplication[]
+  careerChatThreads     CareerChatThread[]
+  interviewSessions     InterviewSession[]
   /// Consecutive days (including today) the dashboard has been visited.
   /// Updated in src/lib/streak.ts whenever the dashboard loads.
   currentStreak         Int                  @default(0)
@@ -501,17 +503,19 @@ model Notification {
 /// backend as Documents (see src/lib/uploads.ts's resume-specific
 /// helpers), namespaced by userId instead of courseId.
 model Resume {
-  id              String           @id @default(cuid())
-  userId          String
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title           String
-  fileName        String
-  storedName      String
-  storageUrl      String?
-  mimeType        String
-  sizeBytes       Int
-  jobApplications JobApplication[]
-  createdAt       DateTime         @default(now())
+  id                String             @id @default(cuid())
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title             String
+  fileName          String
+  storedName        String
+  storageUrl        String?
+  mimeType          String
+  sizeBytes         Int
+  jobApplications   JobApplication[]
+  careerChatThreads CareerChatThread[]
+  interviewSessions InterviewSession[]
+  createdAt         DateTime           @default(now())
 
   @@index([userId])
 }
@@ -564,4 +568,79 @@ model JobApplication {
   updatedAt          DateTime             @updatedAt
 
   @@index([userId, status])
+}
+
+/// A chat conversation scoped to career help: either grounded in one resume
+/// ("Resume Chat" — feedback on that specific resume) when `resumeId` is
+/// set, or general career advice ("AI Career Coach") when it's null. Reuses
+/// the same answerChatMessageStream-style pattern as course ChatThread, just
+/// grounded in a resume instead of course documents.
+model CareerChatThread {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  resumeId  String?
+  resume    Resume?             @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  messages  CareerChatMessage[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@index([userId])
+  @@index([resumeId])
+}
+
+model CareerChatMessage {
+  id        String           @id @default(cuid())
+  threadId  String
+  thread    CareerChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  /// "user" or "assistant".
+  role      String
+  content   String
+  createdAt DateTime         @default(now())
+
+  @@index([threadId])
+}
+
+enum InterviewSessionStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+/// A turn-by-turn mock interview: the AI plays the interviewer (one
+/// question at a time, following up on answers), grounded in the target
+/// role/company and, optionally, a resume for more specific questions.
+/// `feedback` is a wrap-up assessment generated once the student ends the
+/// session — null until then.
+model InterviewSession {
+  id            String                 @id @default(cuid())
+  userId        String
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role          String
+  company       String?
+  resumeId      String?
+  resume        Resume?                @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  status        InterviewSessionStatus @default(IN_PROGRESS)
+  messages      InterviewMessage[]
+  /// AI-generated wrap-up assessment, produced on demand once the student
+  /// ends the session. Null until then, cached rather than regenerated.
+  feedback      String?
+  feedbackError String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@index([userId])
+  @@index([resumeId])
+}
+
+model InterviewMessage {
+  id        String           @id @default(cuid())
+  sessionId String
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  /// "assistant" (the interviewer) or "user" (the candidate).
+  role      String
+  content   String
+  createdAt DateTime         @default(now())
+
+  @@index([sessionId])
 }
