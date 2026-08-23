@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CourseProgressBar } from "@/components/course-progress-bar";
 import { ICON_TILE_COLOR_CYCLE, IconTile } from "@/components/icon-tile";
 import {
   Card,
@@ -36,6 +37,7 @@ export default async function CoursesPage() {
   const courses = await db.course.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
+    include: { assignments: { select: { completed: true } } },
   });
 
   return (
@@ -78,10 +80,14 @@ export default async function CoursesPage() {
                           </CardDescription>
                         ) : null}
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="space-y-3">
                         <p className="text-muted-foreground text-xs">
                           Added {dateFormatter.format(course.createdAt)}
                         </p>
+                        <CourseProgressBar
+                          completed={course.assignments.filter((a) => a.completed).length}
+                          total={course.assignments.length}
+                        />
                       </CardContent>
                     </Card>
                   </Link>

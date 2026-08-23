@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CourseProgressBar } from "@/components/course-progress-bar";
 import { ICON_TILE_COLOR_CYCLE, IconTile } from "@/components/icon-tile";
 import { Button } from "@/components/ui/button";
 import {
@@ -93,6 +94,7 @@ export default async function HomePage() {
       where: { userId },
       orderBy: { createdAt: "desc" },
       take: COURSES_SHOWN,
+      include: { assignments: { select: { completed: true } } },
     }),
   ]);
 
@@ -190,6 +192,7 @@ export default async function HomePage() {
                         assignmentId={assignment.id}
                         title={assignment.title}
                         dueDate={assignment.dueDate}
+                        priority={assignment.priority}
                         isOverdue={isAssignmentOverdue(assignment)}
                       />
                     ))}
@@ -335,6 +338,12 @@ export default async function HomePage() {
                             </CardDescription>
                           ) : null}
                         </CardHeader>
+                        <CardContent>
+                          <CourseProgressBar
+                            completed={course.assignments.filter((a) => a.completed).length}
+                            total={course.assignments.length}
+                          />
+                        </CardContent>
                       </Card>
                     </Link>
                   </RevealItem>

@@ -18,6 +18,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { BackLink } from "@/components/back-link";
+import { CourseProgressBar } from "@/components/course-progress-bar";
 import { getTileColorClasses, type IconTileColor } from "@/components/icon-tile";
 import { cn } from "@/lib/utils";
 
@@ -116,10 +117,12 @@ export function CourseSidebar({
   courseId,
   courseTitle,
   counts,
+  progress,
 }: {
   courseId: string;
   courseTitle: string;
   counts: CourseSidebarCounts;
+  progress: { completed: number; total: number };
 }) {
   const pathname = usePathname();
 
@@ -138,6 +141,11 @@ export function CourseSidebar({
         <p className="text-sidebar-foreground mt-1 truncate font-heading font-bold" title={courseTitle}>
           {courseTitle}
         </p>
+        <CourseProgressBar
+          completed={progress.completed}
+          total={progress.total}
+          className="mt-3"
+        />
       </div>
 
       <div className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
