@@ -6,6 +6,7 @@ import { IconTile } from "@/components/icon-tile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { blobStorageConfigured } from "@/lib/uploads";
 
 import { DocumentRow } from "../_components/document-row";
 import { UploadDocumentForm } from "../_components/upload-document-form";
@@ -54,7 +55,7 @@ export default async function DocumentsPage({
           <CardTitle>Add a document</CardTitle>
         </CardHeader>
         <CardContent>
-          <UploadDocumentForm courseId={course.id} />
+          <UploadDocumentForm courseId={course.id} blobEnabled={blobStorageConfigured()} />
         </CardContent>
       </Card>
 

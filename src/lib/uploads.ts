@@ -2,23 +2,14 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "./uploads-shared";
+
 // Local disk when running without Blob configured (plain local dev); Vercel
 // Blob storage everywhere BLOB_READ_WRITE_TOKEN is set (production), since
 // Vercel's filesystem is ephemeral and local disk wouldn't survive a deploy.
 const UPLOAD_ROOT = path.join(process.cwd(), "uploads");
 
-export const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
-
-export const ALLOWED_FILE_TYPES: Record<
-  string,
-  { extension: "pdf" | "docx" | "pptx"; label: string }
-> = {
-  "application/pdf": { extension: "pdf", label: "PDF" },
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-    { extension: "docx", label: "Word document" },
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-    { extension: "pptx", label: "PowerPoint presentation" },
-};
+export { ALLOWED_FILE_TYPES, MAX_FILE_SIZE_BYTES };
 
 export interface StoredFile {
   storedName: string;
@@ -34,7 +25,7 @@ export interface UploadedFileRef {
   storageUrl: string | null;
 }
 
-function blobStorageConfigured(): boolean {
+export function blobStorageConfigured(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 

@@ -4,17 +4,11 @@ import { revalidatePath } from "next/cache";
 
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { deleteResumeFile, MAX_FILE_SIZE_BYTES, saveResumeFile } from "@/lib/uploads";
+import { deleteResumeFile, saveResumeFile } from "@/lib/uploads";
+import { MAX_FILE_SIZE_BYTES, RESUME_MIME_TYPES } from "@/lib/uploads-shared";
 import { resumeTitleSchema } from "@/lib/validations/resume";
 
 import type { ResumeFormState } from "./resume-form-state";
-
-// A resume is never a slide deck — narrower than the course Documents'
-// ALLOWED_FILE_TYPES, which also accepts .pptx.
-const RESUME_MIME_TYPES = new Set([
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
 
 export async function uploadResume(
   previousState: ResumeFormState,
@@ -87,6 +81,46 @@ export async function uploadResume(
   revalidatePath("/career");
 
   return { submission, status: "success" };
+}
+
+/** Records a resume whose bytes were already uploaded directly from the
+ * browser to Vercel Blob (see UploadResumeForm + src/app/api/resumes/upload) —
+ * used instead of {@link uploadResume} whenever Blob storage is configured,
+ * since routing the file through this Server Action would hit Vercel's
+ * ~4.5MB Function request-body cap well before the app's own 15MB limit. */
+export async function finalizeResumeUpload(
+  title: string,
+  file: { fileName: string; storedName: string; storageUrl: string; mimeType: string; sizeBytes: number },
+): Promise<{ status: "success" } | { status: "error"; message: string }> {
+  const userId = await requireUserId();
+
+  const parsed = resumeTitleSchema.safeParse(title);
+
+  if (!parsed.success) {
+    return { status: "error", message: parsed.error.issues[0]?.message ?? "Invalid title." };
+  }
+
+  try {
+    await db.resume.create({
+      data: {
+        userId,
+        title: parsed.data,
+        fileName: file.fileName,
+        storedName: file.storedName,
+        storageUrl: file.storageUrl,
+        mimeType: file.mimeType,
+        sizeBytes: file.sizeBytes,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to save resume", error);
+    return { status: "error", message: "Could not save the resume. Please try again." };
+  }
+
+  revalidatePath("/career/resumes");
+  revalidatePath("/career");
+
+  return { status: "success" };
 }
 
 export async function deleteResume(resumeId: string): Promise<void> {

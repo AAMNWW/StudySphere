@@ -5,6 +5,7 @@ import { IconTile } from "@/components/icon-tile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { blobStorageConfigured } from "@/lib/uploads";
 
 import { ResumeRow } from "./_components/resume-row";
 import { UploadResumeForm } from "./_components/upload-resume-form";
@@ -40,7 +41,7 @@ export default async function ResumesPage() {
           <CardTitle>Upload a resume</CardTitle>
         </CardHeader>
         <CardContent>
-          <UploadResumeForm />
+          <UploadResumeForm blobEnabled={blobStorageConfigured()} />
         </CardContent>
       </Card>
 

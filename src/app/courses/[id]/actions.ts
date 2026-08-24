@@ -661,9 +661,52 @@ export async function uploadDocument(
     };
   }
 
+  revalidatePath(`/courses/${courseId}/documents`);
   revalidatePath(`/courses/${courseId}`);
 
   return { submission, status: "success" };
+}
+
+/** Records a document whose bytes were already uploaded directly from the
+ * browser to Vercel Blob (see UploadDocumentForm + src/app/api/documents/upload) —
+ * used instead of {@link uploadDocument} whenever Blob storage is configured,
+ * since routing the file through this Server Action would hit Vercel's
+ * ~4.5MB Function request-body cap well before the app's own 15MB limit. */
+export async function finalizeDocumentUpload(
+  courseId: string,
+  file: { fileName: string; storedName: string; storageUrl: string; mimeType: string; sizeBytes: number },
+): Promise<{ status: "success" } | { status: "error"; message: string }> {
+  const userId = await requireUserId();
+
+  const course = await db.course.findFirst({
+    where: { id: courseId, userId },
+    select: { id: true },
+  });
+
+  if (!course) {
+    return { status: "error", message: "Could not save the file. Please try again." };
+  }
+
+  try {
+    await db.document.create({
+      data: {
+        courseId,
+        fileName: file.fileName,
+        storedName: file.storedName,
+        storageUrl: file.storageUrl,
+        mimeType: file.mimeType,
+        sizeBytes: file.sizeBytes,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to save uploaded file", error);
+    return { status: "error", message: "Could not save the file. Please try again." };
+  }
+
+  revalidatePath(`/courses/${courseId}/documents`);
+  revalidatePath(`/courses/${courseId}`);
+
+  return { status: "success" };
 }
 
 export async function deleteDocument(
@@ -683,6 +726,7 @@ export async function deleteDocument(
   await db.document.delete({ where: { id: document.id } });
   await deleteUploadedFile(document);
 
+  revalidatePath(`/courses/${courseId}/documents`);
   revalidatePath(`/courses/${courseId}`);
 }
 
@@ -728,7 +772,7 @@ export async function generateDocumentSummary(
       },
     });
 
-    revalidatePath(`/courses/${courseId}`);
+    revalidatePath(`/courses/${courseId}/documents`);
 
     return {
       submission,
@@ -737,7 +781,7 @@ export async function generateDocumentSummary(
     };
   }
 
-  revalidatePath(`/courses/${courseId}`);
+  revalidatePath(`/courses/${courseId}/documents`);
 
   return { submission, status: "success" };
 }
