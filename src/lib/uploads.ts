@@ -140,6 +140,29 @@ export async function saveResumeFile(userId: string, file: File): Promise<Stored
   return { storedName, storageUrl: null };
 }
 
+/** Resume-maker equivalent of {@link saveResumeFile} for bytes generated
+ * server-side (a rendered PDF) rather than an uploaded File — same
+ * storage backend and namespace, always stored as .pdf. */
+export async function saveResumeBytes(userId: string, bytes: Buffer): Promise<StoredFile> {
+  const storedName = `${randomUUID()}.pdf`;
+  const namespace = `resumes/${userId}`;
+
+  if (blobStorageConfigured()) {
+    const { put } = await import("@vercel/blob");
+    const blob = await put(`${namespace}/${storedName}`, bytes, {
+      access: "public",
+      contentType: "application/pdf",
+    });
+    return { storedName, storageUrl: blob.url };
+  }
+
+  const resumeDir = path.join(UPLOAD_ROOT, namespace);
+  await mkdir(resumeDir, { recursive: true });
+  await writeFile(path.join(resumeDir, storedName), bytes);
+
+  return { storedName, storageUrl: null };
+}
+
 export async function readResumeFile(resume: UploadedResumeRef): Promise<Buffer> {
   if (resume.storageUrl) {
     const response = await fetch(resume.storageUrl);

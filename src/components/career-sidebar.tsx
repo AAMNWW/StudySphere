@@ -1,6 +1,15 @@
 "use client";
 
-import { Briefcase, FileText, LayoutDashboard, Mic, MessageCircle } from "lucide-react";
+import {
+  Briefcase,
+  FileText,
+  LayoutDashboard,
+  Mail,
+  Mic,
+  MessageCircle,
+  Target,
+  Wand2,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -48,6 +57,9 @@ const NAV_ITEMS: NavItem[] = [
     color: "red",
     countKey: "interviewSessions",
   },
+  { label: "ATS Check", href: "/career/ats-check", icon: Target, color: "green" },
+  { label: "Cover Letter", href: "/career/cover-letter", icon: Mail, color: "pink" },
+  { label: "Resume Maker", href: "/career/resume-maker", icon: Wand2, color: "yellow" },
 ];
 
 function isActive(pathname: string, item: NavItem) {
