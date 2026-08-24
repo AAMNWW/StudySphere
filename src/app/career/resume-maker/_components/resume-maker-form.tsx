@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Sparkles, Trash2 } from "lucide-react";
-import { useEffect, useId, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,7 +143,9 @@ export function ResumeMakerForm() {
   const [isDrafting, startDrafting] = useTransition();
   const [isSaving, startSaving] = useTransition();
   const [hasRestored, setHasRestored] = useState(false);
+  const [draftedJustNow, setDraftedJustNow] = useState(false);
   const idPrefix = useId();
+  const previewRef = useRef<HTMLElement>(null);
 
   if (mounted && !hasRestored) {
     setHasRestored(true);
@@ -175,6 +177,13 @@ export function ResumeMakerForm() {
 
   function handleDraft() {
     setDraftError(null);
+    setDraftedJustNow(false);
+
+    if (!background.trim()) {
+      setDraftError("Paste some background above first.");
+      return;
+    }
+
     startDrafting(async () => {
       try {
         const draft = await draftResume(background, targetRole);
@@ -213,6 +222,15 @@ export function ResumeMakerForm() {
         if (!title) {
           setTitle(targetRole ? `${targetRole} Resume` : "AI Resume");
         }
+
+        // The fields most likely to visibly change (summary, skills,
+        // experience) are further down the page than Contact — and AI
+        // deliberately never touches Full name/Email/Phone/Location, so
+        // without this a draft that worked perfectly can look like it did
+        // nothing if those top fields are what's in view. Scroll to the
+        // preview so the result is immediately visible either way.
+        setDraftedJustNow(true);
+        previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       } catch (error) {
         setDraftError(error instanceof Error ? error.message : "Could not draft a resume.");
       }
@@ -313,6 +331,13 @@ export function ResumeMakerForm() {
           <Sparkles />
           {isDrafting ? "Drafting…" : "Draft with AI"}
         </Button>
+
+        {draftedJustNow ? (
+          <p role="status" className="text-sm text-emerald-600">
+            Drafted — check the Preview below. It won&apos;t fill in your name/email/phone, so
+            add those above by hand.
+          </p>
+        ) : null}
       </section>
 
       <section className="space-y-4">
@@ -471,7 +496,7 @@ export function ResumeMakerForm() {
         ))}
       </section>
 
-      <section className="space-y-3">
+      <section ref={previewRef} className="space-y-3 scroll-mt-4">
         <h2 className="font-bold">Preview</h2>
         <ResumePreview draft={toResumeDraft(form)} />
       </section>
