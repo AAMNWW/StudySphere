@@ -4,7 +4,7 @@ import { Reveal, RevealGroup, RevealItem } from "./reveal";
 
 const FAQS = [
   {
-    question: "Is StudySphere free?",
+    question: "Is Academique free?",
     answer: "Yes — every feature described on this page as available today is free to use.",
   },
   {

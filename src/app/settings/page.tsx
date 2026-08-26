@@ -34,7 +34,7 @@ export default async function SettingsPage() {
         <header className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
           <p className="text-muted-foreground text-sm">
-            Customize how StudySphere AI looks and works for you.
+            Customize how Academique looks and works for you.
           </p>
         </header>
 

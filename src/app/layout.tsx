@@ -29,10 +29,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   // `template` wraps the title exported by each page, so /courses renders as
-  // "Courses · StudySphere AI" without every page repeating the app name.
+  // "Courses · Academique" without every page repeating the app name.
   title: {
-    default: "StudySphere AI",
-    template: "%s · StudySphere AI",
+    default: "Academique",
+    template: "%s · Academique",
   },
   description:
     "An AI-powered learning workspace for organising courses, notes and study material.",
@@ -77,9 +77,9 @@ export default async function RootLayout({
             <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
               <div className="flex items-center gap-6">
                 <Link href="/" className="flex items-center gap-2">
-                  <Logo priority className="h-8 w-auto" />
+                  <Logo className="h-8 w-auto" />
                   <span className="font-heading text-lg font-bold tracking-tight">
-                    StudySphere AI
+                    Academique
                   </span>
                 </Link>
                 <MainNav />

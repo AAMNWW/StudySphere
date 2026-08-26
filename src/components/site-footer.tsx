@@ -27,7 +27,7 @@ export function SiteFooter() {
           <Link href="/" className="flex items-center gap-2">
             <Logo className="h-7 w-auto" />
             <span className="font-heading text-base font-bold tracking-tight">
-              StudySphere AI
+              Academique
             </span>
           </Link>
           <p className="text-muted-foreground mt-3 max-w-xs text-sm">
@@ -89,7 +89,7 @@ export function SiteFooter() {
 
       <div className="border-t">
         <p className="text-muted-foreground mx-auto w-full max-w-5xl px-6 py-4 text-xs">
-          © {new Date().getFullYear()} StudySphere AI.
+          © {new Date().getFullYear()} Academique.
         </p>
       </div>
     </footer>

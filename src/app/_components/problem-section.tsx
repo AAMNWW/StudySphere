@@ -40,7 +40,7 @@ export function ProblemSection() {
           </ul>
         </RevealItem>
         <RevealItem className="mt-8 flex items-center justify-center gap-2 text-sm font-medium">
-          <span>StudySphere brings it all into one workspace</span>
+          <span>Academique brings it all into one workspace</span>
           <ArrowRight className="size-4" />
         </RevealItem>
       </RevealGroup>

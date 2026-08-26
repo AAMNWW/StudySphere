@@ -27,7 +27,7 @@ import { StreakCard } from "./_components/streak-card";
 import { TaskList } from "./_components/task-list";
 
 // Signed-out visitors get the marketing title from the layout default
-// ("StudySphere AI"); only the authenticated dashboard needs its own.
+// ("Academique"); only the authenticated dashboard needs its own.
 export async function generateMetadata(): Promise<Metadata> {
   const session = await auth();
   return session?.user ? { title: "Dashboard" } : {};

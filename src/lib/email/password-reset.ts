@@ -9,18 +9,18 @@ export interface PasswordResetEmail {
  * only formats the message, it never sees the token's hash or handles
  * matching it back to a user. */
 export function buildPasswordResetEmail(resetUrl: string): PasswordResetEmail {
-  const subject = "Reset your StudySphere AI password";
+  const subject = "Reset your Academique password";
 
   const text =
-    `Someone (hopefully you) asked to reset your StudySphere AI password.\n\n` +
+    `Someone (hopefully you) asked to reset your Academique password.\n\n` +
     `Reset it here: ${resetUrl}\n\n` +
     `This link expires in 1 hour. If you didn't request this, you can ` +
     `safely ignore this email — your password won't change.\n\n` +
-    `— StudySphere AI`;
+    `— Academique`;
 
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
-      <p style="color:#111827;">Someone (hopefully you) asked to reset your StudySphere AI password.</p>
+      <p style="color:#111827;">Someone (hopefully you) asked to reset your Academique password.</p>
       <p style="margin:24px 0;">
         <a href="${resetUrl}" style="background:#111827;color:#fff;padding:10px 20px;border-radius:9999px;text-decoration:none;display:inline-block;">
           Reset password
@@ -30,7 +30,7 @@ export function buildPasswordResetEmail(resetUrl: string): PasswordResetEmail {
         This link expires in 1 hour. If you didn't request this, you can safely
         ignore this email — your password won't change.
       </p>
-      <p style="margin-top:24px;color:#9ca3af;font-size:13px;">— StudySphere AI</p>
+      <p style="margin-top:24px;color:#9ca3af;font-size:13px;">— Academique</p>
     </div>`;
 
   return { subject, html, text };

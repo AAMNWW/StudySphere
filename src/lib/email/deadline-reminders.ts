@@ -43,7 +43,7 @@ export function buildDeadlineReminderEmail(
     return `${group.courseTitle}\n${lines}`;
   });
 
-  const text = `${greeting}\n\nYou have ${total} assignment${total === 1 ? "" : "s"} due in the next couple of days:\n\n${textSections.join("\n\n")}\n\n— StudySphere AI`;
+  const text = `${greeting}\n\nYou have ${total} assignment${total === 1 ? "" : "s"} due in the next couple of days:\n\n${textSections.join("\n\n")}\n\n— Academique`;
 
   const htmlSections = groups
     .map(
@@ -65,7 +65,7 @@ export function buildDeadlineReminderEmail(
       <p style="color:#111827;">${escapeHtml(greeting)}</p>
       <p style="color:#374151;">You have <strong>${total}</strong> assignment${total === 1 ? "" : "s"} due in the next couple of days:</p>
       ${htmlSections}
-      <p style="margin-top:24px;color:#9ca3af;font-size:13px;">— StudySphere AI</p>
+      <p style="margin-top:24px;color:#9ca3af;font-size:13px;">— Academique</p>
     </div>`;
 
   return { subject, html, text };
