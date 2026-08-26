@@ -50,4 +50,28 @@ export const COLOR_PALETTE_OPTIONS: {
     description: "Earthy greens and warm tan.",
     swatch: ["oklch(0.96 0.02 120)", "oklch(0.48 0.14 145)", "oklch(0.8 0.06 80)"],
   },
+  {
+    value: "SUNSET",
+    label: "Sunset",
+    description: "Warm coral and golden orange.",
+    swatch: ["oklch(0.97 0.02 50)", "oklch(0.62 0.19 40)", "oklch(0.9 0.06 45)"],
+  },
+  {
+    value: "LAVENDER",
+    label: "Lavender",
+    description: "Soft lilac purple, lighter than Galaxy.",
+    swatch: ["oklch(0.97 0.015 300)", "oklch(0.58 0.16 300)", "oklch(0.9 0.05 305)"],
+  },
+  {
+    value: "MINT",
+    label: "Mint",
+    description: "Cool fresh teal-green.",
+    swatch: ["oklch(0.97 0.018 175)", "oklch(0.55 0.11 175)", "oklch(0.9 0.05 165)"],
+  },
+  {
+    value: "SLATE",
+    label: "Graphite",
+    description: "The original grayscale, no-frills look.",
+    swatch: ["oklch(0.975 0.01 90)", "oklch(0.205 0 0)", "oklch(0.95 0.012 85)"],
+  },
 ];

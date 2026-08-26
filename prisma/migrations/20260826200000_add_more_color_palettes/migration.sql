@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "ColorPalette" ADD VALUE 'SUNSET';
+ALTER TYPE "ColorPalette" ADD VALUE 'LAVENDER';
+ALTER TYPE "ColorPalette" ADD VALUE 'MINT';
+ALTER TYPE "ColorPalette" ADD VALUE 'SLATE';

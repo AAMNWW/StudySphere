@@ -30,6 +30,10 @@ enum ColorPalette {
   GALAXY
   OCEAN
   FOREST
+  SUNSET
+  LAVENDER
+  MINT
+  SLATE
 }
 
 /// A student. Owns every course (and, through courses, every note and

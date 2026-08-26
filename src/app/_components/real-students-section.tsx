@@ -4,8 +4,8 @@ import { Reveal, RevealGroup, RevealItem } from "./reveal";
 
 const PHOTOS = [
   {
-    src: "/photos/study-library.jpg",
-    alt: "A student studying at a library table surrounded by open books and a laptop",
+    src: "/photos/study-friends.jpg",
+    alt: "Three friends smiling together on campus, carrying backpacks and notebooks",
   },
   {
     src: "/photos/study-cafe.jpg",
