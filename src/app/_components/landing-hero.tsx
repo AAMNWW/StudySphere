@@ -8,10 +8,7 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-import { AiAssistantSection } from "./ai-assistant-section";
-import { AnalyticsSection } from "./analytics-section";
-import { AssignmentManagementSection } from "./assignment-management-section";
-import { DashboardPreviewSection } from "./dashboard-preview-section";
+import { DoodleUnderline } from "./doodle-accents";
 import { FaqSection } from "./faq-section";
 import { FeatureShowcase } from "./feature-showcase";
 import { PrivacySection } from "./privacy-section";
@@ -19,7 +16,7 @@ import { ProblemSection } from "./problem-section";
 import { RealStudentsSection } from "./real-students-section";
 import { MotionPop, Reveal, RevealGroup, RevealItem } from "./reveal";
 import { StudyToolsSection } from "./study-tools-section";
-import { SubjectsFlowSection } from "./subjects-flow-section";
+import { TrustStatsSection } from "./trust-stats-section";
 import { WhySection } from "./why-section";
 import { WorkspaceSection } from "./workspace-section";
 
@@ -74,7 +71,10 @@ export function LandingHero() {
           className="text-4xl font-bold tracking-tight text-balance sm:text-5xl"
         >
           Your entire study life,{" "}
-          <span className="text-primary">powered by AI.</span>
+          <span className="relative inline-block">
+            <span className="text-primary">powered by AI.</span>
+            <DoodleUnderline className="text-primary/50 absolute inset-x-0 -bottom-2 h-3 w-full" />
+          </span>
         </motion.h1>
         <motion.p
           variants={HERO_ITEM}
@@ -116,6 +116,7 @@ export function LandingHero() {
       </motion.section>
 
       <ProblemSection />
+      <TrustStatsSection />
       <WorkspaceSection />
       <RealStudentsSection />
 
@@ -137,9 +138,7 @@ export function LandingHero() {
         </Reveal>
       </section>
 
-      <AiAssistantSection />
       <StudyToolsSection />
-      <DashboardPreviewSection />
 
       <section
         id="how-it-works"
@@ -157,9 +156,13 @@ export function LandingHero() {
         <RevealGroup className="mt-10 grid gap-6 sm:grid-cols-3" stagger={0.15}>
           {STEPS.map(({ title, description, icon: Icon }, index) => (
             <RevealItem key={title} className="text-center">
-              <div className="bg-card mx-auto flex size-12 items-center justify-center rounded-full border border-black/5 shadow-sm">
+              <motion.div
+                whileHover={{ scale: 1.08, rotate: -4 }}
+                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                className="bg-card mx-auto flex size-12 items-center justify-center rounded-full border border-black/5 shadow-sm"
+              >
                 <Icon className="text-muted-foreground size-5" />
-              </div>
+              </motion.div>
               <p className="text-muted-foreground mt-3 text-xs font-medium">
                 Step {index + 1}
               </p>
@@ -170,10 +173,6 @@ export function LandingHero() {
         </RevealGroup>
       </section>
 
-      <SubjectsFlowSection />
-      <AssignmentManagementSection />
-      <AnalyticsSection />
-
       <WhySection />
 
       <PrivacySection />
@@ -183,7 +182,14 @@ export function LandingHero() {
         <Reveal className="mx-auto w-full max-w-4xl">
           <Card className="bg-secondary border-transparent">
             <CardContent className="flex flex-col items-center gap-4 py-6 text-center">
-              <Logo className="h-20 w-auto" />
+              <motion.div
+                initial={{ scale: 0.6, rotate: -8, opacity: 0 }}
+                whileInView={{ scale: 1, rotate: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ type: "spring", stiffness: 200, damping: 14 }}
+              >
+                <Logo className="h-20 w-auto" />
+              </motion.div>
               <h2 className="text-xl font-bold tracking-tight text-balance sm:text-2xl">
                 Stop studying across ten different tools.
               </h2>

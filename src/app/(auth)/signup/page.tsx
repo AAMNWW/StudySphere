@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 export default function SignupPage() {
   return (
     <AuthSplitLayout
-      photoSrc="/photos/study-group.jpg"
-      photoAlt="A group of students studying together around a table with notebooks and a laptop"
+      photoSrc="/photos/study-library-group.jpg"
+      photoAlt="Four students studying together at a library table surrounded by books and notes"
       quote="Better with everything — and everyone — in one place."
     >
       <Card>

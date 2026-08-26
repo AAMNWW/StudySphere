@@ -77,7 +77,7 @@ export default async function RootLayout({
             <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
               <div className="flex items-center gap-6">
                 <Link href="/" className="flex items-center gap-2">
-                  <Logo className="h-8 w-auto" />
+                  <Logo className="h-11 w-auto" />
                   <span className="font-heading text-lg font-bold tracking-tight">
                     Academique
                   </span>

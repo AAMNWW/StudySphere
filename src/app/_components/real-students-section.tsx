@@ -6,17 +6,14 @@ const PHOTOS = [
   {
     src: "/photos/study-library.jpg",
     alt: "A student studying at a library table surrounded by open books and a laptop",
-    offset: false,
   },
   {
     src: "/photos/study-cafe.jpg",
     alt: "Three friends laughing together while studying with laptops at a cafe table",
-    offset: true,
   },
   {
     src: "/photos/study-group.jpg",
     alt: "A group of five students studying together around a table covered in notebooks",
-    offset: false,
   },
 ];
 
@@ -34,9 +31,9 @@ export function RealStudentsSection() {
       </Reveal>
 
       <RevealGroup className="mt-10 grid gap-5 sm:grid-cols-3" stagger={0.1}>
-        {PHOTOS.map(({ src, alt, offset }) => (
-          <RevealItem key={src} className={offset ? "sm:mt-8" : undefined}>
-            <div className="bg-muted relative aspect-[4/5] overflow-hidden rounded-3xl shadow-sm">
+        {PHOTOS.map(({ src, alt }) => (
+          <RevealItem key={src}>
+            <div className="bg-muted relative aspect-[4/5] overflow-hidden rounded-3xl shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-md">
               <Image
                 src={src}
                 alt={alt}

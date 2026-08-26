@@ -21,7 +21,7 @@ export async function MainNav() {
           How it works
         </Link>
         <Link
-          href="/#ai-assistant"
+          href="/#tools"
           className="text-foreground/70 transition-colors hover:text-foreground"
         >
           AI tools

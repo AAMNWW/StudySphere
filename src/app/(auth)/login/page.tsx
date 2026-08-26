@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <AuthSplitLayout
-      photoSrc="/photos/study-library.jpg"
-      photoAlt="A student studying at a library table surrounded by open books and a laptop"
+      photoSrc="/photos/study-outdoor.jpg"
+      photoAlt="Three students studying together outside on campus, looking at a laptop"
       quote="Pick up right where you left off."
     >
       <Card>
