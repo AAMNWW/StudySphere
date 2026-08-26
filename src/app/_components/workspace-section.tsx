@@ -1,3 +1,6 @@
+import { getTileColorClasses, ICON_TILE_COLOR_CYCLE } from "@/components/icon-tile";
+import { cn } from "@/lib/utils";
+
 import { Reveal, RevealGroup, RevealItem } from "./reveal";
 
 const ITEMS = ["Subjects", "Notes", "Documents", "Assignments", "Exams", "Tasks", "Study sessions"];
@@ -16,9 +19,14 @@ export function WorkspaceSection() {
       </Reveal>
 
       <RevealGroup className="mt-8 flex flex-wrap items-center justify-center gap-3" stagger={0.05}>
-        {ITEMS.map((label) => (
+        {ITEMS.map((label, index) => (
           <RevealItem key={label}>
-            <span className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-medium text-purple-700">
+            <span
+              className={cn(
+                "inline-block rounded-full px-4 py-2 text-sm font-medium transition-transform duration-200 hover:-translate-y-0.5 hover:scale-105",
+                getTileColorClasses(ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length]),
+              )}
+            >
               {label}
             </span>
           </RevealItem>

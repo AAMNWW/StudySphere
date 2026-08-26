@@ -1,5 +1,7 @@
 import { ArrowRight, CalendarX, FolderOpen, ListX, NotebookPen, Puzzle } from "lucide-react";
 
+import { ICON_TILE_COLOR_CYCLE, IconTile } from "@/components/icon-tile";
+
 import { RevealGroup, RevealItem } from "./reveal";
 
 const PROBLEMS = [
@@ -21,12 +23,17 @@ export function ProblemSection() {
         </RevealItem>
         <RevealItem>
           <ul className="mx-auto mt-8 grid max-w-xl gap-3">
-            {PROBLEMS.map(({ text, icon: Icon }) => (
+            {PROBLEMS.map(({ text, icon: Icon }, index) => (
               <li
                 key={text}
-                className="bg-card flex items-center gap-3 rounded-xl border border-black/5 px-4 py-3 text-left shadow-sm"
+                className="bg-card flex items-center gap-3 rounded-xl border border-black/5 px-4 py-3 text-left shadow-sm transition-transform duration-200 hover:-translate-y-0.5"
               >
-                <Icon className="text-destructive/70 size-4 shrink-0" />
+                <IconTile
+                  color={ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length]}
+                  size="sm"
+                >
+                  <Icon className="size-4" />
+                </IconTile>
                 <span className="text-sm font-medium">{text}</span>
               </li>
             ))}

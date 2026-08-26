@@ -1,6 +1,7 @@
 import { ChevronRight } from "lucide-react";
 
 import { ComingSoonBadge } from "@/components/coming-soon-badge";
+import { getTileColorClasses, ICON_TILE_COLOR_CYCLE } from "@/components/icon-tile";
 import { cn } from "@/lib/utils";
 
 import { Reveal } from "./reveal";
@@ -30,9 +31,9 @@ export function SubjectsFlowSection() {
             <div key={node.label} className="flex items-center gap-1.5">
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium",
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-transform duration-200 hover:-translate-y-0.5 hover:scale-105",
                   node.live
-                    ? "bg-purple-100 text-purple-700"
+                    ? getTileColorClasses(ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length])
                     : "bg-muted text-muted-foreground",
                 )}
               >
