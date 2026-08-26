@@ -1,4 +1,3 @@
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import type { TextItem } from "pdfjs-dist/types/src/display/api";
 
 // Gemini's document understanding caps out at 1000 pages per PDF regardless
@@ -6,9 +5,21 @@ import type { TextItem } from "pdfjs-dist/types/src/display/api";
 // requires a topic so it can extract just the relevant pages instead.
 export const MAX_PDF_PAGES = 1000;
 
+// Dynamically imported (not a static top-level import) so pdfjs-dist is only
+// ever loaded when a PDF is actually being processed. Next.js bundles every
+// "use server" action across the app into shared chunks; a static import
+// here would have pulled pdfjs-dist's module-level `DOMMatrix` reference
+// into that shared bundle and crashed *every* server action in production,
+// not just PDF ones, since @napi-rs/canvas isn't always resolvable in
+// Vercel's serverless runtime.
+async function loadPdfjs() {
+  return import("pdfjs-dist/legacy/build/pdf.mjs");
+}
+
 /** Counts a PDF's pages without rendering anything. Node-only (pulls in
  * pdfjs-dist's legacy build). */
 export async function countPdfPages(bytes: Buffer): Promise<number> {
+  const { getDocument } = await loadPdfjs();
   const loadingTask = getDocument({ data: new Uint8Array(bytes) });
 
   try {
@@ -21,6 +32,7 @@ export async function countPdfPages(bytes: Buffer): Promise<number> {
 
 /** Extracts each page's plain text, index 0 = page 1. Node-only. */
 export async function extractPdfPageTexts(bytes: Buffer): Promise<string[]> {
+  const { getDocument } = await loadPdfjs();
   const loadingTask = getDocument({ data: new Uint8Array(bytes) });
 
   try {
