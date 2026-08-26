@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import type { Prisma } from "@/generated/prisma/client";
+import { DocumentContentError } from "@/lib/ai/document-content";
 import { generateQuizQuestions } from "@/lib/ai/generate-quiz";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -97,7 +98,10 @@ export async function generateQuiz(
     return {
       submission,
       status: "error",
-      message: "Could not generate a quiz. Please try again.",
+      message:
+        error instanceof DocumentContentError
+          ? error.message
+          : "Could not generate a quiz. Please try again.",
       values,
     };
   }

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getAssignmentHelp } from "@/lib/ai/assignment-help";
+import { DocumentContentError } from "@/lib/ai/document-content";
 import { summarizeDocument } from "@/lib/ai/summarize-document";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -712,7 +713,7 @@ export async function finalizeDocumentUpload(
 export async function deleteDocument(
   courseId: string,
   documentId: string,
-): Promise<void> {
+): Promise<{ status: "success" } | { status: "error"; message: string }> {
   const userId = await requireUserId();
 
   const document = await db.document.findFirst({
@@ -720,14 +721,26 @@ export async function deleteDocument(
   });
 
   if (!document) {
-    return;
+    return { status: "error", message: "This document was already deleted." };
   }
 
-  await db.document.delete({ where: { id: document.id } });
-  await deleteUploadedFile(document);
+  try {
+    await db.document.delete({ where: { id: document.id } });
+  } catch (error) {
+    console.error("Failed to delete document", error);
+    return { status: "error", message: "Could not delete this document. Please try again." };
+  }
+
+  // Best-effort: the DB row is already gone, so a storage hiccup here
+  // shouldn't block the user or resurrect the document in the UI.
+  await deleteUploadedFile(document).catch((error) => {
+    console.error("Failed to delete uploaded file", error);
+  });
 
   revalidatePath(`/courses/${courseId}/documents`);
   revalidatePath(`/courses/${courseId}`);
+
+  return { status: "success" };
 }
 
 export async function generateDocumentSummary(
@@ -765,20 +778,19 @@ export async function generateDocumentSummary(
   } catch (error) {
     console.error("Failed to summarize document", error);
 
+    const message =
+      error instanceof DocumentContentError
+        ? error.message
+        : "Could not summarize this file. Please try again.";
+
     await db.document.update({
       where: { id: document.id },
-      data: {
-        summaryError: "Could not summarize this file. Please try again.",
-      },
+      data: { summaryError: message },
     });
 
     revalidatePath(`/courses/${courseId}/documents`);
 
-    return {
-      submission,
-      status: "error",
-      message: "Could not summarize the file. Please try again.",
-    };
+    return { submission, status: "error", message };
   }
 
   revalidatePath(`/courses/${courseId}/documents`);

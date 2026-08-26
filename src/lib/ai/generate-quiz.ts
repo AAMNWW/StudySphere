@@ -74,7 +74,7 @@ export async function generateQuizQuestions(
   options: GenerateQuizOptions,
 ): Promise<GeneratedQuizQuestion[]> {
   const ai = getClient();
-  const parts = await getDocumentsContent(documents);
+  const parts = await getDocumentsContent(documents, { topic: options.topic });
 
   const scope =
     documents.length > 1

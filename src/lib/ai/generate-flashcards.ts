@@ -40,7 +40,7 @@ export async function generateFlashcards(
   options: GenerateFlashcardsOptions = {},
 ): Promise<GeneratedFlashcard[]> {
   const ai = getClient();
-  const parts = await getDocumentsContent(documents);
+  const parts = await getDocumentsContent(documents, { topic: options.topic });
 
   const scope =
     documents.length > 1
