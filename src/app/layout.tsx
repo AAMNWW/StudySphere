@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import Link from "next/link";
@@ -6,7 +5,7 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 
 import { auth } from "@/auth";
-import { IconTile } from "@/components/icon-tile";
+import { Logo } from "@/components/logo";
 import { MainNav } from "@/components/main-nav";
 import { NavUser } from "@/components/nav-user";
 import { NotificationBell } from "@/components/notification-bell";
@@ -46,11 +45,11 @@ export default async function RootLayout({
 }>) {
   const session = await auth();
 
-  // GRAPHITE (the app's original grayscale look) needs no data-palette
-  // override, so the attribute is only set once a student has picked
-  // something else — see the `[data-palette]` blocks in globals.css. Value
-  // is kebab-cased ("SPIDER_MAN" -> "spider-man") to match CSS attribute
-  // selector convention.
+  // GRAPHITE (the default dusty-rose look, styled straight off the app
+  // logo) needs no data-palette override, so the attribute is only set once
+  // a student has picked something else — see the `[data-palette]` blocks
+  // in globals.css. Value is kebab-cased ("SPIDER_MAN" -> "spider-man") to
+  // match CSS attribute selector convention.
   const colorPalette = session?.user?.id
     ? (
         await db.user.findUnique({
@@ -78,9 +77,7 @@ export default async function RootLayout({
             <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
               <div className="flex items-center gap-6">
                 <Link href="/" className="flex items-center gap-2">
-                  <IconTile color="purple" size="sm">
-                    <Sparkles className="size-4" />
-                  </IconTile>
+                  <Logo priority className="h-8 w-auto" />
                   <span className="font-heading text-lg font-bold tracking-tight">
                     StudySphere AI
                   </span>

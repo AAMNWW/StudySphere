@@ -1,7 +1,6 @@
-import { Sparkles } from "lucide-react";
 import Link from "next/link";
 
-import { IconTile } from "@/components/icon-tile";
+import { Logo } from "@/components/logo";
 
 const PRODUCT_LINKS = [
   { href: "/#features", label: "Features" },
@@ -26,9 +25,7 @@ export function SiteFooter() {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-10 sm:flex-row sm:justify-between">
         <div>
           <Link href="/" className="flex items-center gap-2">
-            <IconTile color="purple" size="sm">
-              <Sparkles className="size-4" />
-            </IconTile>
+            <Logo className="h-7 w-auto" />
             <span className="font-heading text-base font-bold tracking-tight">
               StudySphere AI
             </span>

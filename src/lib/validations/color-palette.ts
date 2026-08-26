@@ -16,9 +16,9 @@ export const COLOR_PALETTE_OPTIONS: {
 }[] = [
   {
     value: "GRAPHITE",
-    label: "Graphite",
-    description: "The original, no-frills look.",
-    swatch: ["oklch(0.975 0.01 90)", "oklch(0.205 0 0)", "oklch(0.95 0.012 85)"],
+    label: "Rose",
+    description: "Soft dusty rose — the default look.",
+    swatch: ["oklch(0.975 0.012 350)", "oklch(0.58 0.12 350)", "oklch(0.91 0.035 350)"],
   },
   {
     value: "HELLO_KITTY",
