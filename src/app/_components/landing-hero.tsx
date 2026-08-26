@@ -141,7 +141,7 @@ export function LandingHero() {
             transition={{ delay: 0.5, type: "spring", stiffness: 200, damping: 16 }}
             className="bg-card absolute -bottom-5 -left-5 flex items-center gap-2.5 rounded-2xl border border-black/5 px-4 py-3 shadow-md"
           >
-            <Logo className="h-8 w-auto" />
+            <Logo className="h-8 w-auto" paper="var(--card)" />
             <div className="leading-tight">
               <p className="text-sm font-bold">Academique</p>
               <p className="text-muted-foreground text-xs">Study smarter, together</p>
@@ -223,7 +223,7 @@ export function LandingHero() {
                 viewport={{ once: true }}
                 transition={{ type: "spring", stiffness: 200, damping: 14 }}
               >
-                <Logo className="h-20 w-auto" />
+                <Logo className="h-20 w-auto" paper="var(--secondary)" />
               </motion.div>
               <h2 className="text-xl font-bold tracking-tight text-balance sm:text-2xl">
                 Stop studying across ten different tools.
