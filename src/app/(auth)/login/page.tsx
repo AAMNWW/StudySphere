@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { AuthSplitLayout } from "@/components/auth-split-layout";
 import {
   Card,
   CardContent,
@@ -17,7 +18,11 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-12">
+    <AuthSplitLayout
+      photoSrc="/photos/study-library.jpg"
+      photoAlt="A student studying at a library table surrounded by open books and a laptop"
+      quote="Pick up right where you left off."
+    >
       <Card>
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
@@ -38,6 +43,6 @@ export default function LoginPage() {
           </p>
         </CardContent>
       </Card>
-    </main>
+    </AuthSplitLayout>
   );
 }

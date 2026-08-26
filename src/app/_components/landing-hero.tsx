@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { BookOpen, Sparkles, UploadCloud } from "lucide-react";
 import Link from "next/link";
 
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -13,20 +14,14 @@ import { AssignmentManagementSection } from "./assignment-management-section";
 import { DashboardPreviewSection } from "./dashboard-preview-section";
 import { FaqSection } from "./faq-section";
 import { FeatureShowcase } from "./feature-showcase";
-import { HeroOrbs } from "./hero-orbs";
 import { PrivacySection } from "./privacy-section";
 import { ProblemSection } from "./problem-section";
+import { RealStudentsSection } from "./real-students-section";
 import { MotionPop, Reveal, RevealGroup, RevealItem } from "./reveal";
 import { StudyToolsSection } from "./study-tools-section";
 import { SubjectsFlowSection } from "./subjects-flow-section";
 import { WhySection } from "./why-section";
 import { WorkspaceSection } from "./workspace-section";
-
-// A little more expressive than the shared Button's default variant — used
-// only for the two "Get started free" CTAs, which are the one place on the
-// marketing page that should look unmistakably like the main action.
-const CTA_GRADIENT_CLASS =
-  "border-transparent bg-gradient-to-r from-violet-600 via-fuchsia-500 to-amber-500 text-white shadow-lg shadow-fuchsia-500/30 hover:from-violet-500 hover:via-fuchsia-400 hover:to-amber-400 hover:shadow-xl hover:shadow-fuchsia-500/40";
 
 const STEPS = [
   {
@@ -55,16 +50,15 @@ export function LandingHero() {
   return (
     <main>
       <motion.section
-        className="relative mx-auto flex w-full max-w-4xl flex-col items-center overflow-hidden px-6 py-20 text-center sm:py-28"
+        className="mx-auto flex w-full max-w-4xl flex-col items-center px-6 py-20 text-center sm:py-28"
         initial="hidden"
         animate="visible"
         variants={{ visible: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } } }}
       >
-        <HeroOrbs />
         <motion.span
           variants={HERO_ITEM}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="mb-6 inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700"
+          className="bg-secondary text-secondary-foreground mb-6 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
         >
           <motion.span
             animate={{ rotate: [0, 15, -10, 0] }}
@@ -80,9 +74,7 @@ export function LandingHero() {
           className="text-4xl font-bold tracking-tight text-balance sm:text-5xl"
         >
           Your entire study life,{" "}
-          <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
-            powered by AI.
-          </span>
+          <span className="text-primary">powered by AI.</span>
         </motion.h1>
         <motion.p
           variants={HERO_ITEM}
@@ -101,7 +93,6 @@ export function LandingHero() {
             <Button
               size="lg"
               nativeButton={false}
-              className={CTA_GRADIENT_CLASS}
               render={<Link href="/signup">Get started free</Link>}
             />
           </MotionPop>
@@ -126,6 +117,7 @@ export function LandingHero() {
 
       <ProblemSection />
       <WorkspaceSection />
+      <RealStudentsSection />
 
       <section
         id="features"
@@ -189,13 +181,13 @@ export function LandingHero() {
 
       <section className="px-6 py-16">
         <Reveal className="mx-auto w-full max-w-4xl">
-          <Card className="relative overflow-hidden">
-            <HeroOrbs />
-            <CardContent className="flex flex-col items-center gap-4 py-4 text-center">
+          <Card className="bg-secondary border-transparent">
+            <CardContent className="flex flex-col items-center gap-4 py-6 text-center">
+              <Logo className="h-20 w-auto" />
               <h2 className="text-xl font-bold tracking-tight text-balance sm:text-2xl">
                 Stop studying across ten different tools.
               </h2>
-              <p className="text-muted-foreground max-w-md text-sm">
+              <p className="text-secondary-foreground/70 max-w-md text-sm">
                 Bring your entire study life into one workspace — free to
                 start, in under a minute.
               </p>
@@ -203,7 +195,6 @@ export function LandingHero() {
                 <Button
                   size="lg"
                   nativeButton={false}
-                  className={CTA_GRADIENT_CLASS}
                   render={<Link href="/signup">Get started free</Link>}
                 />
               </MotionPop>
