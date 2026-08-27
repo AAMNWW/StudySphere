@@ -74,17 +74,17 @@ export default async function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <ThemeDecor />
           <header className="border-b">
-            <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-4">
-              <div className="flex items-center gap-6">
+            <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
+              <div className="flex items-center gap-3 sm:gap-6">
                 <Link href="/" className="flex items-center gap-2">
-                  <Logo className="h-11 w-auto" />
-                  <span className="font-heading text-lg font-bold tracking-tight">
+                  <Logo className="h-8 w-auto sm:h-11" />
+                  <span className="font-heading hidden text-lg font-bold tracking-tight sm:inline">
                     Academique
                   </span>
                 </Link>
                 <MainNav />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <NotificationBell />
                 <NavUser />
               </div>

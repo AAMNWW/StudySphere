@@ -658,8 +658,16 @@
     /* Every Tailwind size/spacing utility here is rem-based, so bumping the
        root size scales the whole UI at once — the "everything's a bit
        bigger" feel of a 125% browser zoom, without an actual CSS zoom (which
-       blurs text and breaks scroll/viewport math). */
-    font-size: 125%;
+       blurs text and breaks scroll/viewport math). Only applied from `sm`
+       up: on a phone-width viewport the same 25% inflation is what was
+       shoving fixed-width cards, header controls and grids into each other,
+       since the screen doesn't have the desktop's spare width to absorb it. */
+    font-size: 100%;
+  }
+  @media (min-width: 640px) {
+    html {
+      font-size: 125%;
+    }
   }
 }
 
