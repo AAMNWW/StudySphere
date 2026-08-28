@@ -35,26 +35,44 @@ export function TrustStatsSection() {
           <motion.div
             variants={POP}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="bg-secondary absolute top-0 left-0 flex h-40 w-44 flex-col justify-between rounded-3xl p-5 shadow-sm sm:h-44 sm:w-48"
+            className="absolute top-0 left-0 h-40 w-44 overflow-hidden rounded-3xl shadow-md sm:h-44 sm:w-48"
           >
-            <span className="relative inline-block w-fit">
-              <span className="text-3xl font-bold tracking-tight sm:text-4xl">7</span>
-              <DoodleScribbleCircle className="text-primary/60 pointer-events-none absolute -inset-x-3 -inset-y-2 h-[calc(100%+1rem)] w-[calc(100%+1.5rem)]" />
-            </span>
-            <span className="text-secondary-foreground/70 text-xs font-medium">
+            <Image
+              src="/photos/study-library.jpg"
+              alt="A student studying alone at a library desk"
+              fill
+              sizes="190px"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+            <div className="absolute inset-x-0 top-3 left-4">
+              <span className="relative inline-block w-fit">
+                <span className="text-3xl font-bold tracking-tight text-white sm:text-4xl">7</span>
+                <DoodleScribbleCircle className="text-white/50 pointer-events-none absolute -inset-x-3 -inset-y-2 h-[calc(100%+1rem)] w-[calc(100%+1.5rem)]" />
+              </span>
+            </div>
+            <p className="absolute inset-x-0 bottom-3 px-4 text-xs font-medium text-white/85">
               AI-powered study tools, in one place
-            </span>
+            </p>
           </motion.div>
 
           <motion.div
             variants={POP}
             transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.08 }}
-            className="bg-accent absolute top-4 right-0 flex h-32 w-40 flex-col justify-between rounded-3xl p-4 shadow-sm sm:h-36 sm:w-44"
+            className="absolute top-4 right-0 h-32 w-40 overflow-hidden rounded-3xl shadow-md sm:h-36 sm:w-44"
           >
-            <p className="text-3xl font-bold tracking-tight sm:text-4xl">$0</p>
-            <p className="text-accent-foreground/70 text-xs font-medium">
-              Free to start, always
-            </p>
+            <Image
+              src="/photos/study-outdoor.jpg"
+              alt="Students studying together outside on campus"
+              fill
+              sizes="180px"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-4">
+              <p className="text-lg font-bold text-white">$0</p>
+              <p className="text-xs text-white/80">Free to start, always</p>
+            </div>
           </motion.div>
 
           <motion.div
