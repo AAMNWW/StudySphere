@@ -12,8 +12,25 @@ export const MAX_PDF_PAGES = 1000;
 // into that shared bundle and crashed *every* server action in production,
 // not just PDF ones, since @napi-rs/canvas isn't always resolvable in
 // Vercel's serverless runtime.
+let pdfjs: typeof import("pdfjs-dist/legacy/build/pdf.mjs") | undefined;
+
 async function loadPdfjs() {
-  return import("pdfjs-dist/legacy/build/pdf.mjs");
+  if (!pdfjs) {
+    pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    // Node has no native Worker for pdfjs-dist to use, so it falls back to
+    // running the worker code on the main thread via a dynamic
+    // `import(GlobalWorkerOptions.workerSrc)` — which defaults to the
+    // relative specifier "./pdf.worker.mjs". Next.js's bundler (Turbopack in
+    // dev, webpack in prod) rewrites that relative import's base to the
+    // *compiled chunk's* location instead of pdfjs-dist's real package
+    // directory, so the default fails with "Cannot find module
+    // '.next/.../pdf.worker.mjs'". Pointing it at the bare package
+    // specifier instead lets Node's normal module resolution find the real
+    // file in node_modules regardless of where the bundler placed the chunk
+    // that's doing the importing.
+    pdfjs.GlobalWorkerOptions.workerSrc = "pdfjs-dist/legacy/build/pdf.worker.mjs";
+  }
+  return pdfjs;
 }
 
 /** Counts a PDF's pages without rendering anything. Node-only (pulls in
