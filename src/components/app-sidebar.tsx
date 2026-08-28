@@ -13,6 +13,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { getTileColorClasses } from "@/components/icon-tile";
+import { MobileSectionNav } from "@/components/mobile-section-nav";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -66,19 +67,27 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
     );
   }
 
-  return (
-    <nav
-      aria-label="Main"
-      className="bg-sidebar border-sidebar-border flex shrink-0 flex-col gap-1 rounded-2xl border p-3 md:w-56"
-    >
-      <div className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
-        {NAV_ITEMS.map(renderItem)}
-      </div>
+  const allItems = [...NAV_ITEMS, SETTINGS_ITEM, ...(isAdmin ? [ADMIN_ITEM] : [])];
 
-      <div className="mt-2 flex gap-1 border-t pt-2 md:flex-col">
-        {renderItem(SETTINGS_ITEM)}
-        {isAdmin ? renderItem(ADMIN_ITEM) : null}
-      </div>
-    </nav>
+  return (
+    <>
+      <MobileSectionNav
+        items={allItems.map((item) => ({
+          ...item,
+          active: pathname === item.href,
+        }))}
+      />
+      <nav
+        aria-label="Main"
+        className="bg-sidebar border-sidebar-border hidden shrink-0 flex-col gap-1 rounded-2xl border p-3 md:flex md:w-56"
+      >
+        <div className="flex flex-col gap-1">{NAV_ITEMS.map(renderItem)}</div>
+
+        <div className="mt-2 flex flex-col gap-1 border-t pt-2">
+          {renderItem(SETTINGS_ITEM)}
+          {isAdmin ? renderItem(ADMIN_ITEM) : null}
+        </div>
+      </nav>
+    </>
   );
 }

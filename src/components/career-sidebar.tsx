@@ -15,6 +15,7 @@ import { usePathname } from "next/navigation";
 
 import { BackLink } from "@/components/back-link";
 import { getTileColorClasses, type IconTileColor } from "@/components/icon-tile";
+import { MobileSectionNav } from "@/components/mobile-section-nav";
 import { cn } from "@/lib/utils";
 
 export interface CareerSidebarCounts {
@@ -76,55 +77,70 @@ export function CareerSidebar({ counts }: { counts: CareerSidebarCounts }) {
   const pathname = usePathname();
 
   return (
-    <nav
-      aria-label="Career sections"
-      className="bg-sidebar border-sidebar-border flex shrink-0 flex-col gap-1 rounded-2xl border p-3 md:w-56"
-    >
-      <div className="px-1 pt-1 pb-3">
-        <BackLink
-          href="/"
-          className="text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground -ml-1.5 py-1 pr-2 pl-1.5 text-xs"
-        >
+    <>
+      <div className="md:hidden">
+        <BackLink href="/" className="text-muted-foreground hover:text-foreground mb-2 py-1 text-xs">
           Back to dashboard
         </BackLink>
-        <p className="text-sidebar-foreground mt-1 font-heading font-bold">Career</p>
+        <MobileSectionNav
+          items={NAV_ITEMS.map((item) => ({
+            ...item,
+            active: isActive(pathname, item),
+            count: item.countKey ? counts[item.countKey] : undefined,
+          }))}
+        />
       </div>
 
-      <div className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(pathname, item);
-          const count = item.countKey ? counts[item.countKey] : undefined;
+      <nav
+        aria-label="Career sections"
+        className="bg-sidebar border-sidebar-border hidden shrink-0 flex-col gap-1 rounded-2xl border p-3 md:flex md:w-56"
+      >
+        <div className="px-1 pt-1 pb-3">
+          <BackLink
+            href="/"
+            className="text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground -ml-1.5 py-1 pr-2 pl-1.5 text-xs"
+          >
+            Back to dashboard
+          </BackLink>
+          <p className="text-sidebar-foreground mt-1 font-heading font-bold">Career</p>
+        </div>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
-                active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-              )}
-            >
-              <span
+        <div className="flex flex-col gap-1">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(pathname, item);
+            const count = item.countKey ? counts[item.countKey] : undefined;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
                 className={cn(
-                  "flex size-6 shrink-0 items-center justify-center rounded-lg",
-                  getTileColorClasses(item.color),
+                  "flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
+                  active
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
                 )}
               >
-                <Icon className="size-3.5" />
-              </span>
-              {item.label}
-              {count !== undefined && count > 0 ? (
-                <span className="text-sidebar-foreground/50 ml-auto text-xs tabular-nums">
-                  {count}
+                <span
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-lg",
+                    getTileColorClasses(item.color),
+                  )}
+                >
+                  <Icon className="size-3.5" />
                 </span>
-              ) : null}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+                {item.label}
+                {count !== undefined && count > 0 ? (
+                  <span className="text-sidebar-foreground/50 ml-auto text-xs tabular-nums">
+                    {count}
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }

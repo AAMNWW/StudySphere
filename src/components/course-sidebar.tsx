@@ -21,6 +21,7 @@ import { usePathname } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { CourseProgressBar } from "@/components/course-progress-bar";
 import { getTileColorClasses, type IconTileColor } from "@/components/icon-tile";
+import { MobileSectionNav } from "@/components/mobile-section-nav";
 import { cn } from "@/lib/utils";
 
 export interface CourseSidebarCounts {
@@ -112,9 +113,10 @@ function NavLink({
 /**
  * Persistent left nav for everything inside one course, so switching
  * features (Quiz, Flashcards, Chat, ...) is a single click from anywhere
- * instead of a trip back to the course root. Vertical list on md+, a
- * horizontally scrollable pill row on narrow screens (same shell, same
- * links — just a different flex direction).
+ * instead of a trip back to the course root. Vertical list on md+; below
+ * that, 13 destinations is too many to scroll through sideways as pills, so
+ * it collapses into a single "current section" dropdown (MobileSectionNav)
+ * instead.
  */
 export function CourseSidebar({
   courseId,
@@ -128,48 +130,72 @@ export function CourseSidebar({
   progress: { completed: number; total: number };
 }) {
   const pathname = usePathname();
+  const allItems = [...NAV_ITEMS, SETTINGS_ITEM];
 
   return (
-    <nav
-      aria-label="Course sections"
-      className="bg-sidebar border-sidebar-border flex shrink-0 flex-col gap-1 rounded-2xl border p-3 md:w-56"
-    >
-      <div className="px-1 pt-1 pb-3">
+    <>
+      <div className="md:hidden">
         <BackLink
           href="/courses"
-          className="text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground -ml-1.5 py-1 pr-2 pl-1.5 text-xs"
+          className="text-muted-foreground hover:text-foreground py-1 text-xs"
         >
           Back to courses
         </BackLink>
-        <p className="text-sidebar-foreground mt-1 truncate font-heading font-bold" title={courseTitle}>
+        <p className="mt-1 truncate font-heading font-bold" title={courseTitle}>
           {courseTitle}
         </p>
-        <CourseProgressBar
-          completed={progress.completed}
-          total={progress.total}
-          className="mt-3"
+        <CourseProgressBar completed={progress.completed} total={progress.total} className="mt-3 mb-3" />
+        <MobileSectionNav
+          items={allItems.map((item) => ({
+            ...item,
+            href: item.href(courseId),
+            active: isActive(pathname, item, courseId),
+            count: item.countKey ? counts[item.countKey] : undefined,
+          }))}
         />
       </div>
 
-      <div className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.label}
-            item={item}
-            courseId={courseId}
-            active={isActive(pathname, item, courseId)}
-            count={item.countKey ? counts[item.countKey] : undefined}
+      <nav
+        aria-label="Course sections"
+        className="bg-sidebar border-sidebar-border hidden shrink-0 flex-col gap-1 rounded-2xl border p-3 md:flex md:w-56"
+      >
+        <div className="px-1 pt-1 pb-3">
+          <BackLink
+            href="/courses"
+            className="text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground -ml-1.5 py-1 pr-2 pl-1.5 text-xs"
+          >
+            Back to courses
+          </BackLink>
+          <p className="text-sidebar-foreground mt-1 truncate font-heading font-bold" title={courseTitle}>
+            {courseTitle}
+          </p>
+          <CourseProgressBar
+            completed={progress.completed}
+            total={progress.total}
+            className="mt-3"
           />
-        ))}
-      </div>
+        </div>
 
-      <div className="mt-2 border-t pt-2">
-        <NavLink
-          item={SETTINGS_ITEM}
-          courseId={courseId}
-          active={isActive(pathname, SETTINGS_ITEM, courseId)}
-        />
-      </div>
-    </nav>
+        <div className="flex flex-col gap-1">
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.label}
+              item={item}
+              courseId={courseId}
+              active={isActive(pathname, item, courseId)}
+              count={item.countKey ? counts[item.countKey] : undefined}
+            />
+          ))}
+        </div>
+
+        <div className="mt-2 border-t pt-2">
+          <NavLink
+            item={SETTINGS_ITEM}
+            courseId={courseId}
+            active={isActive(pathname, SETTINGS_ITEM, courseId)}
+          />
+        </div>
+      </nav>
+    </>
   );
 }
