@@ -75,7 +75,7 @@ export default async function RootLayout({
           <ThemeDecor />
           <header className="border-b">
             <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
-              <div className="flex items-center gap-3 sm:gap-6">
+              <div className="flex items-center gap-3 sm:gap-5">
                 <Link href="/" className="flex items-center gap-2">
                   <Logo className="h-8 w-auto sm:h-11" />
                   <span className="font-heading hidden text-lg font-bold tracking-tight sm:inline">

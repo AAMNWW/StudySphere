@@ -49,22 +49,12 @@ export function TrustStatsSection() {
           <motion.div
             variants={POP}
             transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.08 }}
-            className="absolute top-4 right-0 w-40 overflow-hidden rounded-3xl shadow-md sm:w-44"
+            className="bg-accent absolute top-4 right-0 flex h-32 w-40 flex-col justify-between rounded-3xl p-4 shadow-sm sm:h-36 sm:w-44"
           >
-            <div className="relative aspect-square">
-              <Image
-                src="/photos/study-outdoor.jpg"
-                alt="Students studying together outside on campus"
-                fill
-                sizes="180px"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent" />
-            </div>
-            <div className="absolute inset-x-0 bottom-0 p-3">
-              <p className="text-lg font-bold text-white">$0</p>
-              <p className="text-xs text-white/80">Free to start, always</p>
-            </div>
+            <p className="text-3xl font-bold tracking-tight sm:text-4xl">$0</p>
+            <p className="text-accent-foreground/70 text-xs font-medium">
+              Free to start, always
+            </p>
           </motion.div>
 
           <motion.div

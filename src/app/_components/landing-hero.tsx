@@ -48,7 +48,7 @@ export function LandingHero() {
   return (
     <main>
       <motion.section
-        className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 py-20 sm:py-28 lg:grid-cols-2"
+        className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 py-20 sm:py-28 lg:grid-cols-2 lg:items-start"
         initial="hidden"
         animate="visible"
         variants={{ visible: { transition: { staggerChildren: 0.12, delayChildren: 0.05 } } }}
