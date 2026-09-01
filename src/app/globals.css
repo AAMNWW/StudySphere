@@ -652,9 +652,16 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Guards against the page itself panning sideways on mobile when some
+       descendant (a fixed-width element, an unwrapped flex row, decorative
+       art) is briefly wider than the viewport — those elements should
+       scroll internally (see .decor-web, overflow-x-auto containers), not
+       drag the whole page. */
+    overflow-x: hidden;
   }
   html {
     @apply font-sans;
+    overflow-x: hidden;
     /* Every Tailwind size/spacing utility here is rem-based, so bumping the
        root size scales the whole UI at once — the "everything's a bit
        bigger" feel of a 125% browser zoom, without an actual CSS zoom (which

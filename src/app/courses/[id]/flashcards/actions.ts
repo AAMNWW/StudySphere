@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { DocumentContentError } from "@/lib/ai/document-content";
+import { isDocumentContentError } from "@/lib/ai/document-content";
 import { generateFlashcards } from "@/lib/ai/generate-flashcards";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -93,10 +93,9 @@ export async function generateFlashcardSet(
     return {
       submission,
       status: "error",
-      message:
-        error instanceof DocumentContentError
-          ? error.message
-          : "Could not generate flashcards. Please try again.",
+      message: isDocumentContentError(error)
+        ? error.message
+        : "Could not generate flashcards. Please try again.",
       values,
     };
   }

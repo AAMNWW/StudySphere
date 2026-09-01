@@ -23,7 +23,22 @@ export interface SourceDocument {
  * user verbatim (too many pages, no pages matched a topic) — as opposed to
  * a raw Gemini/network error, which callers should mask with a generic
  * message instead of leaking upstream error text. */
-export class DocumentContentError extends Error {}
+export class DocumentContentError extends Error {
+  constructor(message: string) {
+    super(message);
+    // Set explicitly (rather than relying on the class name) so callers can
+    // check `error.name` instead of `instanceof` — Next.js bundles each
+    // Server Action's module graph somewhat independently, and this repo has
+    // already hit cases (see pdf.ts) where that split makes two "copies" of
+    // the same class not `instanceof`-equal in production. A string survives
+    // that; a class reference doesn't.
+    this.name = "DocumentContentError";
+  }
+}
+
+export function isDocumentContentError(error: unknown): error is DocumentContentError {
+  return error instanceof Error && error.name === "DocumentContentError";
+}
 
 export async function getDocumentContent(
   bytes: Buffer,

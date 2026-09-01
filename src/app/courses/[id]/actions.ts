@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { getAssignmentHelp } from "@/lib/ai/assignment-help";
-import { DocumentContentError } from "@/lib/ai/document-content";
+import { isDocumentContentError } from "@/lib/ai/document-content";
 import { summarizeDocument } from "@/lib/ai/summarize-document";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -778,10 +778,9 @@ export async function generateDocumentSummary(
   } catch (error) {
     console.error("Failed to summarize document", error);
 
-    const message =
-      error instanceof DocumentContentError
-        ? error.message
-        : "Could not summarize this file. Please try again.";
+    const message = isDocumentContentError(error)
+      ? error.message
+      : "Could not summarize this file. Please try again.";
 
     await db.document.update({
       where: { id: document.id },
