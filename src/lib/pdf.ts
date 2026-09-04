@@ -1,3 +1,4 @@
+import DOMMatrixPolyfill from "@thednp/dommatrix";
 import type { TextItem } from "pdfjs-dist/types/src/display/api";
 
 // Gemini's document understanding caps out at 1000 pages per PDF regardless
@@ -10,12 +11,27 @@ export const MAX_PDF_PAGES = 1000;
 // "use server" action across the app into shared chunks; a static import
 // here would have pulled pdfjs-dist's module-level `DOMMatrix` reference
 // into that shared bundle and crashed *every* server action in production,
-// not just PDF ones, since @napi-rs/canvas isn't always resolvable in
-// Vercel's serverless runtime.
+// not just PDF ones.
 let pdfjs: typeof import("pdfjs-dist/legacy/build/pdf.mjs") | undefined;
 
 async function loadPdfjs() {
   if (!pdfjs) {
+    // pdfjs-dist's Node build touches `new DOMMatrix()` at module scope
+    // (unconditionally, even for the page-count/text-extraction paths below
+    // that never render anything) and otherwise falls back to getting one
+    // from the optional `@napi-rs/canvas` — which repeatedly proved
+    // unreliable to deploy on Vercel: it's a native binary, and Next's
+    // bundler breaks its runtime binary resolution even with
+    // serverExternalPackages, so it silently fails to load in the deployed
+    // function ("Cannot find module '@napi-rs/canvas'") and pdfjs then
+    // crashes with "DOMMatrix is not defined". Polyfilling with a pure-JS
+    // implementation here sidesteps native-binary deployment entirely —
+    // pdfjs only needs a spec-compliant constructor, not real canvas
+    // rendering, for anything this app calls.
+    if (typeof globalThis.DOMMatrix === "undefined") {
+      (globalThis as unknown as { DOMMatrix: typeof DOMMatrixPolyfill }).DOMMatrix =
+        DOMMatrixPolyfill;
+    }
     pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
     // Node has no native Worker for pdfjs-dist to use, so it falls back to
     // running the worker code on the main thread via a dynamic
