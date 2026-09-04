@@ -3,6 +3,7 @@
 import crypto from "node:crypto";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 
 import { getAssignmentHelp } from "@/lib/ai/assignment-help";
@@ -10,6 +11,7 @@ import { isDocumentContentError } from "@/lib/ai/document-content";
 import { summarizeDocument } from "@/lib/ai/summarize-document";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { indexDocument } from "@/lib/rag/index-document";
 import {
   ALLOWED_FILE_TYPES,
   deleteUploadedFile,
@@ -643,7 +645,7 @@ export async function uploadDocument(
   try {
     const { storedName, storageUrl } = await saveUploadedFile(courseId, file);
 
-    await db.document.create({
+    const document = await db.document.create({
       data: {
         courseId,
         fileName: file.name,
@@ -653,6 +655,8 @@ export async function uploadDocument(
         sizeBytes: file.size,
       },
     });
+
+    autoIndexAfterResponse(document.id);
   } catch (error) {
     console.error("Failed to save uploaded file", error);
     return {
@@ -666,6 +670,21 @@ export async function uploadDocument(
   revalidatePath(`/courses/${courseId}`);
 
   return { submission, status: "success" };
+}
+
+/** Indexes a freshly-uploaded document for RAG search ("ask across my whole
+ * course") without making the uploader wait — it used to require a separate
+ * manual "Index for search" click buried in the document's own page, which
+ * meant a course-wide chat silently had nothing to search until someone
+ * found that button. Failure here shouldn't fail the upload itself (the
+ * document still exists and can be manually re-indexed from its page), so
+ * it's logged rather than surfaced. */
+function autoIndexAfterResponse(documentId: string): void {
+  after(() =>
+    indexDocument(documentId).catch((error) => {
+      console.error("Failed to auto-index uploaded document", error);
+    }),
+  );
 }
 
 /** Records a document whose bytes were already uploaded directly from the
@@ -689,7 +708,7 @@ export async function finalizeDocumentUpload(
   }
 
   try {
-    await db.document.create({
+    const document = await db.document.create({
       data: {
         courseId,
         fileName: file.fileName,
@@ -699,6 +718,8 @@ export async function finalizeDocumentUpload(
         sizeBytes: file.sizeBytes,
       },
     });
+
+    autoIndexAfterResponse(document.id);
   } catch (error) {
     console.error("Failed to save uploaded file", error);
     return { status: "error", message: "Could not save the file. Please try again." };

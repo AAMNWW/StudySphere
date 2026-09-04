@@ -65,21 +65,37 @@ export async function POST(
       // course (src/lib/rag/retrieve.ts), instead of reading whole
       // documents the user picked ahead of time.
       const chunks = await retrieveRelevantChunks(courseId, message);
-      const documentIds = [...new Set(chunks.map((chunk) => chunk.documentId))];
-      const documents = await db.document.findMany({
-        where: { id: { in: documentIds } },
-        select: { id: true, fileName: true },
-      });
-      const fileNameByDocumentId = new Map(documents.map((d) => [d.id, d.fileName]));
 
-      textStream = answerFromChunksStream(
-        chunks.map((chunk) => ({
-          content: chunk.content,
-          fileName: fileNameByDocumentId.get(chunk.documentId) ?? "document",
-          pageNumber: chunk.pageNumber,
-        })),
-        message,
-      );
+      if (chunks.length === 0) {
+        // retrieveRelevantChunks has no similarity threshold — an empty
+        // result means the course has no indexed chunks at all yet, not
+        // that nothing matched. Uploads now auto-index in the background
+        // (src/app/courses/[id]/actions.ts), so this is almost always a
+        // "still indexing" race rather than a real dead end; surface that
+        // instead of forwarding an empty context to Gemini, which used to
+        // come back with a confusing "no source excerpts were provided".
+        textStream = (async function* () {
+          yield "Your documents for this course haven't finished indexing for search yet " +
+            "(this usually takes a few seconds after upload). Try again in a moment — or " +
+            "open a document's page and use \"Index for search\" if it's been a while.";
+        })();
+      } else {
+        const documentIds = [...new Set(chunks.map((chunk) => chunk.documentId))];
+        const documents = await db.document.findMany({
+          where: { id: { in: documentIds } },
+          select: { id: true, fileName: true },
+        });
+        const fileNameByDocumentId = new Map(documents.map((d) => [d.id, d.fileName]));
+
+        textStream = answerFromChunksStream(
+          chunks.map((chunk) => ({
+            content: chunk.content,
+            fileName: fileNameByDocumentId.get(chunk.documentId) ?? "document",
+            pageNumber: chunk.pageNumber,
+          })),
+          message,
+        );
+      }
     } else {
       const sourceDocumentIds = thread.documentId
         ? [thread.documentId]
