@@ -2,7 +2,7 @@ import { createUserContent, Type } from "@google/genai";
 
 import type { QuizDifficulty } from "@/generated/prisma/enums";
 
-import { getClient, MODEL } from "./client";
+import { getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentsContent, type SourceDocument } from "./document-content";
 import { requireText } from "./summarize-document";
 
@@ -92,11 +92,13 @@ export async function generateQuizQuestions(
     `Each question needs exactly ${OPTION_COUNT} options with exactly one ` +
     `correct answer.`;
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: createUserContent([prompt, ...parts]),
-    config: { responseMimeType: "application/json", responseSchema: QUIZ_SCHEMA },
-  });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({
+      model: MODEL,
+      contents: createUserContent([prompt, ...parts]),
+      config: { responseMimeType: "application/json", responseSchema: QUIZ_SCHEMA },
+    }),
+  );
 
   const parsed = JSON.parse(requireText(response)) as {
     questions: GeneratedQuizQuestion[];

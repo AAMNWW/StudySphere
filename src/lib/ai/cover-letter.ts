@@ -1,6 +1,6 @@
 import { createUserContent } from "@google/genai";
 
-import { getClient, MODEL } from "./client";
+import { getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentContent } from "./document-content";
 import { requireText } from "./summarize-document";
 
@@ -32,6 +32,8 @@ export async function generateCoverLetter(
       ? createUserContent([prompt, resumeContent.part])
       : `${prompt}\n\nResume:\n${resumeContent.text}`;
 
-  const response = await ai.models.generateContent({ model: MODEL, contents });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({ model: MODEL, contents }),
+  );
   return requireText(response);
 }

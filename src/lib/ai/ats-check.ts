@@ -1,6 +1,6 @@
 import { createUserContent, Type } from "@google/genai";
 
-import { getClient, MODEL } from "./client";
+import { getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentContent } from "./document-content";
 import { requireText } from "./summarize-document";
 
@@ -61,11 +61,13 @@ export async function checkAtsMatch(
       ? createUserContent([prompt, resumeContent.part])
       : `${prompt}\n\nResume:\n${resumeContent.text}`;
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents,
-    config: { responseMimeType: "application/json", responseSchema: ATS_SCHEMA },
-  });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({
+      model: MODEL,
+      contents,
+      config: { responseMimeType: "application/json", responseSchema: ATS_SCHEMA },
+    }),
+  );
 
   const parsed = JSON.parse(requireText(response)) as AtsCheckResult;
 

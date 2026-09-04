@@ -1,4 +1,4 @@
-import { getClient, MODEL } from "./client";
+import { getClient, MODEL, withGeminiRetry } from "./client";
 import { requireText } from "./summarize-document";
 
 /**
@@ -20,6 +20,8 @@ export async function getAssignmentHelp(
     "actionable steps as a plain numbered list. Don't do the assignment for " +
     "them; help them see how to approach it.";
 
-  const response = await ai.models.generateContent({ model: MODEL, contents: prompt });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({ model: MODEL, contents: prompt }),
+  );
   return requireText(response);
 }

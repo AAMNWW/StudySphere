@@ -1,6 +1,6 @@
 import { createUserContent, type Content, type Part } from "@google/genai";
 
-import { getClient, MODEL } from "./client";
+import { getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentsContent, type SourceDocument } from "./document-content";
 
 export interface ChatTurn {
@@ -58,7 +58,9 @@ export async function* answerCareerChatMessageStream(
     createUserContent([question]),
   ];
 
-  const stream = await ai.models.generateContentStream({ model: MODEL, contents });
+  const stream = await withGeminiRetry(() =>
+    ai.models.generateContentStream({ model: MODEL, contents }),
+  );
 
   for await (const chunk of stream) {
     if (chunk.text) yield chunk.text;

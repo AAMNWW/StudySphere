@@ -1,6 +1,6 @@
 import { createUserContent, Type } from "@google/genai";
 
-import { getClient, MODEL } from "./client";
+import { getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentsContent, type SourceDocument } from "./document-content";
 import { requireText } from "./summarize-document";
 
@@ -56,11 +56,13 @@ export async function generateFlashcards(
     `${topicClause} Each card has a short term or question on the front and ` +
     `its definition or answer on the back.`;
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: createUserContent([prompt, ...parts]),
-    config: { responseMimeType: "application/json", responseSchema: FLASHCARD_SCHEMA },
-  });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({
+      model: MODEL,
+      contents: createUserContent([prompt, ...parts]),
+      config: { responseMimeType: "application/json", responseSchema: FLASHCARD_SCHEMA },
+    }),
+  );
 
   const parsed = JSON.parse(requireText(response)) as {
     cards: GeneratedFlashcard[];

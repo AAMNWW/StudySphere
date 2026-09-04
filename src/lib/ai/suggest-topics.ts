@@ -1,6 +1,6 @@
 import { createUserContent, Type } from "@google/genai";
 
-import { getClient, MODEL } from "./client";
+import { getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentsContent, type SourceDocument } from "./document-content";
 import { requireText } from "./summarize-document";
 
@@ -55,11 +55,13 @@ export async function suggestCourseTopics(
     "topics. Each topic needs a short title and a one-to-two sentence " +
     "description of what to focus on and why it matters.";
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: createUserContent([prompt, ...parts]),
-    config: { responseMimeType: "application/json", responseSchema: TOPIC_SCHEMA },
-  });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({
+      model: MODEL,
+      contents: createUserContent([prompt, ...parts]),
+      config: { responseMimeType: "application/json", responseSchema: TOPIC_SCHEMA },
+    }),
+  );
 
   const parsed = JSON.parse(requireText(response)) as { topics: SuggestedTopic[] };
 

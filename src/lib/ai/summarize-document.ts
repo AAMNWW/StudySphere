@@ -1,6 +1,6 @@
 import { createUserContent, type GoogleGenAI } from "@google/genai";
 
-import { getClient, MODEL } from "./client";
+import { getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentContent } from "./document-content";
 
 const SUMMARY_PROMPT =
@@ -21,7 +21,9 @@ export async function summarizeDocument(
       ? createUserContent([SUMMARY_PROMPT, document.part])
       : `${SUMMARY_PROMPT}\n\n---\n\n${document.text}`;
 
-  const response = await ai.models.generateContent({ model: MODEL, contents });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({ model: MODEL, contents }),
+  );
   return requireText(response);
 }
 

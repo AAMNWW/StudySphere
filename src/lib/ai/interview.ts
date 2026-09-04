@@ -1,6 +1,6 @@
 import { createUserContent, type Content, type Part } from "@google/genai";
 
-import { getClient, MODEL } from "./client";
+import { getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentsContent, type SourceDocument } from "./document-content";
 import { requireText } from "./summarize-document";
 
@@ -60,7 +60,9 @@ export async function* answerInterviewMessageStream(
     createUserContent([candidateMessage]),
   ];
 
-  const stream = await ai.models.generateContentStream({ model: MODEL, contents });
+  const stream = await withGeminiRetry(() =>
+    ai.models.generateContentStream({ model: MODEL, contents }),
+  );
 
   for await (const chunk of stream) {
     if (chunk.text) yield chunk.text;
@@ -93,7 +95,9 @@ export async function startInterview(
     createUserContent(["Please begin the interview with your greeting and first question."]),
   ];
 
-  const response = await ai.models.generateContent({ model: MODEL, contents });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({ model: MODEL, contents }),
+  );
   return requireText(response);
 }
 
@@ -121,6 +125,8 @@ export async function generateInterviewFeedback(
     "honest. Keep it to a few short paragraphs.\n\nTranscript:\n" +
     transcriptText;
 
-  const response = await ai.models.generateContent({ model: MODEL, contents: prompt });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({ model: MODEL, contents: prompt }),
+  );
   return requireText(response);
 }

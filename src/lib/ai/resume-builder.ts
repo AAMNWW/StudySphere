@@ -2,7 +2,7 @@ import { Type } from "@google/genai";
 
 import { EMPTY_RESUME_DRAFT, type ResumeDraft } from "@/lib/validations/resume-builder";
 
-import { getClient, MODEL } from "./client";
+import { getClient, MODEL, withGeminiRetry } from "./client";
 import { requireText } from "./summarize-document";
 
 const DRAFT_SCHEMA = {
@@ -77,11 +77,13 @@ export async function draftResumeContent(
     'empty ("" or []) rather than guessing.' +
     `\n\nBackground:\n${background}`;
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: prompt,
-    config: { responseMimeType: "application/json", responseSchema: DRAFT_SCHEMA },
-  });
+  const response = await withGeminiRetry(() =>
+    ai.models.generateContent({
+      model: MODEL,
+      contents: prompt,
+      config: { responseMimeType: "application/json", responseSchema: DRAFT_SCHEMA },
+    }),
+  );
 
   const parsed = JSON.parse(requireText(response)) as Partial<ResumeDraft>;
 
