@@ -1,0 +1,237 @@
+import { FileText, GraduationCap, ListTodo, StickyNote } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { IconTile } from "@/components/icon-tile";
+import { Card, CardContent } from "@/components/ui/card";
+import { requireUserId } from "@/lib/auth";
+import { countdownLabel, daysUntil } from "@/lib/days-until";
+import { db } from "@/lib/db";
+import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
+
+import { AssignmentCard } from "./_components/assignment-card";
+import { StudyTimer } from "./_components/study-timer";
+
+const examDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeZone: "UTC",
+});
+
+const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeZone: "UTC",
+});
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/courses/[id]">): Promise<Metadata> {
+  const userId = await requireUserId();
+  const { id } = await params;
+  const course = await db.course.findFirst({
+    where: { id, userId },
+    select: { title: true },
+  });
+
+  return { title: course?.title ?? "Course not found" };
+}
+
+export default async function CoursePage({
+  params,
+}: PageProps<"/courses/[id]">) {
+  const userId = await requireUserId();
+  const { id } = await params;
+  const course = await db.course.findFirst({ where: { id, userId } });
+
+  if (!course) {
+    notFound();
+  }
+
+  const [dueSoon, recentDocuments, recentNotes, activeStudySession, nextExam] = await Promise.all([
+    db.assignment.findMany({
+      where: { courseId: course.id, completed: false },
+      orderBy: { dueDate: { sort: "asc", nulls: "last" } },
+      take: 5,
+    }),
+    db.document.findMany({
+      where: { courseId: course.id },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+      select: { id: true, fileName: true, createdAt: true },
+    }),
+    db.note.findMany({
+      where: { courseId: course.id },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+      select: { id: true, title: true, createdAt: true },
+    }),
+    db.studySession.findFirst({
+      where: { userId, courseId: course.id, endedAt: null },
+      select: { id: true, startedAt: true },
+    }),
+    db.exam.findFirst({
+      where: { courseId: course.id, examDate: { gte: new Date() } },
+      orderBy: { examDate: "asc" },
+      select: { id: true, title: true, examDate: true },
+    }),
+  ]);
+
+  return (
+    <main>
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight">{course.title}</h1>
+        {course.description ? (
+          <p className="text-muted-foreground mt-2 text-sm">{course.description}</p>
+        ) : null}
+      </header>
+
+      <div className="mb-8 grid gap-4 sm:grid-cols-2">
+        <StudyTimer
+          courseId={course.id}
+          activeSession={
+            activeStudySession
+              ? { id: activeStudySession.id, startedAt: activeStudySession.startedAt.toISOString() }
+              : null
+          }
+        />
+        {nextExam ? (
+          <Link href={`/courses/${course.id}/exams`}>
+            <Card className="h-full transition-colors hover:bg-muted/50">
+              <CardContent className="flex items-center gap-3">
+                <IconTile color="red">
+                  <GraduationCap className="size-5" />
+                </IconTile>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">Next exam: {nextExam.title}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {examDateFormatter.format(nextExam.examDate)} ·{" "}
+                    {countdownLabel(daysUntil(nextExam.examDate))}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ) : null}
+      </div>
+
+      <section aria-labelledby="due-soon-heading" className="mb-10">
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <h2 id="due-soon-heading" className="flex items-center gap-2 text-lg font-bold">
+            <IconTile color="yellow" size="sm">
+              <ListTodo className="size-4" />
+            </IconTile>
+            Due soon
+          </h2>
+          <Link
+            href={`/courses/${course.id}/assignments`}
+            className="text-muted-foreground text-sm hover:underline"
+          >
+            See all assignments
+          </Link>
+        </div>
+
+        {dueSoon.length === 0 ? (
+          <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
+            Nothing due — add an assignment to start tracking deadlines.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {dueSoon.map((assignment) => (
+              <li key={assignment.id}>
+                <AssignmentCard
+                  courseId={course.id}
+                  assignment={assignment}
+                  isOverdue={isAssignmentOverdue(assignment)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <div className="grid gap-8 sm:grid-cols-2">
+        <section aria-labelledby="recent-documents-heading">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <h2 id="recent-documents-heading" className="flex items-center gap-2 text-lg font-bold">
+              <IconTile color="blue" size="sm">
+                <FileText className="size-4" />
+              </IconTile>
+              Documents
+            </h2>
+            <Link
+              href={`/courses/${course.id}/documents`}
+              className="text-muted-foreground text-sm hover:underline"
+            >
+              See all
+            </Link>
+          </div>
+
+          {recentDocuments.length === 0 ? (
+            <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
+              No documents yet.
+            </p>
+          ) : (
+            <Card>
+              <CardContent>
+                <ul className="divide-y">
+                  {recentDocuments.map((document) => (
+                    <li
+                      key={document.id}
+                      className="flex items-center justify-between gap-2 py-2.5 text-sm first:pt-0 last:pb-0"
+                    >
+                      <span className="truncate">{document.fileName}</span>
+                      <span className="text-muted-foreground shrink-0 text-xs">
+                        {dateFormatter.format(document.createdAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </section>
+
+        <section aria-labelledby="recent-notes-heading">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <h2 id="recent-notes-heading" className="flex items-center gap-2 text-lg font-bold">
+              <IconTile color="yellow" size="sm">
+                <StickyNote className="size-4" />
+              </IconTile>
+              Notes
+            </h2>
+            <Link
+              href={`/courses/${course.id}/notes`}
+              className="text-muted-foreground text-sm hover:underline"
+            >
+              See all
+            </Link>
+          </div>
+
+          {recentNotes.length === 0 ? (
+            <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
+              No notes yet.
+            </p>
+          ) : (
+            <Card>
+              <CardContent>
+                <ul className="divide-y">
+                  {recentNotes.map((note) => (
+                    <li
+                      key={note.id}
+                      className="flex items-center justify-between gap-2 py-2.5 text-sm first:pt-0 last:pb-0"
+                    >
+                      <span className="truncate">{note.title}</span>
+                      <span className="text-muted-foreground shrink-0 text-xs">
+                        {dateFormatter.format(note.createdAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}

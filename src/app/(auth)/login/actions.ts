@@ -4,7 +4,7 @@ import { CredentialsSignin } from "next-auth";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { signIn } from "@/auth";
+import { EmailNotVerifiedError, signIn } from "@/auth";
 import { loginSchema } from "@/lib/validations/auth";
 
 import type { LoginFormState } from "./login-form-state";
@@ -38,6 +38,15 @@ export async function login(
       redirect: false,
     });
   } catch (error) {
+    if (error instanceof EmailNotVerifiedError) {
+      return {
+        submission,
+        status: "error",
+        message: "Verify your email before signing in.",
+        needsVerification: true,
+        values: { email: values.email },
+      };
+    }
     if (error instanceof CredentialsSignin) {
       return {
         submission,

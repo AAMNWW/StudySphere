@@ -6,6 +6,10 @@ export type LoginFormState = {
   submission: number;
   status: "idle" | "error";
   message?: string;
+  /** Set when the credentials matched but the account hasn't verified its
+   * email yet — shows a "resend verification email" link instead of a
+   * plain error. See EmailNotVerifiedError in src/auth.ts. */
+  needsVerification?: boolean;
   errors?: {
     email?: string[];
     password?: string[];

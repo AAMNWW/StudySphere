@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { NavUserMenu } from "@/components/nav-user-menu";
 
 import { logout } from "./logout-action";
 
@@ -27,15 +28,10 @@ export async function NavUser() {
   }
 
   return (
-    <nav className="flex items-center gap-2 text-sm sm:gap-4">
-      <span className="text-muted-foreground hidden max-w-32 truncate sm:inline">
-        {session.user.name ?? session.user.email}
-      </span>
-      <form action={logout}>
-        <Button type="submit" variant="ghost" size="sm">
-          Sign out
-        </Button>
-      </form>
-    </nav>
+    <NavUserMenu
+      name={session.user.name}
+      email={session.user.email}
+      logoutAction={logout}
+    />
   );
 }

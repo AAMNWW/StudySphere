@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { signIn } from "@/auth";
+import { issueAndSendVerificationEmail } from "@/lib/auth/email-verification";
 import { db } from "@/lib/db";
 import { signupSchema } from "@/lib/validations/auth";
 
@@ -50,8 +50,10 @@ export async function signup(
 
   const hashedPassword = await bcrypt.hash(parsed.data.password, 10);
 
+  let userId: string;
+
   try {
-    await db.user.create({
+    const user = await db.user.create({
       data: {
         // Store an absent name as NULL rather than an empty string, so "no
         // name" has exactly one representation in the database.
@@ -59,7 +61,9 @@ export async function signup(
         email: parsed.data.email,
         password: hashedPassword,
       },
+      select: { id: true },
     });
+    userId = user.id;
   } catch (error) {
     console.error("Failed to create account", error);
     return {
@@ -70,11 +74,21 @@ export async function signup(
     };
   }
 
-  await signIn("credentials", {
-    email: parsed.data.email,
-    password: parsed.data.password,
-    redirect: false,
-  });
+  // Credentials sign-in is blocked until this link is clicked (see
+  // authorize() in src/auth.ts) — the account exists but isn't usable yet,
+  // so send the student to /signup/check-email instead of signing them in.
+  try {
+    await issueAndSendVerificationEmail(userId, parsed.data.email);
+  } catch (error) {
+    console.error("Failed to send verification email", error);
+    return {
+      submission,
+      status: "error",
+      message:
+        "Your account was created, but we couldn't send the verification email. Try resending it from the verify-email page.",
+      values: echoValues,
+    };
+  }
 
-  redirect("/");
+  redirect("/signup/check-email");
 }

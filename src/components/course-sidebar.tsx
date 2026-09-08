@@ -114,9 +114,8 @@ function NavLink({
  * Persistent left nav for everything inside one course, so switching
  * features (Quiz, Flashcards, Chat, ...) is a single click from anywhere
  * instead of a trip back to the course root. Vertical list on md+; below
- * that, 13 destinations is too many to scroll through sideways as pills, so
- * it collapses into a single "current section" dropdown (MobileSectionNav)
- * instead.
+ * that it collapses into a horizontally-scrolling tab strip
+ * (MobileSectionNav) instead.
  */
 export function CourseSidebar({
   courseId,

@@ -42,8 +42,14 @@ model User {
   id                    String               @id @default(cuid())
   name                  String?
   email                 String               @unique
-  /// bcrypt hash, never the plaintext password.
-  password              String
+  /// bcrypt hash, never the plaintext password. Null for an account created
+  /// via "Continue with Google" that has never set a password.
+  password              String?
+  /// Null until the student clicks the link in their verification email
+  /// (see EmailVerificationToken); set immediately on first Google sign-in
+  /// since Google has already verified that email. Credentials sign-in is
+  /// blocked while this is null — see src/auth.ts's authorize().
+  emailVerified         DateTime?
   /// STUDENT for every account except the one that runs the admin panel
   /// (src/app/admin). There's no self-serve promotion path — the one admin
   /// is bootstrapped by the add_user_role_and_prefs migration.
@@ -62,6 +68,9 @@ model User {
   studySessions         StudySession[]
   tasks                 Task[]
   passwordResetTokens   PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  googleCalendarConnection GoogleCalendarConnection?
+  calendarSyncLinks     CalendarSyncLink[]
   resumes               Resume[]
   jobApplications       JobApplication[]
   careerChatThreads     CareerChatThread[]
@@ -93,6 +102,53 @@ model PasswordResetToken {
   usedAt    DateTime?
   createdAt DateTime  @default(now())
 
+  @@index([userId])
+}
+
+/// A one-time link sent to a new student's email to confirm they own it —
+/// mirrors PasswordResetToken's hash-not-raw-token shape. Credentials
+/// sign-in is blocked until this is redeemed (User.emailVerified set).
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// OAuth tokens for a student's connected Google Calendar, obtained via a
+/// dedicated "Connect Google Calendar" flow in /settings — deliberately
+/// separate from the "Continue with Google" sign-in provider, which only
+/// ever requests basic profile scope. See src/lib/google-calendar.ts.
+model GoogleCalendarConnection {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// Maps one local Assignment or Exam to the Google Calendar event exported
+/// for it, so a later edit/completion/deletion updates or removes the same
+/// event instead of creating a duplicate. sourceType/sourceId together
+/// point at whichever local row was exported (no direct FK since the
+/// source can be either model).
+model CalendarSyncLink {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceType    String
+  sourceId      String
+  googleEventId String
+  createdAt     DateTime @default(now())
+
+  @@unique([sourceType, sourceId])
   @@index([userId])
 }
 

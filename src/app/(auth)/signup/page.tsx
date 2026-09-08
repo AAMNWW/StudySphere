@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AuthSplitLayout } from "@/components/auth-split-layout";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { OrDivider } from "@/components/or-divider";
 import {
   Card,
   CardContent,
@@ -31,6 +33,8 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <GoogleSignInButton />
+          <OrDivider label="or continue with email" />
           <SignupForm />
           <p className="text-muted-foreground mt-4 text-sm">
             Already have an account?{" "}

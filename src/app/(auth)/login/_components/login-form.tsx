@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { resendVerificationEmail } from "../../verify-email/resend-action";
 import { login } from "../actions";
 import { initialLoginFormState } from "../login-form-state";
 
@@ -14,6 +15,10 @@ export function LoginForm() {
   const [state, formAction, isPending] = useActionState(
     login,
     initialLoginFormState,
+  );
+  const [resendState, resendAction, isResending] = useActionState(
+    resendVerificationEmail,
+    { status: "idle" as const },
   );
 
   return (
@@ -72,9 +77,27 @@ export function LoginForm() {
       </div>
 
       {state.message ? (
-        <p role="alert" className="text-destructive text-sm">
-          {state.message}
-        </p>
+        <div role="alert" className="space-y-2">
+          <p className="text-destructive text-sm">{state.message}</p>
+          {state.needsVerification ? (
+            resendState.status === "success" ? (
+              <p role="status" className="text-muted-foreground text-sm">
+                {resendState.message}
+              </p>
+            ) : (
+              <form action={resendAction}>
+                <input type="hidden" name="email" value={state.values?.email} />
+                <button
+                  type="submit"
+                  disabled={isResending}
+                  className="text-foreground text-sm underline underline-offset-4"
+                >
+                  {isResending ? "Sending…" : "Resend verification email"}
+                </button>
+              </form>
+            )
+          ) : null}
+        </div>
       ) : null}
 
       <Button type="submit" disabled={isPending} className="w-full">
