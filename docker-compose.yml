@@ -17,5 +17,31 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: studysphere-app
+    restart: unless-stopped
+    # Local dev only — GEMINI_API_KEY, AUTH_SECRET, etc. still come from
+    # .env same as running `npm run dev` directly; DATABASE_URL below
+    # overrides its localhost value to reach the postgres container instead
+    # (env_file entries and later `environment:` entries for the same key —
+    # DATABASE_URL is both — the latter wins).
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://studysphere:studysphere_dev_password@postgres:5432/studysphere?schema=public
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+      - /app/src/generated
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:
