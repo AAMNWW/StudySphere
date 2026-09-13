@@ -1,73 +1,25 @@
 "use client";
 
-import {
-  BarChart3,
-  CalendarDays,
-  FileText,
-  GraduationCap,
-  History,
-  Layers3,
-  LayoutDashboard,
-  ListTodo,
-  MessageCircle,
-  Settings,
-  Sparkles,
-  SquareStack,
-  StickyNote,
-} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { BackLink } from "@/components/back-link";
 import { CourseProgressBar } from "@/components/course-progress-bar";
-import { getTileColorClasses, type IconTileColor } from "@/components/icon-tile";
+import { getTileColorClasses } from "@/components/icon-tile";
 import { MobileSectionNav } from "@/components/mobile-section-nav";
+import type { CourseSidebarCounts } from "@/lib/course-sidebar-counts";
+import {
+  COURSE_SETTINGS_TOOL,
+  COURSE_TOOLS,
+  courseToolHref,
+  type CourseTool,
+} from "@/lib/course-tools";
 import { cn } from "@/lib/utils";
 
-export interface CourseSidebarCounts {
-  documents: number;
-  notes: number;
-  assignments: number;
-  exams: number;
-  quizzes: number;
-  flashcardSets: number;
-  chatThreads: number;
-  topics: number;
-}
+export type { CourseSidebarCounts };
 
-interface NavItem {
-  label: string;
-  href: (courseId: string) => string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: IconTileColor;
-  countKey?: keyof CourseSidebarCounts;
-  exact?: boolean;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "Overview", href: (id) => `/courses/${id}`, icon: LayoutDashboard, color: "gray", exact: true },
-  { label: "Documents", href: (id) => `/courses/${id}/documents`, icon: FileText, color: "blue", countKey: "documents" },
-  { label: "Notes", href: (id) => `/courses/${id}/notes`, icon: StickyNote, color: "yellow", countKey: "notes" },
-  { label: "Assignments", href: (id) => `/courses/${id}/assignments`, icon: ListTodo, color: "yellow", countKey: "assignments" },
-  { label: "Exams", href: (id) => `/courses/${id}/exams`, icon: GraduationCap, color: "red", countKey: "exams" },
-  { label: "Quiz", href: (id) => `/courses/${id}/quiz`, icon: SquareStack, color: "purple", countKey: "quizzes" },
-  { label: "Flashcards", href: (id) => `/courses/${id}/flashcards`, icon: Layers3, color: "blue", countKey: "flashcardSets" },
-  { label: "Chat", href: (id) => `/courses/${id}/chat`, icon: MessageCircle, color: "pink", countKey: "chatThreads" },
-  { label: "Topics", href: (id) => `/courses/${id}/topics`, icon: CalendarDays, color: "green", countKey: "topics" },
-  { label: "Study planner", href: (id) => `/courses/${id}/planner`, icon: Sparkles, color: "gray" },
-  { label: "History", href: (id) => `/courses/${id}/history`, icon: History, color: "red" },
-  { label: "Analytics", href: (id) => `/courses/${id}/analytics`, icon: BarChart3, color: "purple" },
-];
-
-const SETTINGS_ITEM: NavItem = {
-  label: "Settings",
-  href: (id) => `/courses/${id}/settings`,
-  icon: Settings,
-  color: "gray",
-};
-
-function isActive(pathname: string, item: NavItem, courseId: string) {
-  const href = item.href(courseId);
+function isActive(pathname: string, item: CourseTool, courseId: string) {
+  const href = courseToolHref(item, courseId);
   return item.exact ? pathname === href : pathname.startsWith(href);
 }
 
@@ -77,7 +29,7 @@ function NavLink({
   active,
   count,
 }: {
-  item: NavItem;
+  item: CourseTool;
   courseId: string;
   active: boolean;
   count?: number;
@@ -86,7 +38,7 @@ function NavLink({
 
   return (
     <Link
-      href={item.href(courseId)}
+      href={courseToolHref(item, courseId)}
       className={cn(
         "flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
         active
@@ -129,7 +81,7 @@ export function CourseSidebar({
   progress: { completed: number; total: number };
 }) {
   const pathname = usePathname();
-  const allItems = [...NAV_ITEMS, SETTINGS_ITEM];
+  const allItems = [...COURSE_TOOLS, COURSE_SETTINGS_TOOL];
 
   return (
     <>
@@ -147,7 +99,7 @@ export function CourseSidebar({
         <MobileSectionNav
           items={allItems.map((item) => ({
             ...item,
-            href: item.href(courseId),
+            href: courseToolHref(item, courseId),
             active: isActive(pathname, item, courseId),
             count: item.countKey ? counts[item.countKey] : undefined,
           }))}
@@ -176,7 +128,7 @@ export function CourseSidebar({
         </div>
 
         <div className="flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => (
+          {COURSE_TOOLS.map((item) => (
             <NavLink
               key={item.label}
               item={item}
@@ -189,9 +141,9 @@ export function CourseSidebar({
 
         <div className="mt-2 border-t pt-2">
           <NavLink
-            item={SETTINGS_ITEM}
+            item={COURSE_SETTINGS_TOOL}
             courseId={courseId}
-            active={isActive(pathname, SETTINGS_ITEM, courseId)}
+            active={isActive(pathname, COURSE_SETTINGS_TOOL, courseId)}
           />
         </div>
       </nav>

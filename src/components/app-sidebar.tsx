@@ -12,8 +12,9 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { getTileColorClasses } from "@/components/icon-tile";
+import { getTileColorClasses, type IconTileColor } from "@/components/icon-tile";
 import { MobileSectionNav } from "@/components/mobile-section-nav";
+import { PRIMARY_GLOBAL_TOOLS } from "@/lib/course-tools";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -23,6 +24,20 @@ const NAV_ITEMS = [
   { label: "Grades", href: "/grades", icon: GraduationCap, color: "blue" as const },
   { label: "Career", href: "/career", icon: Briefcase, color: "yellow" as const },
 ];
+
+/**
+ * The course sections worth reaching before a course is picked (see
+ * PRIMARY_GLOBAL_TOOLS in src/lib/course-tools.ts). Each opens
+ * /tools/<slug>, which asks which course to open it for — previously these
+ * lived only in CourseSidebar, so with no course open there was no way to
+ * reach a quiz or a flashcard set at all.
+ */
+const TOOL_ITEMS = PRIMARY_GLOBAL_TOOLS.map((tool) => ({
+  label: tool.label,
+  href: `/tools/${tool.globalSlug}`,
+  icon: tool.icon,
+  color: tool.color,
+}));
 
 const SETTINGS_ITEM = { label: "Settings", href: "/settings", icon: Settings, color: "gray" as const };
 const ADMIN_ITEM = { label: "Admin", href: "/admin", icon: ShieldCheck, color: "red" as const };
@@ -39,7 +54,12 @@ const ADMIN_ITEM = { label: "Admin", href: "/admin", icon: ShieldCheck, color: "
 export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
 
-  function renderItem(item: { label: string; href: string; icon: typeof LayoutDashboard; color: "gray" | "purple" | "green" | "blue" | "yellow" | "red" }) {
+  function renderItem(item: {
+    label: string;
+    href: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: IconTileColor;
+  }) {
     const Icon = item.icon;
     const active = pathname === item.href;
 
@@ -67,7 +87,12 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
     );
   }
 
-  const allItems = [...NAV_ITEMS, SETTINGS_ITEM, ...(isAdmin ? [ADMIN_ITEM] : [])];
+  const allItems = [
+    ...NAV_ITEMS,
+    ...TOOL_ITEMS,
+    SETTINGS_ITEM,
+    ...(isAdmin ? [ADMIN_ITEM] : []),
+  ];
 
   return (
     <>
@@ -82,6 +107,13 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
         className="bg-sidebar border-sidebar-border hidden shrink-0 flex-col gap-1 rounded-2xl border p-3 md:flex md:w-56"
       >
         <div className="flex flex-col gap-1">{NAV_ITEMS.map(renderItem)}</div>
+
+        <div className="mt-2 flex flex-col gap-1 border-t pt-2">
+          <p className="text-sidebar-foreground/50 px-3 pt-1 pb-1 text-xs font-medium">
+            Study tools
+          </p>
+          {TOOL_ITEMS.map(renderItem)}
+        </div>
 
         <div className="mt-2 flex flex-col gap-1 border-t pt-2">
           {renderItem(SETTINGS_ITEM)}
