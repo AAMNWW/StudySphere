@@ -5,6 +5,7 @@ import Google from "next-auth/providers/google";
 
 import type { UserRole } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
+import { googleOAuthCredentials } from "@/lib/google-oauth";
 import { loginSchema } from "@/lib/validations/auth";
 
 // Auth.js's default Session shape doesn't carry the database id or role —
@@ -32,6 +33,8 @@ declare module "next-auth" {
 export class EmailNotVerifiedError extends CredentialsSignin {
   code = "email_not_verified";
 }
+
+const googleCredentials = googleOAuthCredentials();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -75,15 +78,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return { id: user.id, name: user.name, email: user.email, role: user.role };
       },
     }),
-    Google({
-      // Deliberately no extra `authorization.params.scope` here — this
-      // provider is sign-in only (openid email profile, Google's default).
-      // Google Calendar access is a separate, explicit "Connect Google
-      // Calendar" OAuth flow from /settings (see src/lib/google-calendar.ts)
-      // so signing in with Google never silently grants calendar access.
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
+    // Registered only when GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET are set.
+    // Auth.js accepts a blank clientId without complaint and redirects to
+    // Google with `client_id=`, which dead-ends on Google's
+    // "Error 401: invalid_client" page; leaving the provider out instead
+    // makes the misconfiguration visible in the app itself (the sign-in
+    // button is hidden — see isGoogleOAuthConfigured in
+    // src/lib/google-oauth.ts).
+    ...(googleCredentials
+      ? [
+          Google({
+            // Deliberately no extra `authorization.params.scope` here — this
+            // provider is sign-in only (openid email profile, Google's
+            // default). Google Calendar access is a separate, explicit
+            // "Connect Google Calendar" OAuth flow from /settings (see
+            // src/lib/google-calendar.ts) so signing in with Google never
+            // silently grants calendar access.
+            clientId: googleCredentials.clientId,
+            clientSecret: googleCredentials.clientSecret,
+          }),
+        ]
+      : []),
   ],
   callbacks: {
     // Backs src/proxy.ts: `false` sends signed-out visitors to `pages.signIn`

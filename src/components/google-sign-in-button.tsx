@@ -1,15 +1,38 @@
+import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
+
 import { signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
 
 /** "Continue with Google" — a plain `<form>` server action, no client JS.
  * Sign-in only (see the Google provider config in src/auth.ts); Calendar
- * access is a separate connection flow from /settings. */
+ * access is a separate connection flow from /settings.
+ *
+ * Call sites must gate on `isGoogleOAuthConfigured()`
+ * (src/lib/google-oauth.ts): without GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET
+ * the Google provider isn't registered at all, so this button would only
+ * lead to an error. */
 export function GoogleSignInButton() {
   return (
     <form
       action={async () => {
         "use server";
-        await signIn("google");
+        try {
+          await signIn("google");
+        } catch (error) {
+          // An AuthError here (bad provider config, a refused authorization
+          // request) would otherwise escape as an unhandled Server Action
+          // rejection: the browser stays on /login with nothing rendered, so
+          // the button reads as doing nothing at all. Turn it into the same
+          // `?error=` redirect Auth.js itself uses, which /login now shows.
+          if (error instanceof AuthError) {
+            redirect(`/login?error=${encodeURIComponent(error.type)}`);
+          }
+          // `signIn` signals its redirect to Google by throwing, so anything
+          // that isn't an AuthError has to keep propagating — swallowing it
+          // here is exactly what would stop the redirect from happening.
+          throw error;
+        }
       }}
     >
       <Button type="submit" variant="outline" className="w-full">

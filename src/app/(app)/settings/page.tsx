@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isGoogleOAuthConfigured } from "@/lib/google-oauth";
 
 import { ChangePasswordForm } from "./_components/change-password-form";
 import { ColorPalettePicker } from "./_components/color-palette-picker";
@@ -19,9 +20,16 @@ export const metadata: Metadata = {
   title: "Settings",
 };
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: PageProps<"/settings">) {
   const userId = await requireUserId();
   const session = await auth();
+  // Set by the Google Calendar OAuth routes on their way back here
+  // (src/app/api/integrations/google-calendar/). Without this the callback's
+  // error redirect landed on an unchanged page, so a failed connection looked
+  // like the Connect button simply doing nothing.
+  const { calendar: calendarStatus } = await searchParams;
 
   const user = await db.user.findUniqueOrThrow({
     where: { id: userId },
@@ -123,7 +131,18 @@ export default async function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <GoogleCalendarCard connected={Boolean(user.googleCalendarConnection)} />
+            {calendarStatus === "error" ? (
+              <p
+                role="status"
+                className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-400"
+              >
+                We couldn&apos;t connect your Google Calendar. Please try again.
+              </p>
+            ) : null}
+            <GoogleCalendarCard
+              connected={Boolean(user.googleCalendarConnection)}
+              configured={isGoogleOAuthConfigured()}
+            />
           </CardContent>
         </Card>
       </main>

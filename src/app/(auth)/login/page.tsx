@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { isGoogleOAuthConfigured } from "@/lib/google-oauth";
 
 import { LoginForm } from "./_components/login-form";
 
@@ -18,10 +19,42 @@ export const metadata: Metadata = {
   title: "Sign in",
 };
 
+/** Auth.js redirects every failed sign-in to `pages.signIn` with `?error=`
+ * (and Google's own OAuth errors arrive the same way), so without this the
+ * page rendered as if nothing had happened — the reason "Continue with
+ * Google" looked like a button that merely reloaded the page. Keys are
+ * `AuthError.type` values; the raw code is shown alongside the message
+ * because these are almost always a Google Cloud Console misconfiguration
+ * that the code alone identifies. */
+const SIGN_IN_ERRORS: Record<string, string> = {
+  Configuration:
+    "Sign-in isn't configured correctly on this server. Its Google credentials are missing or wrong.",
+  AccessDenied:
+    "Google wouldn't authorize this sign-in. If the app's OAuth consent screen is still in Testing, your account has to be added as a test user.",
+  OAuthSignInError: "Couldn't start the Google sign-in. Please try again.",
+  OAuthCallbackError:
+    "Google redirected back with an error. The redirect URI registered in Google Cloud Console may not match this site's URL.",
+  OAuthAccountNotLinked:
+    "An account with this email already exists. Sign in with your password instead.",
+  CallbackRouteError:
+    "Sign-in failed while finishing up. Please try again.",
+  Verification: "That sign-in link is invalid or has expired.",
+  CredentialsSignin: "Invalid email or password.",
+};
+
+function signInErrorMessage(code: string): string {
+  return (
+    SIGN_IN_ERRORS[code] ??
+    "Something went wrong signing you in. Please try again."
+  );
+}
+
 export default async function LoginPage({
   searchParams,
 }: PageProps<"/login">) {
-  const { verified } = await searchParams;
+  const { verified, error } = await searchParams;
+  // searchParams values are `string | string[] | undefined`.
+  const errorCode = Array.isArray(error) ? error[0] : error;
 
   return (
     <AuthSplitLayout
@@ -37,6 +70,19 @@ export default async function LoginPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {errorCode ? (
+            <div
+              role="alert"
+              className="mb-4 rounded-lg bg-red-50 px-3 py-2 dark:bg-red-950/40"
+            >
+              <p className="text-sm text-red-700 dark:text-red-400">
+                {signInErrorMessage(errorCode)}
+              </p>
+              <p className="mt-1 text-xs text-red-700/70 dark:text-red-400/70">
+                Error code: {errorCode}
+              </p>
+            </div>
+          ) : null}
           {verified ? (
             <p
               role="status"
@@ -45,8 +91,15 @@ export default async function LoginPage({
               Your email is verified — sign in to continue.
             </p>
           ) : null}
-          <GoogleSignInButton />
-          <OrDivider label="or continue with email" />
+          {/* Hidden entirely when GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET aren't
+              configured — the divider goes with it, since "or continue with
+              email" only makes sense when there is another option above. */}
+          {isGoogleOAuthConfigured() ? (
+            <>
+              <GoogleSignInButton />
+              <OrDivider label="or continue with email" />
+            </>
+          ) : null}
           <LoginForm />
           <p className="text-muted-foreground mt-4 text-sm">
             Don&apos;t have an account?{" "}

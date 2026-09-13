@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { isGoogleOAuthConfigured } from "@/lib/google-oauth";
 
 import { SignupForm } from "./_components/signup-form";
 
@@ -33,8 +34,15 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <GoogleSignInButton />
-          <OrDivider label="or continue with email" />
+          {/* Hidden entirely when GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET aren't
+              configured — the divider goes with it, since "or continue with
+              email" only makes sense when there is another option above. */}
+          {isGoogleOAuthConfigured() ? (
+            <>
+              <GoogleSignInButton />
+              <OrDivider label="or continue with email" />
+            </>
+          ) : null}
           <SignupForm />
           <p className="text-muted-foreground mt-4 text-sm">
             Already have an account?{" "}

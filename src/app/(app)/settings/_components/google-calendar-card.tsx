@@ -6,8 +6,26 @@ import { Button } from "@/components/ui/button";
 
 import { disconnectGoogleCalendar } from "../actions";
 
-export function GoogleCalendarCard({ connected }: { connected: boolean }) {
+export function GoogleCalendarCard({
+  connected,
+  configured,
+}: {
+  connected: boolean;
+  /** Whether this deployment has Google OAuth credentials at all (see
+   * src/lib/google-oauth.ts). Without them the Connect button can only lead
+   * to Google's "invalid_client" error, so say so instead of offering it. */
+  configured: boolean;
+}) {
   const [isPending, startTransition] = useTransition();
+
+  if (!configured && !connected) {
+    return (
+      <p className="text-muted-foreground text-sm">
+        Google Calendar sync isn&apos;t set up on this server yet — no Google
+        OAuth credentials are configured.
+      </p>
+    );
+  }
 
   if (!connected) {
     return (
