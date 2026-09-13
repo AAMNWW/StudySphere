@@ -1,41 +1,49 @@
-import { AuthError } from "next-auth";
-import { redirect } from "next/navigation";
+"use client";
 
-import { signIn } from "@/auth";
+import { signIn } from "next-auth/react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 
-/** "Continue with Google" — a plain `<form>` server action, no client JS.
+/** "Continue with Google".
+ *
+ * Deliberately a client component calling `signIn` from `next-auth/react`
+ * rather than a Server Action calling `signIn` from `@/auth`. Both ask Auth.js
+ * for the same Google authorization URL, but they travel there differently:
+ * the Server Action hands the Next client router a cross-origin redirect
+ * (`X-Action-Redirect: https://accounts.google.com/…;push`), while this does
+ * `window.location.href = url` — a plain browser navigation with no router
+ * involved, which is the only one of the two that can't end with the click
+ * appearing to do nothing at all.
+ *
  * Sign-in only (see the Google provider config in src/auth.ts); Calendar
  * access is a separate connection flow from /settings.
  *
  * Call sites must gate on `isGoogleOAuthConfigured()`
  * (src/lib/google-oauth.ts): without GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET
- * the Google provider isn't registered at all, so this button would only
- * lead to an error. */
+ * the Google provider isn't registered at all, so this button would only lead
+ * to an error page. */
 export function GoogleSignInButton() {
+  const [status, setStatus] = useState<"idle" | "pending" | "error">("idle");
+
   return (
-    <form
-      action={async () => {
-        "use server";
-        try {
-          await signIn("google");
-        } catch (error) {
-          // An AuthError here (bad provider config, a refused authorization
-          // request) would otherwise escape as an unhandled Server Action
-          // rejection: the browser stays on /login with nothing rendered, so
-          // the button reads as doing nothing at all. Turn it into the same
-          // `?error=` redirect Auth.js itself uses, which /login now shows.
-          if (error instanceof AuthError) {
-            redirect(`/login?error=${encodeURIComponent(error.type)}`);
+    <div>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        disabled={status === "pending"}
+        onClick={async () => {
+          setStatus("pending");
+          try {
+            // Resolves by navigating away, so reaching any line after this
+            // means the redirect didn't happen.
+            await signIn("google", { callbackUrl: "/" });
+          } catch {
+            setStatus("error");
           }
-          // `signIn` signals its redirect to Google by throwing, so anything
-          // that isn't an AuthError has to keep propagating — swallowing it
-          // here is exactly what would stop the redirect from happening.
-          throw error;
-        }
-      }}
-    >
-      <Button type="submit" variant="outline" className="w-full">
+        }}
+      >
         <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
           <path
             fill="#4285F4"
@@ -54,8 +62,14 @@ export function GoogleSignInButton() {
             d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.45-3.45C17.94 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.3 6.58l4.02 3.09C6.26 6.85 8.89 4.75 12 4.75Z"
           />
         </svg>
-        Continue with Google
+        {status === "pending" ? "Redirecting to Google…" : "Continue with Google"}
       </Button>
-    </form>
+      {status === "error" ? (
+        <p role="alert" className="text-destructive mt-2 text-sm">
+          Couldn&apos;t reach Google to start sign-in. Check your connection and
+          try again.
+        </p>
+      ) : null}
+    </div>
   );
 }
