@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 
+import {
+  AUTH_BUTTON_CLASS,
+  AUTH_FIELD_CLASS,
+} from "@/components/auth-split-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +31,7 @@ export function SignupForm() {
       <div className="space-y-2">
         <Label htmlFor="name">Name (optional)</Label>
         <Input
+          className={AUTH_FIELD_CLASS}
           id="name"
           name="name"
           placeholder="Jamie Rivera"
@@ -38,6 +43,7 @@ export function SignupForm() {
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
+          className={AUTH_FIELD_CLASS}
           id="email"
           name="email"
           type="email"
@@ -57,6 +63,7 @@ export function SignupForm() {
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <Input
+          className={AUTH_FIELD_CLASS}
           id="password"
           name="password"
           type="password"
@@ -83,7 +90,7 @@ export function SignupForm() {
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending} className={AUTH_BUTTON_CLASS}>
         {isPending ? "Creating account…" : "Create account"}
       </Button>
     </form>

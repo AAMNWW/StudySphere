@@ -9,7 +9,7 @@ export async function MainNav() {
   if (!session?.user) {
     return (
       <>
-        <nav className="hidden items-center gap-4 text-sm font-medium lg:flex">
+        <nav className="hidden items-center gap-7 text-sm font-medium lg:flex">
           <Link
             href="/#features"
             className="text-foreground/70 transition-colors hover:text-foreground"

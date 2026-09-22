@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
+import {
+  AUTH_BUTTON_CLASS,
+  AUTH_FIELD_CLASS,
+} from "@/components/auth-split-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,12 +31,13 @@ export function LoginForm() {
       // again after a validation error.
       key={state.submission}
       action={formAction}
-      className="space-y-4"
+      className="space-y-5"
       noValidate
     >
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
+          className={AUTH_FIELD_CLASS}
           id="email"
           name="email"
           type="email"
@@ -60,6 +65,7 @@ export function LoginForm() {
           </Link>
         </div>
         <Input
+          className={AUTH_FIELD_CLASS}
           id="password"
           name="password"
           type="password"
@@ -100,7 +106,7 @@ export function LoginForm() {
         </div>
       ) : null}
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending} className={AUTH_BUTTON_CLASS}>
         {isPending ? "Signing in…" : "Sign in"}
       </Button>
     </form>

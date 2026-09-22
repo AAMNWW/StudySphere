@@ -21,7 +21,7 @@ import { recordDashboardVisit } from "@/lib/streak";
 import { ALLOWED_FILE_TYPES, formatFileSize } from "@/lib/uploads";
 
 import { DashboardAssignmentRow } from "./_components/dashboard-assignment-row";
-import { LandingHero } from "./_components/landing-hero";
+import { LandingPage } from "./_components/landing/landing-page";
 import { Reveal, RevealGroup, RevealItem } from "./_components/reveal";
 import { StreakCard } from "./_components/streak-card";
 import { TaskList } from "./_components/task-list";
@@ -50,7 +50,7 @@ export default async function HomePage() {
   const session = await auth();
 
   if (!session?.user) {
-    return <LandingHero />;
+    return <LandingPage />;
   }
 
   const userId = await requireUserId();

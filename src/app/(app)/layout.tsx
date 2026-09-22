@@ -77,18 +77,26 @@ export default async function AppLayout({
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <ThemeDecor />
-          <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-40">
-            <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
-              <div className="flex items-center gap-3 sm:gap-5">
-                <Link href="/" className="flex items-center gap-2">
-                  <Logo className="h-8 w-auto sm:h-11" />
-                  <span className="font-heading hidden text-lg font-bold tracking-tight sm:inline">
-                    Academique
-                  </span>
-                </Link>
-                <MainNav />
-              </div>
-              <div className="flex items-center gap-2 sm:gap-3">
+          {/* One header for the whole app: same max width as the page
+              content below it (max-w-6xl) so the logo lines up with the
+              first column of every section, and a fixed height so nothing
+              shifts as the right-hand controls change between signed-in and
+              signed-out. */}
+          <header className="border-border/70 bg-background/85 sticky top-0 z-40 border-b backdrop-blur-md">
+            <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-4 px-6 sm:h-[4.5rem] sm:gap-8">
+              <Link
+                href="/"
+                className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80"
+              >
+                <Logo className="h-9 w-auto sm:h-10" />
+                <span className="font-heading hidden text-lg font-bold tracking-tight sm:inline">
+                  Academique
+                </span>
+              </Link>
+
+              <MainNav />
+
+              <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
                 <NotificationBell />
                 <NavUser />
               </div>

@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 
+import {
+  AUTH_BUTTON_CLASS,
+  AUTH_FIELD_CLASS,
+} from "@/components/auth-split-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +39,7 @@ export function ForgotPasswordForm() {
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
+          className={AUTH_FIELD_CLASS}
           id="email"
           name="email"
           type="email"
@@ -57,7 +62,7 @@ export function ForgotPasswordForm() {
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending} className={AUTH_BUTTON_CLASS}>
         {isPending ? "Sending…" : "Send reset link"}
       </Button>
     </form>

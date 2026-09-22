@@ -32,3 +32,25 @@ export function googleOAuthCredentials(): GoogleOAuthCredentials | null {
 export function isGoogleOAuthConfigured(): boolean {
   return googleOAuthCredentials() !== null;
 }
+
+/**
+ * Whether the sign-in screens should offer "Continue with Google".
+ *
+ * Looser than `isGoogleOAuthConfigured()` on purpose, and only for that
+ * button. A client ID on its own means the operator *intends* Google sign-in
+ * to exist here — a half-filled `.env` (an ID with a blank secret, say)
+ * shouldn't make the button silently vanish, because an install that looks
+ * like it has no Google sign-in at all is harder to diagnose than one that
+ * says why the attempt failed.
+ *
+ * Auth.js can't register the provider without both halves, so with a missing
+ * secret the click comes back to /login?error=Configuration, which the login
+ * page already renders as "Sign-in isn't configured correctly on this
+ * server." That is the intended failure path.
+ *
+ * The Calendar integration keeps using the strict check: it has no equivalent
+ * error screen to land on.
+ */
+export function isGoogleSignInOffered(): boolean {
+  return Boolean(process.env.GOOGLE_CLIENT_ID?.trim());
+}

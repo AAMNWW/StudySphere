@@ -4,14 +4,7 @@ import Link from "next/link";
 import { AuthSplitLayout } from "@/components/auth-split-layout";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { OrDivider } from "@/components/or-divider";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { isGoogleOAuthConfigured } from "@/lib/google-oauth";
+import { isGoogleSignInOffered } from "@/lib/google-oauth";
 
 import { LoginForm } from "./_components/login-form";
 
@@ -60,58 +53,56 @@ export default async function LoginPage({
     <AuthSplitLayout
       photoSrc="/photos/study-outdoor.jpg"
       photoAlt="Three students studying together outside on campus, looking at a laptop"
+      eyebrow="Welcome back"
       quote="Pick up right where you left off."
     >
-      <Card>
-        <CardHeader>
-          <CardTitle>Sign in</CardTitle>
-          <CardDescription>
-            Welcome back to your study workspace.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {errorCode ? (
-            <div
-              role="alert"
-              className="mb-4 rounded-lg bg-red-50 px-3 py-2 dark:bg-red-950/40"
-            >
-              <p className="text-sm text-red-700 dark:text-red-400">
-                {signInErrorMessage(errorCode)}
-              </p>
-              <p className="mt-1 text-xs text-red-700/70 dark:text-red-400/70">
-                Error code: {errorCode}
-              </p>
-            </div>
-          ) : null}
-          {verified ? (
-            <p
-              role="status"
-              className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-            >
-              Your email is verified — sign in to continue.
+      <h1 className="text-2xl font-bold tracking-tight">Sign in</h1>
+      <p className="text-muted-foreground mt-2 text-sm">
+        Welcome back to your study workspace.
+      </p>
+
+      <div className="mt-8">
+        {errorCode ? (
+          <div
+            role="alert"
+            className="mb-4 rounded-md border border-red-200 bg-red-50 px-3.5 py-3 dark:border-red-900 dark:bg-red-950/40"
+          >
+            <p className="text-sm text-red-700 dark:text-red-400">
+              {signInErrorMessage(errorCode)}
             </p>
-          ) : null}
-          {/* Hidden entirely when GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET aren't
-              configured — the divider goes with it, since "or continue with
-              email" only makes sense when there is another option above. */}
-          {isGoogleOAuthConfigured() ? (
-            <>
-              <GoogleSignInButton />
-              <OrDivider label="or continue with email" />
-            </>
-          ) : null}
-          <LoginForm />
-          <p className="text-muted-foreground mt-4 text-sm">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/signup"
-              className="text-foreground underline underline-offset-4"
-            >
-              Sign up
-            </Link>
+            <p className="mt-1 text-xs text-red-700/70 dark:text-red-400/70">
+              Error code: {errorCode}
+            </p>
+          </div>
+        ) : null}
+        {verified ? (
+          <p
+            role="status"
+            className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400"
+          >
+            Your email is verified. Sign in to continue.
           </p>
-        </CardContent>
-      </Card>
+        ) : null}
+        {/* Hidden entirely when GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET aren't
+            configured: the divider goes with it, since "or continue with
+            email" only makes sense when there is another option above. */}
+        {isGoogleSignInOffered() ? (
+          <>
+            <GoogleSignInButton />
+            <OrDivider label="or continue with email" />
+          </>
+        ) : null}
+        <LoginForm />
+        <p className="text-muted-foreground mt-6 text-sm">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/signup"
+            className="text-foreground font-medium underline underline-offset-4"
+          >
+            Sign up
+          </Link>
+        </p>
+      </div>
     </AuthSplitLayout>
   );
 }

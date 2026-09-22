@@ -22,7 +22,7 @@ const ACCOUNT_LINKS = [
 export function SiteFooter() {
   return (
     <footer className="border-t">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-10 sm:flex-row sm:justify-between">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10 sm:flex-row sm:justify-between">
         <div>
           <Link href="/" className="flex items-center gap-2">
             <Logo className="h-9 w-auto" />
@@ -88,7 +88,7 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t">
-        <p className="text-muted-foreground mx-auto w-full max-w-5xl px-6 py-4 text-xs">
+        <p className="text-muted-foreground mx-auto w-full max-w-6xl px-6 py-4 text-xs">
           © {new Date().getFullYear()} Academique.
         </p>
       </div>

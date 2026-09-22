@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
-import Link from "next/link";
 import { ThemeProvider } from "next-themes";
 import "../globals.css";
-
-import { Logo } from "@/components/logo";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -43,21 +40,10 @@ export default function AuthLayout({
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <div className="flex flex-1 flex-col">
-            <div className="px-4 pt-6 sm:px-6 sm:pt-8">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2"
-                aria-label="Academique home"
-              >
-                <Logo className="h-8 w-auto" />
-                <span className="font-heading text-lg font-bold tracking-tight">
-                  Academique
-                </span>
-              </Link>
-            </div>
-            {children}
-          </div>
+          {/* No chrome of its own: each auth screen owns its own brand
+              placement (on the photo panel, or above the form on mobile) via
+              AuthSplitLayout. */}
+          <div className="flex flex-1 flex-col">{children}</div>
         </ThemeProvider>
       </body>
     </html>

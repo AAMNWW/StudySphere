@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 
+import { AUTH_BUTTON_CLASS } from "@/components/auth-split-layout";
 import { Button } from "@/components/ui/button";
 
 /** "Continue with Google".
@@ -31,7 +32,7 @@ export function GoogleSignInButton() {
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className={AUTH_BUTTON_CLASS}
         disabled={status === "pending"}
         onClick={async () => {
           setStatus("pending");

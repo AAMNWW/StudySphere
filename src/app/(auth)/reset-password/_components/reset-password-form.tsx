@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 
+import {
+  AUTH_BUTTON_CLASS,
+  AUTH_FIELD_CLASS,
+} from "@/components/auth-split-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +29,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <div className="space-y-2">
         <Label htmlFor="password">New password</Label>
         <Input
+          className={AUTH_FIELD_CLASS}
           id="password"
           name="password"
           type="password"
@@ -48,6 +53,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">Confirm new password</Label>
         <Input
+          className={AUTH_FIELD_CLASS}
           id="confirmPassword"
           name="confirmPassword"
           type="password"
@@ -70,7 +76,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending} className={AUTH_BUTTON_CLASS}>
         {isPending ? "Saving…" : "Set new password"}
       </Button>
     </form>
