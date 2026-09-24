@@ -1,10 +1,22 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel, type GenerateContentConfig } from "@google/genai";
 
 // gemini-3.6-flash has native PDF document vision (reads layout, figures and
 // scanned pages, not just embedded text), which is why PDFs are sent to it
 // directly rather than through the officeparser text-extraction path used
 // for DOCX/PPTX.
 export const MODEL = "gemini-3.6-flash";
+
+/**
+ * Config for live, back-and-forth chat turns (course chat, career chat, the
+ * mock interviewer). Gemini 3 models think before answering by default; at
+ * MINIMAL the first words of a reply arrived in ~1-1.5s instead of ~6-7s in
+ * testing, with answers of the same length. One-shot generation (quizzes,
+ * summaries, interview feedback) keeps the default, where the extra
+ * reasoning is worth the wait.
+ */
+export const FAST_CHAT_CONFIG: GenerateContentConfig = {
+  thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL },
+};
 
 let client: GoogleGenAI | undefined;
 

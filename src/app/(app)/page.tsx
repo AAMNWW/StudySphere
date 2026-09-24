@@ -16,6 +16,7 @@ import { recordDashboardVisit } from "@/lib/streak";
 import { ALLOWED_FILE_TYPES, formatFileSize } from "@/lib/uploads";
 
 import { DashboardAssignmentRow } from "./_components/dashboard-assignment-row";
+import { QuickNoteForm } from "./_components/quick-note-form";
 import { LandingPage } from "./_components/landing/landing-page";
 import { Reveal, RevealGroup, RevealItem } from "./_components/reveal";
 import { StreakCard } from "./_components/streak-card";
@@ -61,6 +62,7 @@ export default async function HomePage() {
     recentDocuments,
     courses,
     tasks,
+    courseOptions,
   ] = await Promise.all([
     recordDashboardVisit(userId),
     db.course.count({ where: { userId } }),
@@ -97,6 +99,12 @@ export default async function HomePage() {
       where: { userId },
       orderBy: [{ completed: "asc" }, { createdAt: "desc" }],
       select: { id: true, title: true, completed: true },
+    }),
+    // Every course, for the quick-add note's course picker.
+    db.course.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, title: true },
     }),
   ]);
 
@@ -231,26 +239,23 @@ export default async function HomePage() {
                 <IconTile color="yellow" size="sm">
                   <StickyNote className="size-4" />
                 </IconTile>
-                Recent notes
+                Notes
               </h2>
 
-              {recentNotes.length === 0 ? (
-                <Card className="flex-1">
-                  <CardContent className="text-muted-foreground flex flex-1 items-center justify-center py-6 text-center text-sm">
-                    No notes yet.
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="flex-1">
-                  <CardContent>
-                    <ul className="-my-2.5 divide-y">
+              <Card className="flex-1">
+                <CardContent className="space-y-3">
+                  <QuickNoteForm courses={courseOptions} />
+                  {recentNotes.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">No notes yet.</p>
+                  ) : (
+                    <ul className="divide-y border-t">
                       {recentNotes.map((note) => (
                         <li key={note.id}>
                           <Link
-                            href={`/courses/${note.course.id}`}
-                            className="-mx-(--card-spacing) block px-(--card-spacing) py-2.5 transition-colors hover:bg-muted/50"
+                            href={`/courses/${note.course.id}/notes`}
+                            className="-mx-(--card-spacing) block px-(--card-spacing) py-2.5 transition-colors last:pb-0 hover:bg-muted/50"
                           >
-                            <p className="truncate text-sm font-medium">
+                            <p className="truncate text-sm font-medium" title={note.title}>
                               {note.title}
                             </p>
                             <p className="text-muted-foreground mt-0.5 truncate text-xs">
@@ -260,9 +265,9 @@ export default async function HomePage() {
                         </li>
                       ))}
                     </ul>
-                  </CardContent>
-                </Card>
-              )}
+                  )}
+                </CardContent>
+              </Card>
             </section>
           </Reveal>
 
@@ -356,7 +361,6 @@ export default async function HomePage() {
                     <CourseCard
                       href={`/courses/${course.id}`}
                       title={course.title}
-                      description={course.description}
                       color={ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length]}
                     >
                       <CourseProgressBar

@@ -90,6 +90,7 @@ export function CourseSidebar({
               href={courseToolHref(item, courseId)}
               label={item.label}
               icon={item.icon}
+              color={item.color}
               active={isActive(pathname, item, courseId)}
               count={item.countKey ? counts[item.countKey] : undefined}
             />
@@ -101,6 +102,7 @@ export function CourseSidebar({
             href={courseToolHref(COURSE_SETTINGS_TOOL, courseId)}
             label={COURSE_SETTINGS_TOOL.label}
             icon={COURSE_SETTINGS_TOOL.icon}
+            color={COURSE_SETTINGS_TOOL.color}
             active={isActive(pathname, COURSE_SETTINGS_TOOL, courseId)}
           />
         </SidebarSection>

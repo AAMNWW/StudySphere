@@ -1,11 +1,13 @@
 import Link from "next/link";
 
+import { getTileColorClasses, type IconTileColor } from "@/components/icon-tile";
 import { cn } from "@/lib/utils";
 
 /**
  * Shared building blocks for the three section sidebars (AppSidebar,
  * CourseSidebar, CareerSidebar), so they stay visually identical: a sticky
- * card on md+, monochrome icons, and an accent bar marking the active row.
+ * card on md+, color-coded icon tiles, and an accent bar marking the active
+ * row.
  * Phone widths use MobileSectionNav instead.
  */
 export function SidebarShell({
@@ -53,12 +55,14 @@ export function SidebarLink({
   href,
   label,
   icon: Icon,
+  color,
   active,
   count,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  color: IconTileColor;
   active: boolean;
   count?: number;
 }) {
@@ -73,14 +77,15 @@ export function SidebarLink({
           : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
       )}
     >
-      <Icon
+      <span
         className={cn(
-          "size-4 shrink-0 transition-colors",
-          active
-            ? "text-primary"
-            : "text-sidebar-foreground/45 group-hover:text-sidebar-foreground/75",
+          "flex size-6 shrink-0 items-center justify-center rounded-md transition-shadow",
+          getTileColorClasses(color),
+          active && "ring-1 ring-current/20",
         )}
-      />
+      >
+        <Icon className="size-3.5" />
+      </span>
       <span className="truncate">{label}</span>
       {count !== undefined && count > 0 ? (
         <span className="text-sidebar-foreground/55 bg-sidebar-foreground/5 ml-auto rounded px-1.5 text-[0.7rem] tabular-nums">

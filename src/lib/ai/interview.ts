@@ -1,6 +1,6 @@
 import { createUserContent, type Content, type Part } from "@google/genai";
 
-import { getClient, MODEL, withGeminiRetry } from "./client";
+import { FAST_CHAT_CONFIG, getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentsContent, type SourceDocument } from "./document-content";
 import { requireText } from "./summarize-document";
 
@@ -61,7 +61,7 @@ export async function* answerInterviewMessageStream(
   ];
 
   const stream = await withGeminiRetry(() =>
-    ai.models.generateContentStream({ model: MODEL, contents }),
+    ai.models.generateContentStream({ model: MODEL, contents, config: FAST_CHAT_CONFIG }),
   );
 
   for await (const chunk of stream) {

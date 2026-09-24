@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { noteSchema } from "@/lib/validations/note";
 
 const taskTitleSchema = z.string().trim().min(1).max(150);
 
@@ -37,4 +38,32 @@ export async function deleteTask(taskId: string): Promise<void> {
   await db.task.deleteMany({ where: { id: taskId, userId } });
 
   revalidatePath("/");
+}
+
+/** Dashboard quick-add for a note — just a title and which course it
+ * belongs to; the body can be written later from the course's Notes page.
+ * Same no-error-state approach as {@link createTask}. */
+export async function createQuickNote(formData: FormData): Promise<void> {
+  const userId = await requireUserId();
+  const parsed = noteSchema.shape.title.safeParse(formData.get("title"));
+  const courseId = String(formData.get("courseId") ?? "");
+
+  if (!parsed.success || !courseId) {
+    return;
+  }
+
+  // A course id owned by someone else behaves like one that doesn't exist.
+  const course = await db.course.findFirst({
+    where: { id: courseId, userId },
+    select: { id: true },
+  });
+
+  if (!course) {
+    return;
+  }
+
+  await db.note.create({ data: { courseId, title: parsed.data } });
+
+  revalidatePath("/");
+  revalidatePath(`/courses/${courseId}/notes`);
 }

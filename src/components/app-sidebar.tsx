@@ -11,16 +11,17 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
+import type { IconTileColor } from "@/components/icon-tile";
 import { MobileSectionNav } from "@/components/mobile-section-nav";
 import { SidebarLink, SidebarSection, SidebarShell } from "@/components/sidebar-nav";
 import { PRIMARY_GLOBAL_TOOLS } from "@/lib/course-tools";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Courses", href: "/courses", icon: BookOpen },
-  { label: "Calendar", href: "/calendar", icon: Calendar },
-  { label: "Grades", href: "/grades", icon: GraduationCap },
-  { label: "Career", href: "/career", icon: Briefcase },
+  { label: "Dashboard", href: "/", icon: LayoutDashboard, color: "gray" as const },
+  { label: "Courses", href: "/courses", icon: BookOpen, color: "purple" as const },
+  { label: "Calendar", href: "/calendar", icon: Calendar, color: "green" as const },
+  { label: "Grades", href: "/grades", icon: GraduationCap, color: "blue" as const },
+  { label: "Career", href: "/career", icon: Briefcase, color: "yellow" as const },
 ];
 
 /**
@@ -34,10 +35,11 @@ const TOOL_ITEMS = PRIMARY_GLOBAL_TOOLS.map((tool) => ({
   label: tool.label,
   href: `/tools/${tool.globalSlug}`,
   icon: tool.icon,
+  color: tool.color,
 }));
 
-const SETTINGS_ITEM = { label: "Settings", href: "/settings", icon: Settings };
-const ADMIN_ITEM = { label: "Admin", href: "/admin", icon: ShieldCheck };
+const SETTINGS_ITEM = { label: "Settings", href: "/settings", icon: Settings, color: "gray" as const };
+const ADMIN_ITEM = { label: "Admin", href: "/admin", icon: ShieldCheck, color: "red" as const };
 
 /**
  * Top-level counterpart to CourseSidebar: the same visual shell (the
@@ -55,6 +57,7 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
     label: string;
     href: string;
     icon: React.ComponentType<{ className?: string }>;
+    color: IconTileColor;
   }) {
     return (
       <SidebarLink
@@ -62,6 +65,7 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
         href={item.href}
         label={item.label}
         icon={item.icon}
+        color={item.color}
         active={pathname === item.href}
       />
     );

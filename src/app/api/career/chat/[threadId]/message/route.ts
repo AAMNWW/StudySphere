@@ -84,7 +84,7 @@ export async function POST(
         }
 
         if (!full.trim()) {
-          throw new Error("Gemini returned an empty response.");
+          throw new Error("The model returned an empty response.");
         }
 
         await db.careerChatMessage.create({

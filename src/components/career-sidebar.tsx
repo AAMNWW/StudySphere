@@ -13,8 +13,14 @@ import {
 import { usePathname } from "next/navigation";
 
 import { BackLink } from "@/components/back-link";
+import type { IconTileColor } from "@/components/icon-tile";
 import { MobileSectionNav } from "@/components/mobile-section-nav";
-import { SidebarHeader, SidebarLink, SidebarSection, SidebarShell } from "@/components/sidebar-nav";
+import {
+  SidebarHeader,
+  SidebarLink,
+  SidebarSection,
+  SidebarShell,
+} from "@/components/sidebar-nav";
 
 export interface CareerSidebarCounts {
   resumes: number;
@@ -27,34 +33,38 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  color: IconTileColor;
   countKey?: keyof CareerSidebarCounts;
   exact?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Overview", href: "/career", icon: LayoutDashboard, exact: true },
-  { label: "Resumes", href: "/career/resumes", icon: FileText, countKey: "resumes" },
+  { label: "Overview", href: "/career", icon: LayoutDashboard, color: "gray", exact: true },
+  { label: "Resumes", href: "/career/resumes", icon: FileText, color: "blue", countKey: "resumes" },
   {
     label: "Job Tracker",
     href: "/career/jobs",
     icon: Briefcase,
+    color: "purple",
     countKey: "jobApplications",
   },
   {
     label: "Chat",
     href: "/career/chat",
     icon: MessageCircle,
+    color: "pink",
     countKey: "careerChatThreads",
   },
   {
     label: "Mock Interviews",
     href: "/career/interviews",
     icon: Mic,
+    color: "red",
     countKey: "interviewSessions",
   },
-  { label: "ATS Check", href: "/career/ats-check", icon: Target },
-  { label: "Cover Letter", href: "/career/cover-letter", icon: Mail },
-  { label: "Resume Maker", href: "/career/resume-maker", icon: Wand2 },
+  { label: "ATS Check", href: "/career/ats-check", icon: Target, color: "green" },
+  { label: "Cover Letter", href: "/career/cover-letter", icon: Mail, color: "pink" },
+  { label: "Resume Maker", href: "/career/resume-maker", icon: Wand2, color: "yellow" },
 ];
 
 function isActive(pathname: string, item: NavItem) {
@@ -73,7 +83,10 @@ export function CareerSidebar({ counts }: { counts: CareerSidebarCounts }) {
   return (
     <>
       <div className="md:hidden">
-        <BackLink href="/" className="text-muted-foreground hover:text-foreground mb-2 py-1 text-xs">
+        <BackLink
+          href="/"
+          className="text-muted-foreground hover:text-foreground mb-2 py-1 text-xs"
+        >
           Back to dashboard
         </BackLink>
         <MobileSectionNav
@@ -93,7 +106,9 @@ export function CareerSidebar({ counts }: { counts: CareerSidebarCounts }) {
           >
             Back to dashboard
           </BackLink>
-          <p className="text-sidebar-foreground mt-1 font-heading font-semibold">Career</p>
+          <p className="text-sidebar-foreground mt-1 font-heading font-semibold">
+            Career
+          </p>
         </SidebarHeader>
 
         <SidebarSection>
@@ -103,6 +118,7 @@ export function CareerSidebar({ counts }: { counts: CareerSidebarCounts }) {
               href={item.href}
               label={item.label}
               icon={item.icon}
+              color={item.color}
               active={isActive(pathname, item)}
               count={item.countKey ? counts[item.countKey] : undefined}
             />

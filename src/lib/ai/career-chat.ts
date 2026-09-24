@@ -1,6 +1,7 @@
 import { createUserContent, type Content, type Part } from "@google/genai";
 
-import { getClient, MODEL, withGeminiRetry } from "./client";
+import { streamClaudeChat, withGeminiFallback } from "./claude";
+import { FAST_CHAT_CONFIG, getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentsContent, type SourceDocument } from "./document-content";
 
 export interface ChatTurn {
@@ -31,38 +32,51 @@ function turnsToContents(history: ChatTurn[]): Content[] {
  * Answers a career-chat message, either grounded in one resume ("Resume
  * Chat") when `resume` is given, or as a general career coach when it's
  * null. Mirrors src/lib/ai/chat.ts's answerChatMessageStream — same
- * stateless-per-request streaming shape, just a different grounding source.
+ * stateless-per-request streaming shape (Claude when configured, else
+ * Gemini), just a different grounding source.
  */
 export async function* answerCareerChatMessageStream(
   resume: SourceDocument | null,
   history: ChatTurn[],
   question: string,
 ): AsyncGenerator<string> {
-  const ai = getClient();
-
-  const groundingParts: (string | Part)[] = [];
+  let systemPrompt = CAREER_COACH_SYSTEM_PROMPT;
+  let documentParts: (string | Part)[] = [];
   let acknowledgement = "Got it — what would you like to talk about?";
 
   if (resume) {
-    groundingParts.push(RESUME_CHAT_SYSTEM_PROMPT);
-    groundingParts.push(...(await getDocumentsContent([resume])));
+    systemPrompt = RESUME_CHAT_SYSTEM_PROMPT;
+    documentParts = await getDocumentsContent([resume]);
     acknowledgement = "Understood — ask me anything about this resume.";
-  } else {
-    groundingParts.push(CAREER_COACH_SYSTEM_PROMPT);
   }
 
-  const contents: Content[] = [
-    createUserContent(groundingParts),
-    { role: "model", parts: [{ text: acknowledgement }] },
-    ...turnsToContents(history),
-    createUserContent([question]),
-  ];
+  yield* withGeminiFallback(
+    () =>
+      streamClaudeChat({
+        system: systemPrompt,
+        grounding: documentParts,
+        acknowledgement,
+        history,
+        question,
+      }),
+    async function* () {
+      const ai = getClient();
+      const groundingParts: (string | Part)[] = [systemPrompt, ...documentParts];
 
-  const stream = await withGeminiRetry(() =>
-    ai.models.generateContentStream({ model: MODEL, contents }),
+      const contents: Content[] = [
+        createUserContent(groundingParts),
+        { role: "model", parts: [{ text: acknowledgement }] },
+        ...turnsToContents(history),
+        createUserContent([question]),
+      ];
+
+      const stream = await withGeminiRetry(() =>
+        ai.models.generateContentStream({ model: MODEL, contents, config: FAST_CHAT_CONFIG }),
+      );
+
+      for await (const chunk of stream) {
+        if (chunk.text) yield chunk.text;
+      }
+    },
   );
-
-  for await (const chunk of stream) {
-    if (chunk.text) yield chunk.text;
-  }
 }

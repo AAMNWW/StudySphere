@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 
+import { getTileColorClasses, type IconTileColor } from "@/components/icon-tile";
 import { cn } from "@/lib/utils";
 
 export interface MobileNavEntry {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  color: IconTileColor;
   active: boolean;
   count?: number;
 }
@@ -49,12 +51,14 @@ export function MobileSectionNav({
                 : "text-foreground/70 hover:bg-accent/60 hover:text-foreground border-transparent",
             )}
           >
-            <Icon
+            <span
               className={cn(
-                "size-4 shrink-0",
-                item.active ? "text-primary" : "text-muted-foreground",
+                "flex size-5 shrink-0 items-center justify-center rounded",
+                getTileColorClasses(item.color),
               )}
-            />
+            >
+              <Icon className="size-3" />
+            </span>
             {item.label}
             {item.count !== undefined && item.count > 0 ? (
               <span className="text-muted-foreground text-xs tabular-nums">
