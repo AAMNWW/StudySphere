@@ -1,10 +1,10 @@
-import { BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CourseCard } from "@/components/course-card";
 import { CourseProgressBar } from "@/components/course-progress-bar";
 import { ICON_TILE_COLOR_CYCLE, IconTile } from "@/components/icon-tile";
 import {
@@ -107,27 +107,17 @@ export default async function ToolPage({ params }: PageProps<"/tools/[tool]">) {
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {courses.map((course, index) => (
                 <li key={course.id}>
-                  <Link href={courseToolHref(tool, course.id)} className="block h-full">
-                    <Card className="h-full transition-colors hover:bg-muted/50">
-                      <CardHeader>
-                        <IconTile
-                          color={ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length]}
-                        >
-                          <BookOpen className="size-5" />
-                        </IconTile>
-                        <CardTitle className="mt-3">{course.title}</CardTitle>
-                        {course.description ? (
-                          <CardDescription>{course.description}</CardDescription>
-                        ) : null}
-                      </CardHeader>
-                      <CardContent>
-                        <CourseProgressBar
-                          completed={course.assignments.filter((a) => a.completed).length}
-                          total={course.assignments.length}
-                        />
-                      </CardContent>
-                    </Card>
-                  </Link>
+                  <CourseCard
+                    href={courseToolHref(tool, course.id)}
+                    title={course.title}
+                    description={course.description}
+                    color={ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length]}
+                  >
+                    <CourseProgressBar
+                      completed={course.assignments.filter((a) => a.completed).length}
+                      total={course.assignments.length}
+                    />
+                  </CourseCard>
                 </li>
               ))}
             </ul>

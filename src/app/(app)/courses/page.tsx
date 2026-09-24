@@ -1,5 +1,4 @@
 import {
-  BookOpen,
   CalendarDays,
   FileText,
   GraduationCap,
@@ -9,12 +8,12 @@ import {
   StickyNote,
 } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CourseCard } from "@/components/course-card";
 import { CourseProgressBar } from "@/components/course-progress-bar";
-import { ICON_TILE_COLOR_CYCLE, IconTile } from "@/components/icon-tile";
+import { ICON_TILE_COLOR_CYCLE } from "@/components/icon-tile";
 import {
   Card,
   CardContent,
@@ -137,41 +136,29 @@ export default async function CoursesPage() {
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {courses.map((course, index) => (
                 <li key={course.id}>
-                  <Link href={`/courses/${course.id}`} className="block h-full">
-                    <Card className="h-full transition-colors hover:bg-muted/50">
-                      <CardHeader>
-                        <IconTile
-                          color={ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length]}
-                        >
-                          <BookOpen className="size-5" />
-                        </IconTile>
-                        <CardTitle className="mt-3">{course.title}</CardTitle>
-                        {course.description ? (
-                          <CardDescription>
-                            {course.description}
-                          </CardDescription>
-                        ) : null}
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <p className="text-muted-foreground text-xs">
-                          Added {dateFormatter.format(course.createdAt)}
-                        </p>
-                        <CourseProgressBar
-                          completed={course.assignments.filter((a) => a.completed).length}
-                          total={course.assignments.length}
-                        />
-                        <FeatureCounts
-                          documents={course._count.documents}
-                          notes={course._count.notes}
-                          exams={course._count.exams}
-                          quizzes={course._count.quizzes}
-                          flashcardSets={course._count.flashcardSets}
-                          chatThreads={course._count.chatThreads}
-                          topics={course._count.topics}
-                        />
-                      </CardContent>
-                    </Card>
-                  </Link>
+                  <CourseCard
+                    href={`/courses/${course.id}`}
+                    title={course.title}
+                    description={course.description}
+                    color={ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length]}
+                  >
+                    <p className="text-muted-foreground text-xs">
+                      Added {dateFormatter.format(course.createdAt)}
+                    </p>
+                    <CourseProgressBar
+                      completed={course.assignments.filter((a) => a.completed).length}
+                      total={course.assignments.length}
+                    />
+                    <FeatureCounts
+                      documents={course._count.documents}
+                      notes={course._count.notes}
+                      exams={course._count.exams}
+                      quizzes={course._count.quizzes}
+                      flashcardSets={course._count.flashcardSets}
+                      chatThreads={course._count.chatThreads}
+                      topics={course._count.topics}
+                    />
+                  </CourseCard>
                 </li>
               ))}
             </ul>

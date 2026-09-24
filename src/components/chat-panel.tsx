@@ -264,7 +264,7 @@ export function ChatPanel({
           placeholder={isListening ? "Listening…" : "Ask a question…"}
           autoComplete="off"
           disabled={isStreaming}
-          className="border-input flex-1 rounded-full border bg-transparent px-4 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="border-input flex-1 rounded-lg border bg-transparent px-4 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
         {supportsSpeechRecognition ? (
           <Button

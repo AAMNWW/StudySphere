@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { BackLink } from "@/components/back-link";
 import { CourseProgressBar } from "@/components/course-progress-bar";
-import { getTileColorClasses } from "@/components/icon-tile";
 import { MobileSectionNav } from "@/components/mobile-section-nav";
+import { SidebarHeader, SidebarLink, SidebarSection, SidebarShell } from "@/components/sidebar-nav";
 import type { CourseSidebarCounts } from "@/lib/course-sidebar-counts";
 import {
   COURSE_SETTINGS_TOOL,
@@ -14,52 +13,12 @@ import {
   courseToolHref,
   type CourseTool,
 } from "@/lib/course-tools";
-import { cn } from "@/lib/utils";
 
 export type { CourseSidebarCounts };
 
 function isActive(pathname: string, item: CourseTool, courseId: string) {
   const href = courseToolHref(item, courseId);
   return item.exact ? pathname === href : pathname.startsWith(href);
-}
-
-function NavLink({
-  item,
-  courseId,
-  active,
-  count,
-}: {
-  item: CourseTool;
-  courseId: string;
-  active: boolean;
-  count?: number;
-}) {
-  const Icon = item.icon;
-
-  return (
-    <Link
-      href={courseToolHref(item, courseId)}
-      className={cn(
-        "flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
-        active
-          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-      )}
-    >
-      <span
-        className={cn(
-          "flex size-6 shrink-0 items-center justify-center rounded-lg",
-          getTileColorClasses(item.color),
-        )}
-      >
-        <Icon className="size-3.5" />
-      </span>
-      {item.label}
-      {count !== undefined && count > 0 ? (
-        <span className="text-sidebar-foreground/50 ml-auto text-xs tabular-nums">{count}</span>
-      ) : null}
-    </Link>
-  );
 }
 
 /**
@@ -106,18 +65,15 @@ export function CourseSidebar({
         />
       </div>
 
-      <nav
-        aria-label="Course sections"
-        className="bg-sidebar border-sidebar-border hidden shrink-0 flex-col gap-1 rounded-2xl border p-3 md:flex md:w-56"
-      >
-        <div className="px-1 pt-1 pb-3">
+      <SidebarShell label="Course sections">
+        <SidebarHeader>
           <BackLink
             href="/courses"
             className="text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground -ml-1.5 py-1 pr-2 pl-1.5 text-xs"
           >
             Back to courses
           </BackLink>
-          <p className="text-sidebar-foreground mt-1 truncate font-heading font-bold" title={courseTitle}>
+          <p className="text-sidebar-foreground mt-1 truncate font-heading font-semibold" title={courseTitle}>
             {courseTitle}
           </p>
           <CourseProgressBar
@@ -125,28 +81,30 @@ export function CourseSidebar({
             total={progress.total}
             className="mt-3"
           />
-        </div>
+        </SidebarHeader>
 
-        <div className="flex flex-col gap-1">
+        <SidebarSection>
           {COURSE_TOOLS.map((item) => (
-            <NavLink
+            <SidebarLink
               key={item.label}
-              item={item}
-              courseId={courseId}
+              href={courseToolHref(item, courseId)}
+              label={item.label}
+              icon={item.icon}
               active={isActive(pathname, item, courseId)}
               count={item.countKey ? counts[item.countKey] : undefined}
             />
           ))}
-        </div>
+        </SidebarSection>
 
-        <div className="mt-2 border-t pt-2">
-          <NavLink
-            item={COURSE_SETTINGS_TOOL}
-            courseId={courseId}
+        <SidebarSection>
+          <SidebarLink
+            href={courseToolHref(COURSE_SETTINGS_TOOL, courseId)}
+            label={COURSE_SETTINGS_TOOL.label}
+            icon={COURSE_SETTINGS_TOOL.icon}
             active={isActive(pathname, COURSE_SETTINGS_TOOL, courseId)}
           />
-        </div>
-      </nav>
+        </SidebarSection>
+      </SidebarShell>
     </>
   );
 }

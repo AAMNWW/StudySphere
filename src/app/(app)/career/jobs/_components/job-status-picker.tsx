@@ -18,7 +18,7 @@ export function JobStatusPicker({
         <label
           key={option.value}
           className={cn(
-            "cursor-pointer rounded-full border px-3 py-1 text-sm font-medium transition-colors",
+            "cursor-pointer rounded-md border px-3 py-1 text-sm font-medium transition-colors",
             value === option.value
               ? "border-primary bg-primary text-primary-foreground"
               : "border-border hover:bg-muted",

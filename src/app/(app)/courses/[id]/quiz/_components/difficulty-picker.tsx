@@ -21,7 +21,7 @@ export function DifficultyPicker({ defaultValue = "MEDIUM" }: { defaultValue?: s
         <label
           key={difficulty.value}
           className={cn(
-            "cursor-pointer rounded-full border px-3 py-1 text-sm font-medium transition-colors",
+            "cursor-pointer rounded-md border px-3 py-1 text-sm font-medium transition-colors",
             value === difficulty.value
               ? "border-primary bg-primary text-primary-foreground"
               : "border-border hover:bg-muted",

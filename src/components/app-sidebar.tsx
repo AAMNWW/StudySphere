@@ -9,20 +9,18 @@ import {
   Settings,
   ShieldCheck,
 } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { getTileColorClasses, type IconTileColor } from "@/components/icon-tile";
 import { MobileSectionNav } from "@/components/mobile-section-nav";
+import { SidebarLink, SidebarSection, SidebarShell } from "@/components/sidebar-nav";
 import { PRIMARY_GLOBAL_TOOLS } from "@/lib/course-tools";
-import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard, color: "gray" as const },
-  { label: "Courses", href: "/courses", icon: BookOpen, color: "purple" as const },
-  { label: "Calendar", href: "/calendar", icon: Calendar, color: "green" as const },
-  { label: "Grades", href: "/grades", icon: GraduationCap, color: "blue" as const },
-  { label: "Career", href: "/career", icon: Briefcase, color: "yellow" as const },
+  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Courses", href: "/courses", icon: BookOpen },
+  { label: "Calendar", href: "/calendar", icon: Calendar },
+  { label: "Grades", href: "/grades", icon: GraduationCap },
+  { label: "Career", href: "/career", icon: Briefcase },
 ];
 
 /**
@@ -36,15 +34,14 @@ const TOOL_ITEMS = PRIMARY_GLOBAL_TOOLS.map((tool) => ({
   label: tool.label,
   href: `/tools/${tool.globalSlug}`,
   icon: tool.icon,
-  color: tool.color,
 }));
 
-const SETTINGS_ITEM = { label: "Settings", href: "/settings", icon: Settings, color: "gray" as const };
-const ADMIN_ITEM = { label: "Admin", href: "/admin", icon: ShieldCheck, color: "red" as const };
+const SETTINGS_ITEM = { label: "Settings", href: "/settings", icon: Settings };
+const ADMIN_ITEM = { label: "Admin", href: "/admin", icon: ShieldCheck };
 
 /**
- * Top-level counterpart to CourseSidebar: the same visual shell (bg-sidebar
- * card, icon-tile nav rows, active-link highlighting) one level up, for the
+ * Top-level counterpart to CourseSidebar: the same visual shell (the
+ * shared pieces in src/components/sidebar-nav.tsx) one level up, for the
  * Dashboard, Courses, Calendar, and Settings pages that sit outside any
  * single course. `isAdmin` is passed down from whichever page renders this
  * (each already calls `auth()`) rather than fetched here — this component
@@ -58,32 +55,15 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
     label: string;
     href: string;
     icon: React.ComponentType<{ className?: string }>;
-    color: IconTileColor;
   }) {
-    const Icon = item.icon;
-    const active = pathname === item.href;
-
     return (
-      <Link
+      <SidebarLink
         key={item.href}
         href={item.href}
-        className={cn(
-          "flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
-          active
-            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-        )}
-      >
-        <span
-          className={cn(
-            "flex size-6 shrink-0 items-center justify-center rounded-lg",
-            getTileColorClasses(item.color),
-          )}
-        >
-          <Icon className="size-3.5" />
-        </span>
-        {item.label}
-      </Link>
+        label={item.label}
+        icon={item.icon}
+        active={pathname === item.href}
+      />
     );
   }
 
@@ -102,24 +82,14 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
           active: pathname === item.href,
         }))}
       />
-      <nav
-        aria-label="Main"
-        className="bg-sidebar border-sidebar-border hidden shrink-0 flex-col gap-1 rounded-2xl border p-3 md:flex md:w-56"
-      >
-        <div className="flex flex-col gap-1">{NAV_ITEMS.map(renderItem)}</div>
-
-        <div className="mt-2 flex flex-col gap-1 border-t pt-2">
-          <p className="text-sidebar-foreground/50 px-3 pt-1 pb-1 text-xs font-medium">
-            Study tools
-          </p>
-          {TOOL_ITEMS.map(renderItem)}
-        </div>
-
-        <div className="mt-2 flex flex-col gap-1 border-t pt-2">
+      <SidebarShell label="Main">
+        <SidebarSection>{NAV_ITEMS.map(renderItem)}</SidebarSection>
+        <SidebarSection title="Study tools">{TOOL_ITEMS.map(renderItem)}</SidebarSection>
+        <SidebarSection title="Account">
           {renderItem(SETTINGS_ITEM)}
           {isAdmin ? renderItem(ADMIN_ITEM) : null}
-        </div>
-      </nav>
+        </SidebarSection>
+      </SidebarShell>
     </>
   );
 }

@@ -189,13 +189,13 @@ export default async function CalendarPage({
             {googleStatus === "connected" ? (
               <Link
                 href="/settings"
-                className="flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-blue-700 hover:bg-blue-200"
+                className="flex items-center gap-1.5 rounded-md bg-blue-100 px-3 py-1 text-blue-700 hover:bg-blue-200"
               >
                 <CalendarDays className="size-3.5" />
                 Synced with Google
               </Link>
             ) : googleStatus === "unavailable" ? (
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800">
+              <span className="rounded-md bg-amber-100 px-3 py-1 text-amber-800">
                 Couldn&apos;t load Google events
               </span>
             ) : isGoogleOAuthConfigured() ? (
@@ -203,7 +203,7 @@ export default async function CalendarPage({
               // to Google's consent screen.
               <a
                 href="/api/integrations/google-calendar/connect"
-                className="hover:bg-muted flex items-center gap-1.5 rounded-full border px-3 py-1"
+                className="hover:bg-muted flex items-center gap-1.5 rounded-md border px-3 py-1"
               >
                 <CalendarDays className="size-3.5" />
                 Connect Google Calendar
@@ -211,18 +211,18 @@ export default async function CalendarPage({
             ) : null}
             <Link
               href={`/calendar?month=${monthParam(prevMonth.year, prevMonth.month)}`}
-              className="hover:bg-muted rounded-full border px-3 py-1"
+              className="hover:bg-muted rounded-md border px-3 py-1"
             >
               ← Prev
             </Link>
             {!isCurrentMonth ? (
-              <Link href="/calendar" className="hover:bg-muted rounded-full border px-3 py-1">
+              <Link href="/calendar" className="hover:bg-muted rounded-md border px-3 py-1">
                 Today
               </Link>
             ) : null}
             <Link
               href={`/calendar?month=${monthParam(nextMonth.year, nextMonth.month)}`}
-              className="hover:bg-muted rounded-full border px-3 py-1"
+              className="hover:bg-muted rounded-md border px-3 py-1"
             >
               Next →
             </Link>

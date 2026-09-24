@@ -4,16 +4,11 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CourseCard } from "@/components/course-card";
 import { CourseProgressBar } from "@/components/course-progress-bar";
 import { ICON_TILE_COLOR_CYCLE, IconTile } from "@/components/icon-tile";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
@@ -210,16 +205,16 @@ export default async function HomePage() {
           </section>
         </Reveal>
 
-        <div className="mb-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          <Reveal>
-            <section aria-labelledby="tasks-heading">
+        <div className="mb-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Reveal className="h-full">
+            <section aria-labelledby="tasks-heading" className="flex h-full flex-col">
               <h2 id="tasks-heading" className="mb-4 flex items-center gap-2 text-lg font-bold">
                 <IconTile color="green" size="sm">
                   <CheckSquare className="size-4" />
                 </IconTile>
                 Tasks
               </h2>
-              <Card>
+              <Card className="flex-1">
                 <CardContent>
                   <TaskList tasks={tasks} />
                 </CardContent>
@@ -227,8 +222,8 @@ export default async function HomePage() {
             </section>
           </Reveal>
 
-          <Reveal delay={0.03}>
-            <section aria-labelledby="recent-notes-heading">
+          <Reveal delay={0.03} className="h-full">
+            <section aria-labelledby="recent-notes-heading" className="flex h-full flex-col">
               <h2
                 id="recent-notes-heading"
                 className="mb-4 flex items-center gap-2 text-lg font-bold"
@@ -240,23 +235,25 @@ export default async function HomePage() {
               </h2>
 
               {recentNotes.length === 0 ? (
-                <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
-                  No notes yet.
-                </p>
+                <Card className="flex-1">
+                  <CardContent className="text-muted-foreground flex flex-1 items-center justify-center py-6 text-center text-sm">
+                    No notes yet.
+                  </CardContent>
+                </Card>
               ) : (
-                <Card>
+                <Card className="flex-1">
                   <CardContent>
-                    <ul className="divide-y">
+                    <ul className="-my-2.5 divide-y">
                       {recentNotes.map((note) => (
                         <li key={note.id}>
                           <Link
                             href={`/courses/${note.course.id}`}
-                            className="-mx-(--card-spacing) block px-(--card-spacing) py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-muted/50"
+                            className="-mx-(--card-spacing) block px-(--card-spacing) py-2.5 transition-colors hover:bg-muted/50"
                           >
                             <p className="truncate text-sm font-medium">
                               {note.title}
                             </p>
-                            <p className="text-muted-foreground mt-1 text-xs">
+                            <p className="text-muted-foreground mt-0.5 truncate text-xs">
                               {note.course.title} · {dateFormatter.format(note.createdAt)}
                             </p>
                           </Link>
@@ -269,8 +266,8 @@ export default async function HomePage() {
             </section>
           </Reveal>
 
-          <Reveal delay={0.05}>
-            <section aria-labelledby="recent-documents-heading">
+          <Reveal delay={0.05} className="h-full">
+            <section aria-labelledby="recent-documents-heading" className="flex h-full flex-col">
               <h2
                 id="recent-documents-heading"
                 className="mb-4 flex items-center gap-2 text-lg font-bold"
@@ -282,23 +279,25 @@ export default async function HomePage() {
               </h2>
 
               {recentDocuments.length === 0 ? (
-                <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
-                  No documents yet.
-                </p>
+                <Card className="flex-1">
+                  <CardContent className="text-muted-foreground flex flex-1 items-center justify-center py-6 text-center text-sm">
+                    No documents yet.
+                  </CardContent>
+                </Card>
               ) : (
-                <Card>
+                <Card className="flex-1">
                   <CardContent>
-                    <ul className="divide-y">
+                    <ul className="-my-2.5 divide-y">
                       {recentDocuments.map((document) => (
                         <li key={document.id}>
                           <Link
                             href={`/courses/${document.course.id}`}
-                            className="-mx-(--card-spacing) block px-(--card-spacing) py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-muted/50"
+                            className="-mx-(--card-spacing) block px-(--card-spacing) py-2.5 transition-colors hover:bg-muted/50"
                           >
-                            <p className="truncate text-sm font-medium">
+                            <p className="truncate text-sm font-medium" title={document.fileName}>
                               {document.fileName}
                             </p>
-                            <p className="text-muted-foreground mt-1 text-xs">
+                            <p className="text-muted-foreground mt-0.5 truncate text-xs">
                               {document.course.title} ·{" "}
                               {ALLOWED_FILE_TYPES[document.mimeType]?.label ?? "File"}{" "}
                               · {formatFileSize(document.sizeBytes)}
@@ -353,30 +352,18 @@ export default async function HomePage() {
             ) : (
               <RevealGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" stagger={0.06}>
                 {courses.map((course, index) => (
-                  <RevealItem key={course.id}>
-                    <Link href={`/courses/${course.id}`} className="block h-full">
-                      <Card className={`h-full transition-colors hover:bg-muted/50 ${CARD_HOVER}`}>
-                        <CardHeader>
-                          <IconTile
-                            color={ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length]}
-                          >
-                            <BookOpen className="size-5" />
-                          </IconTile>
-                          <CardTitle className="mt-3">{course.title}</CardTitle>
-                          {course.description ? (
-                            <CardDescription>
-                              {course.description}
-                            </CardDescription>
-                          ) : null}
-                        </CardHeader>
-                        <CardContent>
-                          <CourseProgressBar
-                            completed={course.assignments.filter((a) => a.completed).length}
-                            total={course.assignments.length}
-                          />
-                        </CardContent>
-                      </Card>
-                    </Link>
+                  <RevealItem key={course.id} className="h-full">
+                    <CourseCard
+                      href={`/courses/${course.id}`}
+                      title={course.title}
+                      description={course.description}
+                      color={ICON_TILE_COLOR_CYCLE[index % ICON_TILE_COLOR_CYCLE.length]}
+                    >
+                      <CourseProgressBar
+                        completed={course.assignments.filter((a) => a.completed).length}
+                        total={course.assignments.length}
+                      />
+                    </CourseCard>
                   </RevealItem>
                 ))}
               </RevealGroup>

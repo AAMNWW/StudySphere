@@ -10,13 +10,11 @@ import {
   Target,
   Wand2,
 } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { BackLink } from "@/components/back-link";
-import { getTileColorClasses, type IconTileColor } from "@/components/icon-tile";
 import { MobileSectionNav } from "@/components/mobile-section-nav";
-import { cn } from "@/lib/utils";
+import { SidebarHeader, SidebarLink, SidebarSection, SidebarShell } from "@/components/sidebar-nav";
 
 export interface CareerSidebarCounts {
   resumes: number;
@@ -29,38 +27,34 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  color: IconTileColor;
   countKey?: keyof CareerSidebarCounts;
   exact?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Overview", href: "/career", icon: LayoutDashboard, color: "gray", exact: true },
-  { label: "Resumes", href: "/career/resumes", icon: FileText, color: "blue", countKey: "resumes" },
+  { label: "Overview", href: "/career", icon: LayoutDashboard, exact: true },
+  { label: "Resumes", href: "/career/resumes", icon: FileText, countKey: "resumes" },
   {
     label: "Job Tracker",
     href: "/career/jobs",
     icon: Briefcase,
-    color: "purple",
     countKey: "jobApplications",
   },
   {
     label: "Chat",
     href: "/career/chat",
     icon: MessageCircle,
-    color: "pink",
     countKey: "careerChatThreads",
   },
   {
     label: "Mock Interviews",
     href: "/career/interviews",
     icon: Mic,
-    color: "red",
     countKey: "interviewSessions",
   },
-  { label: "ATS Check", href: "/career/ats-check", icon: Target, color: "green" },
-  { label: "Cover Letter", href: "/career/cover-letter", icon: Mail, color: "pink" },
-  { label: "Resume Maker", href: "/career/resume-maker", icon: Wand2, color: "yellow" },
+  { label: "ATS Check", href: "/career/ats-check", icon: Target },
+  { label: "Cover Letter", href: "/career/cover-letter", icon: Mail },
+  { label: "Resume Maker", href: "/career/resume-maker", icon: Wand2 },
 ];
 
 function isActive(pathname: string, item: NavItem) {
@@ -68,7 +62,7 @@ function isActive(pathname: string, item: NavItem) {
 }
 
 /**
- * Same shell as CourseSidebar (bg-sidebar card, icon-tile nav rows,
+ * Same shell as CourseSidebar (src/components/sidebar-nav.tsx, plus a
  * "Back to..." link at top) for everything under /career — a section
  * outside any course, so it replaces AppSidebar rather than nesting under
  * it, matching how CourseSidebar does for /courses/[id].
@@ -91,56 +85,30 @@ export function CareerSidebar({ counts }: { counts: CareerSidebarCounts }) {
         />
       </div>
 
-      <nav
-        aria-label="Career sections"
-        className="bg-sidebar border-sidebar-border hidden shrink-0 flex-col gap-1 rounded-2xl border p-3 md:flex md:w-56"
-      >
-        <div className="px-1 pt-1 pb-3">
+      <SidebarShell label="Career sections">
+        <SidebarHeader>
           <BackLink
             href="/"
             className="text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground -ml-1.5 py-1 pr-2 pl-1.5 text-xs"
           >
             Back to dashboard
           </BackLink>
-          <p className="text-sidebar-foreground mt-1 font-heading font-bold">Career</p>
-        </div>
+          <p className="text-sidebar-foreground mt-1 font-heading font-semibold">Career</p>
+        </SidebarHeader>
 
-        <div className="flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(pathname, item);
-            const count = item.countKey ? counts[item.countKey] : undefined;
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors",
-                  active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex size-6 shrink-0 items-center justify-center rounded-lg",
-                    getTileColorClasses(item.color),
-                  )}
-                >
-                  <Icon className="size-3.5" />
-                </span>
-                {item.label}
-                {count !== undefined && count > 0 ? (
-                  <span className="text-sidebar-foreground/50 ml-auto text-xs tabular-nums">
-                    {count}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+        <SidebarSection>
+          {NAV_ITEMS.map((item) => (
+            <SidebarLink
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              icon={item.icon}
+              active={isActive(pathname, item)}
+              count={item.countKey ? counts[item.countKey] : undefined}
+            />
+          ))}
+        </SidebarSection>
+      </SidebarShell>
     </>
   );
 }

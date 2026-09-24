@@ -72,7 +72,7 @@ export default async function HistoryPage({
         <Link
           href={`/courses/${courseId}/history?wrong=1`}
           className={cn(
-            "rounded-full border px-3 py-1",
+            "rounded-md border px-3 py-1",
             wrongOnly ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted",
           )}
         >
@@ -81,7 +81,7 @@ export default async function HistoryPage({
         <Link
           href={`/courses/${courseId}/history?wrong=0`}
           className={cn(
-            "rounded-full border px-3 py-1",
+            "rounded-md border px-3 py-1",
             !wrongOnly ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted",
           )}
         >

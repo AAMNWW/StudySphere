@@ -27,7 +27,7 @@ export function ThemeToggle() {
           type="button"
           onClick={() => setTheme(option.value)}
           className={cn(
-            "rounded-full border px-3 py-1",
+            "rounded-md border px-3 py-1",
             mounted && theme === option.value
               ? "border-primary bg-primary text-primary-foreground"
               : "hover:bg-muted",
