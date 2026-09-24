@@ -1,4 +1,4 @@
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -9,6 +9,7 @@ import { requireUserId } from "@/lib/auth";
 import { dateKey, getMonthGrid } from "@/lib/calendar-grid";
 import { db } from "@/lib/db";
 import { getConnectedCalendarClient } from "@/lib/google-calendar";
+import { isGoogleOAuthConfigured } from "@/lib/google-oauth";
 import { isAssignmentOverdue } from "@/lib/is-assignment-overdue";
 
 import { Reveal } from "../_components/reveal";
@@ -114,6 +115,12 @@ export default async function CalendarPage({
 
   const externalEventsByDay = new Map<string, CalendarExternalItem[]>();
   const calendarClient = await getConnectedCalendarClient(userId);
+  // "unavailable" = connected, but this month's events couldn't be fetched —
+  // shown in the header so an empty grid isn't mistaken for an empty Google
+  // Calendar.
+  let googleStatus: "connected" | "unavailable" | "disconnected" = calendarClient
+    ? "connected"
+    : "disconnected";
 
   if (calendarClient) {
     // Events this app exported itself (see src/lib/google-calendar.ts) are
@@ -151,6 +158,7 @@ export default async function CalendarPage({
       }
     } catch (error) {
       console.error("Failed to fetch Google Calendar events", error);
+      googleStatus = "unavailable";
     }
   }
 
@@ -172,12 +180,35 @@ export default async function CalendarPage({
                 {monthLabelFormatter.format(new Date(Date.UTC(year, month, 1)))}
               </h1>
               <p className="text-muted-foreground text-sm">
-                Assignments and exams across every course.
+                Assignments and exams across every course{googleStatus === "connected" ? ", plus your Google events" : ""}.
               </p>
             </div>
           </Reveal>
 
-          <div className="flex gap-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            {googleStatus === "connected" ? (
+              <Link
+                href="/settings"
+                className="flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-blue-700 hover:bg-blue-200"
+              >
+                <CalendarDays className="size-3.5" />
+                Synced with Google
+              </Link>
+            ) : googleStatus === "unavailable" ? (
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800">
+                Couldn&apos;t load Google events
+              </span>
+            ) : isGoogleOAuthConfigured() ? (
+              // Plain <a>, not <Link>: this route handler redirects off-site
+              // to Google's consent screen.
+              <a
+                href="/api/integrations/google-calendar/connect"
+                className="hover:bg-muted flex items-center gap-1.5 rounded-full border px-3 py-1"
+              >
+                <CalendarDays className="size-3.5" />
+                Connect Google Calendar
+              </a>
+            ) : null}
             <Link
               href={`/calendar?month=${monthParam(prevMonth.year, prevMonth.month)}`}
               className="hover:bg-muted rounded-full border px-3 py-1"

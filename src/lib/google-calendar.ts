@@ -62,7 +62,22 @@ export async function getConnectedCalendarClient(userId: string) {
   // Refresh a little ahead of actual expiry so the API call below never
   // races an access token that dies mid-request.
   if (connection.expiresAt.getTime() <= Date.now() + 60_000) {
-    const { credentials } = await client.refreshAccessToken();
+    let credentials;
+    try {
+      ({ credentials } = await client.refreshAccessToken());
+    } catch (error) {
+      // `invalid_grant` means the refresh token is dead for good — the user
+      // revoked access from their Google account, or it expired unused. The
+      // stored connection can never work again, so drop it: /settings then
+      // offers Connect instead of claiming a sync that silently fails. Any
+      // other error (network, Google outage) is transient — keep the tokens.
+      if (isInvalidGrant(error)) {
+        await db.googleCalendarConnection.deleteMany({ where: { userId } });
+      } else {
+        console.error("Failed to refresh Google Calendar token", error);
+      }
+      return null;
+    }
     client.setCredentials(credentials);
 
     if (credentials.access_token && credentials.expiry_date) {
@@ -77,6 +92,11 @@ export async function getConnectedCalendarClient(userId: string) {
   }
 
   return calendar({ version: "v3", auth: client });
+}
+
+function isInvalidGrant(error: unknown): boolean {
+  const data = (error as { response?: { data?: { error?: unknown } } })?.response?.data;
+  return data?.error === "invalid_grant";
 }
 
 export type CalendarSourceType = "assignment" | "exam";
@@ -105,14 +125,17 @@ export async function syncCalendarEvent(params: {
       where: { sourceType_sourceId: { sourceType: params.sourceType, sourceId: params.sourceId } },
     });
 
-    const dateString = params.date.toISOString().slice(0, 10);
+    const nextDay = new Date(params.date);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
     const requestBody = {
       summary: params.title,
       description: params.description ?? undefined,
       // All-day event — assignments/exams are tracked by date, not a
-      // specific time slot.
-      start: { date: dateString },
-      end: { date: dateString },
+      // specific time slot. Google's all-day `end.date` is *exclusive*, so a
+      // one-day event ends the following day; start === end is rejected as
+      // an empty time range.
+      start: { date: params.date.toISOString().slice(0, 10) },
+      end: { date: nextDay.toISOString().slice(0, 10) },
     };
 
     if (existingLink) {
@@ -171,5 +194,60 @@ export async function deleteCalendarEvent(params: {
     await db.calendarSyncLink.delete({ where: { id: link.id } });
   } catch (error) {
     console.error("Failed to delete synced calendar event", error);
+  }
+}
+
+/** Pushes every upcoming, not-yet-synced assignment and exam to Google
+ * Calendar. Run once right after a user connects, since the per-row sync
+ * hooks in the course actions only fire on create/update — without this,
+ * everything that already existed before connecting would never appear in
+ * Google. Rows with an existing CalendarSyncLink (e.g. from an earlier
+ * connection) are skipped so reconnecting doesn't duplicate events. */
+export async function backfillCalendarEvents(userId: string): Promise<void> {
+  try {
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    const [assignments, exams, links] = await Promise.all([
+      db.assignment.findMany({
+        where: { course: { userId }, completed: false, dueDate: { gte: today } },
+        select: { id: true, title: true, dueDate: true },
+      }),
+      db.exam.findMany({
+        where: { userId, examDate: { gte: today } },
+        select: { id: true, title: true, examDate: true },
+      }),
+      db.calendarSyncLink.findMany({
+        where: { userId },
+        select: { sourceType: true, sourceId: true },
+      }),
+    ]);
+
+    const linked = new Set(links.map((link) => `${link.sourceType}:${link.sourceId}`));
+
+    // Sequential on purpose — a student's upcoming work is a handful of rows,
+    // and firing them all at once invites Google's per-user rate limit.
+    for (const assignment of assignments) {
+      if (linked.has(`assignment:${assignment.id}`)) continue;
+      await syncCalendarEvent({
+        userId,
+        sourceType: "assignment",
+        sourceId: assignment.id,
+        title: assignment.title,
+        date: assignment.dueDate!,
+      });
+    }
+    for (const exam of exams) {
+      if (linked.has(`exam:${exam.id}`)) continue;
+      await syncCalendarEvent({
+        userId,
+        sourceType: "exam",
+        sourceId: exam.id,
+        title: exam.title,
+        date: exam.examDate,
+      });
+    }
+  } catch (error) {
+    console.error("Failed to backfill calendar events", error);
   }
 }

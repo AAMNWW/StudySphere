@@ -1,9 +1,9 @@
 import { cookies } from "next/headers";
-import { NextResponse, type NextRequest } from "next/server";
+import { after, NextResponse, type NextRequest } from "next/server";
 
 import { db } from "@/lib/db";
 import { requireUserId } from "@/lib/auth";
-import { exchangeCodeForTokens } from "@/lib/google-calendar";
+import { backfillCalendarEvents, exchangeCodeForTokens } from "@/lib/google-calendar";
 import { getSiteUrl } from "@/lib/site-url";
 
 const STATE_COOKIE = "google_calendar_oauth_state";
@@ -52,6 +52,10 @@ export async function GET(request: NextRequest) {
     console.error("Failed to connect Google Calendar", error);
     return NextResponse.redirect(`${siteUrl}/settings?calendar=error`);
   }
+
+  // Existing assignments/exams predate the connection, so the per-row sync
+  // hooks never fired for them — push them now, after the redirect is sent.
+  after(() => backfillCalendarEvents(userId));
 
   return NextResponse.redirect(`${siteUrl}/settings?calendar=connected`);
 }

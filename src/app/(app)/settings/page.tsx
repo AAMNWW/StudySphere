@@ -138,6 +138,14 @@ export default async function SettingsPage({
               >
                 We couldn&apos;t connect your Google Calendar. Please try again.
               </p>
+            ) : calendarStatus === "connected" && user.googleCalendarConnection ? (
+              <p
+                role="status"
+                className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+              >
+                Google Calendar connected. Your upcoming assignments and exams
+                are being added to it now.
+              </p>
             ) : null}
             <GoogleCalendarCard
               connected={Boolean(user.googleCalendarConnection)}

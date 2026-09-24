@@ -38,8 +38,7 @@ export interface CourseTool {
   /**
    * Reachable at /tools/<globalSlug> without a course selected, which then
    * asks which course to open it for. Omitted for sections that only make
-   * sense once you're already inside a course (overview, history,
-   * analytics, settings).
+   * sense once you're already inside a course (overview, settings).
    */
   globalSlug?: string;
   /** Shown on that /tools page under the heading. */
@@ -78,6 +77,7 @@ export const COURSE_TOOLS: CourseTool[] = [
     countKey: "assignments",
     globalSlug: "assignments",
     description: "Track what's due and tick things off as you finish them.",
+    primary: true,
   },
   {
     label: "Exams",
@@ -87,6 +87,7 @@ export const COURSE_TOOLS: CourseTool[] = [
     countKey: "exams",
     globalSlug: "exams",
     description: "Keep exam dates in one place and prepare against them.",
+    primary: true,
   },
   {
     label: "Quiz",
@@ -126,6 +127,7 @@ export const COURSE_TOOLS: CourseTool[] = [
     countKey: "topics",
     globalSlug: "topics",
     description: "Break a course into topics and track what you've covered.",
+    primary: true,
   },
   {
     label: "Study planner",
@@ -136,8 +138,24 @@ export const COURSE_TOOLS: CourseTool[] = [
     description: "Turn a course's deadlines into a day-by-day study plan.",
     primary: true,
   },
-  { label: "History", segment: "history", icon: History, color: "red" },
-  { label: "Analytics", segment: "analytics", icon: BarChart3, color: "purple" },
+  {
+    label: "History",
+    segment: "history",
+    icon: History,
+    color: "red",
+    globalSlug: "history",
+    description: "Review every quiz question you've gotten wrong in a course.",
+    primary: true,
+  },
+  {
+    label: "Analytics",
+    segment: "analytics",
+    icon: BarChart3,
+    color: "purple",
+    globalSlug: "analytics",
+    description: "See how your quiz scores and study time in a course are trending.",
+    primary: true,
+  },
 ];
 
 export const COURSE_SETTINGS_TOOL: CourseTool = {
