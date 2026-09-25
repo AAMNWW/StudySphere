@@ -19,7 +19,9 @@ export interface MobileNavEntry {
  * CourseSidebar) — those render a vertical link list on `md`+. A sticky
  * horizontally-scrolling icon+label strip under the header, so the section's
  * destinations are all one thumb-swipe away instead of hidden behind a
- * dropdown.
+ * dropdown. Its `top` is the header's height (h-16 / sm:h-[4.5rem], plus the
+ * 1px border) in rem, so it tucks exactly under the header at any root font
+ * size; `-mx-6` matches the page wrappers' px-6 so it runs edge to edge.
  */
 export function MobileSectionNav({
   items,
@@ -32,7 +34,7 @@ export function MobileSectionNav({
     <nav
       aria-label="Section"
       className={cn(
-        "bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-[57px] z-30 -mx-4 flex gap-1.5 overflow-x-auto border-b px-4 py-2 backdrop-blur-sm sm:top-[65px] sm:-mx-6 sm:px-6 md:hidden",
+        "bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-[calc(4rem+1px)] z-30 -mx-6 flex gap-1.5 overflow-x-auto border-b px-6 py-2 backdrop-blur-sm sm:top-[calc(4.5rem+1px)] md:hidden",
         className,
       )}
     >

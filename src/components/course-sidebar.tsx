@@ -44,17 +44,22 @@ export function CourseSidebar({
 
   return (
     <>
-      <div className="md:hidden">
-        <BackLink
-          href="/courses"
-          className="text-muted-foreground hover:text-foreground py-1 text-xs"
-        >
-          Back to courses
-        </BackLink>
-        <p className="mt-1 truncate font-heading font-bold" title={courseTitle}>
-          {courseTitle}
-        </p>
-        <CourseProgressBar completed={progress.completed} total={progress.total} className="mt-3 mb-3" />
+      {/* `contents`, not a real box: the sticky MobileSectionNav inside can
+          only stick within its parent, and this wrapper is short. */}
+      <div className="contents md:hidden">
+        {/* -mb-3 pulls the nav closer than the layout's gap-6. */}
+        <div className="-mb-3">
+          <BackLink
+            href="/courses"
+            className="text-muted-foreground hover:text-foreground py-1 text-xs"
+          >
+            Back to courses
+          </BackLink>
+          <p className="mt-1 truncate font-heading font-bold" title={courseTitle}>
+            {courseTitle}
+          </p>
+          <CourseProgressBar completed={progress.completed} total={progress.total} className="mt-3" />
+        </div>
         <MobileSectionNav
           items={allItems.map((item) => ({
             ...item,

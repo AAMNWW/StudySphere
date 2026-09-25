@@ -82,13 +82,18 @@ export function CareerSidebar({ counts }: { counts: CareerSidebarCounts }) {
 
   return (
     <>
-      <div className="md:hidden">
-        <BackLink
-          href="/"
-          className="text-muted-foreground hover:text-foreground mb-2 py-1 text-xs"
-        >
-          Back to dashboard
-        </BackLink>
+      {/* `contents`, not a real box: the sticky MobileSectionNav inside can
+          only stick within its parent, and this wrapper is short. */}
+      <div className="contents md:hidden">
+        {/* Own box (and -mb-4) so the layout's gap-6 doesn't push the nav away. */}
+        <div className="-mb-4">
+          <BackLink
+            href="/"
+            className="text-muted-foreground hover:text-foreground py-1 text-xs"
+          >
+            Back to dashboard
+          </BackLink>
+        </div>
         <MobileSectionNav
           items={NAV_ITEMS.map((item) => ({
             ...item,
