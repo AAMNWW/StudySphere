@@ -7,12 +7,13 @@ export { auth as proxy } from "@/auth";
 // Server Actions are POSTs to the page route, so a matcher gap here would
 // silently stop protecting them otherwise.
 //
-// The root path is excluded (the trailing `|$` in the lookahead) so signed-out
+// /privacy and /terms are public too — Google's OAuth consent screen links to
+// them. The root path is excluded (the trailing `|$` in the lookahead) so signed-out
 // visitors can see the marketing landing page there instead of bouncing
 // straight to /login — src/app/page.tsx itself branches on session to render
 // either that landing page or the real dashboard.
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|icon.svg|photos/|brand/|login|signup|forgot-password|reset-password|verify-email|$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|icon.svg|photos/|brand/|login|signup|forgot-password|reset-password|verify-email|privacy|terms|$).*)",
   ],
 };

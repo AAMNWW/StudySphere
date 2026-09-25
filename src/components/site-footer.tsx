@@ -11,7 +11,8 @@ const PRODUCT_LINKS = [
 
 const RESOURCE_LINKS = [
   { href: "/#faq", label: "FAQ" },
-  { href: "/#privacy", label: "Privacy" },
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/terms", label: "Terms of Service" },
 ];
 
 const ACCOUNT_LINKS = [
