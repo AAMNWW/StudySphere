@@ -82,7 +82,12 @@ export async function* answerChatMessageStream(
       ];
 
       const stream = await withGeminiRetry(() =>
-        ai.models.generateContentStream({ model: MODEL, contents, config: FAST_CHAT_CONFIG }),
+        ai.models.generateContentStream(
+          { model: MODEL, contents, config: FAST_CHAT_CONFIG },
+          // No documents: nothing for Gemini's PDF vision to read, so take
+          // Groq's faster reply.
+          { preferFast: documentParts.length === 0 },
+        ),
       );
 
       for await (const chunk of stream) {

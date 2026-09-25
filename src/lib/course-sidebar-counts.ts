@@ -3,6 +3,7 @@
  * keys without importing a client component. */
 export interface CourseSidebarCounts {
   documents: number;
+  resources: number;
   notes: number;
   assignments: number;
   exams: number;

@@ -30,6 +30,7 @@ export default async function CourseLayout({
     flashcardSets,
     chatThreads,
     topics,
+    resources,
   ] = await Promise.all([
     db.document.count({ where: { courseId } }),
     db.note.count({ where: { courseId } }),
@@ -40,6 +41,7 @@ export default async function CourseLayout({
     db.flashcardSet.count({ where: { courseId } }),
     db.chatThread.count({ where: { courseId } }),
     db.topic.count({ where: { courseId } }),
+    db.courseResource.count({ where: { courseId } }),
   ]);
 
   return (
@@ -47,7 +49,17 @@ export default async function CourseLayout({
       <CourseSidebar
         courseId={course.id}
         courseTitle={course.title}
-        counts={{ documents, notes, assignments, exams, quizzes, flashcardSets, chatThreads, topics }}
+        counts={{
+          documents,
+          resources,
+          notes,
+          assignments,
+          exams,
+          quizzes,
+          flashcardSets,
+          chatThreads,
+          topics,
+        }}
         progress={{ completed: completedAssignments, total: assignments }}
       />
       <div className="min-w-0 flex-1">{children}</div>

@@ -61,7 +61,11 @@ export async function* answerInterviewMessageStream(
   ];
 
   const stream = await withGeminiRetry(() =>
-    ai.models.generateContentStream({ model: MODEL, contents, config: FAST_CHAT_CONFIG }),
+    ai.models.generateContentStream(
+      { model: MODEL, contents, config: FAST_CHAT_CONFIG },
+      // No resume attached: plain chat, so take Groq's faster reply.
+      { preferFast: !resume },
+    ),
   );
 
   for await (const chunk of stream) {

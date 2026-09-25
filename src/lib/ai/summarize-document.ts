@@ -1,4 +1,4 @@
-import { createUserContent, type GoogleGenAI } from "@google/genai";
+import { createUserContent } from "@google/genai";
 
 import { getClient, MODEL, withGeminiRetry } from "./client";
 import { getDocumentContent } from "./document-content";
@@ -27,13 +27,17 @@ export async function summarizeDocument(
   return requireText(response);
 }
 
-export function requireText(
-  response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>,
-): string {
-  const text = response.text?.trim();
+/** The reply text from either AI provider (see getClient in ./client.ts).
+ * Strips a ```json fence if a model wrapped JSON output in one. */
+export function requireText(response: { text?: string }): string {
+  const text = response.text
+    ?.trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
 
   if (!text) {
-    throw new Error("Gemini returned an empty response.");
+    throw new Error("The model returned an empty response.");
   }
 
   return text;

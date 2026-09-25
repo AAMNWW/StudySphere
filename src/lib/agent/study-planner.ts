@@ -1,9 +1,11 @@
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { ChatGoogle } from "@langchain/google";
+import { ChatGroq } from "@langchain/groq";
 import { END, MessagesAnnotation, START, StateGraph } from "@langchain/langgraph";
 import { ToolNode, toolsCondition } from "@langchain/langgraph/prebuilt";
 
 import { MODEL } from "@/lib/ai/client";
+import { GROQ_MODEL, isGroqConfigured } from "@/lib/ai/groq";
 
 import { buildStudyPlannerTools } from "./tools";
 
@@ -30,12 +32,18 @@ export async function generateStudyPlan(
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
 
-  if (!apiKey) {
+  if (!apiKey && !isGroqConfigured()) {
     throw new Error("GEMINI_API_KEY is not configured.");
   }
 
   const tools = buildStudyPlannerTools(courseId);
-  const model = new ChatGoogle({ model: MODEL, apiKey }).bindTools(tools);
+  // Gemini first; Groq (same tools) if Gemini is out of quota or down — see
+  // src/lib/ai/groq.ts for why Groq is the backup everywhere.
+  const groq = isGroqConfigured()
+    ? new ChatGroq({ model: GROQ_MODEL, reasoningEffort: "low", maxRetries: 1 }).bindTools(tools)
+    : null;
+  const gemini = apiKey ? new ChatGoogle({ model: MODEL, apiKey, maxRetries: 1 }).bindTools(tools) : null;
+  const model = gemini && groq ? gemini.withFallbacks([groq]) : (gemini ?? groq)!;
 
   // The agent node: ask the model what to do next given the conversation
   // so far. Its response either contains tool_calls (route to "tools") or

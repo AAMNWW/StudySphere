@@ -37,7 +37,11 @@ export async function* answerFromChunksStream(
 
   const prompt = `${SYSTEM_PROMPT}\n\n${context}\n\n---\n\nQuestion: ${question}`;
 
-  const stream = await ai.models.generateContentStream({ model: MODEL, contents: prompt });
+  // Retrieved chunks are short plain text, so Groq's faster reply fits.
+  const stream = await ai.models.generateContentStream(
+    { model: MODEL, contents: prompt },
+    { preferFast: true },
+  );
 
   for await (const chunk of stream) {
     if (chunk.text) yield chunk.text;

@@ -176,11 +176,28 @@ model Course {
   studySessions  StudySession[]
   tasks          Task[]
   exams          Exam[]
+  resources      CourseResource[]
   share          CourseShare?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
   @@index([userId])
+}
+
+/// A link to study material that lives online — a video, article, course
+/// site, slide deck — saved to a course instead of downloading and
+/// re-uploading it. Only http(s) URLs are accepted (see
+/// src/lib/validations/resource.ts); the app never fetches them server-side.
+model CourseResource {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  url       String
+  title     String
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([courseId])
 }
 
 /// A read-only shareable link for a course — "study groups" in practice:
@@ -227,9 +244,13 @@ model Task {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseId  String?
   course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  /// Optional day the task is for — set when a task is added from a calendar
+  /// date, so it shows on the calendar. Null for plain to-do list tasks.
+  dueDate   DateTime?
   createdAt DateTime @default(now())
 
   @@index([userId, completed])
+  @@index([userId, dueDate])
   @@index([courseId])
 }
 
