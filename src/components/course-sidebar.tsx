@@ -5,7 +5,13 @@ import { usePathname } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { CourseProgressBar } from "@/components/course-progress-bar";
 import { MobileSectionNav } from "@/components/mobile-section-nav";
-import { SidebarHeader, SidebarLink, SidebarSection, SidebarShell } from "@/components/sidebar-nav";
+import {
+  SidebarHeader,
+  SidebarLink,
+  SidebarSection,
+  SidebarShell,
+  SidebarSignOut,
+} from "@/components/sidebar-nav";
 import type { CourseSidebarCounts } from "@/lib/course-sidebar-counts";
 import {
   COURSE_SETTINGS_TOOL,
@@ -61,6 +67,7 @@ export function CourseSidebar({
           <CourseProgressBar completed={progress.completed} total={progress.total} className="mt-3" />
         </div>
         <MobileSectionNav
+          title={courseTitle}
           items={allItems.map((item) => ({
             ...item,
             href: courseToolHref(item, courseId),
@@ -110,6 +117,7 @@ export function CourseSidebar({
             color={COURSE_SETTINGS_TOOL.color}
             active={isActive(pathname, COURSE_SETTINGS_TOOL, courseId)}
           />
+          <SidebarSignOut />
         </SidebarSection>
       </SidebarShell>
     </>

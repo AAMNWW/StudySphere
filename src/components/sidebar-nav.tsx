@@ -1,6 +1,8 @@
+import { LogOut } from "lucide-react";
 import Link from "next/link";
 
 import { getTileColorClasses, type IconTileColor } from "@/components/icon-tile";
+import { logout } from "@/components/logout-action";
 import { cn } from "@/lib/utils";
 
 /**
@@ -99,4 +101,27 @@ export function SidebarLink({
 /** Title block at the top of a sidebar (course name, "Career", …). */
 export function SidebarHeader({ children }: { children: React.ReactNode }) {
   return <div className="border-sidebar-border border-b px-2.5 pt-1.5 pb-3">{children}</div>;
+}
+
+/** Sign out, styled as a sidebar row — the same action as the avatar menu,
+ * one click away at the bottom of every sidebar. */
+export function SidebarSignOut() {
+  return (
+    <form action={logout}>
+      <button
+        type="submit"
+        className="text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors"
+      >
+        <span
+          className={cn(
+            "flex size-6 shrink-0 items-center justify-center rounded-md",
+            getTileColorClasses("gray"),
+          )}
+        >
+          <LogOut className="size-3.5" />
+        </span>
+        Sign out
+      </button>
+    </form>
+  );
 }

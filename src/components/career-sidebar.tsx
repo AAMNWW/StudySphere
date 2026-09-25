@@ -20,6 +20,7 @@ import {
   SidebarLink,
   SidebarSection,
   SidebarShell,
+  SidebarSignOut,
 } from "@/components/sidebar-nav";
 
 export interface CareerSidebarCounts {
@@ -95,6 +96,7 @@ export function CareerSidebar({ counts }: { counts: CareerSidebarCounts }) {
           </BackLink>
         </div>
         <MobileSectionNav
+          title="Career"
           items={NAV_ITEMS.map((item) => ({
             ...item,
             active: isActive(pathname, item),
@@ -128,6 +130,9 @@ export function CareerSidebar({ counts }: { counts: CareerSidebarCounts }) {
               count={item.countKey ? counts[item.countKey] : undefined}
             />
           ))}
+        </SidebarSection>
+        <SidebarSection>
+          <SidebarSignOut />
         </SidebarSection>
       </SidebarShell>
     </>

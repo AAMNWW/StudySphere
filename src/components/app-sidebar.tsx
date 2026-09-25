@@ -13,7 +13,7 @@ import { usePathname } from "next/navigation";
 
 import type { IconTileColor } from "@/components/icon-tile";
 import { MobileSectionNav } from "@/components/mobile-section-nav";
-import { SidebarLink, SidebarSection, SidebarShell } from "@/components/sidebar-nav";
+import { SidebarLink, SidebarSection, SidebarShell, SidebarSignOut } from "@/components/sidebar-nav";
 import { PRIMARY_GLOBAL_TOOLS } from "@/lib/course-tools";
 
 const NAV_ITEMS = [
@@ -73,14 +73,18 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
 
   const allItems = [
     ...NAV_ITEMS,
-    ...TOOL_ITEMS,
-    SETTINGS_ITEM,
-    ...(isAdmin ? [ADMIN_ITEM] : []),
+    ...TOOL_ITEMS.map((item) => ({ ...item, section: "Study tools" })),
+    { ...SETTINGS_ITEM, section: "Account" },
+    ...(isAdmin ? [{ ...ADMIN_ITEM, section: "Account" }] : []),
   ];
 
   return (
     <>
       <MobileSectionNav
+        title="Academique"
+        // First thing on the page on phones: cancel the wrapper's py-10 so the
+        // bar sits flush under the header instead of floating 40px below it.
+        className="-mt-10"
         items={allItems.map((item) => ({
           ...item,
           active: pathname === item.href,
@@ -92,6 +96,7 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
         <SidebarSection title="Account">
           {renderItem(SETTINGS_ITEM)}
           {isAdmin ? renderItem(ADMIN_ITEM) : null}
+          <SidebarSignOut />
         </SidebarSection>
       </SidebarShell>
     </>
