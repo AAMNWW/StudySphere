@@ -13,12 +13,16 @@ import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { deleteCalendarEvent, syncCalendarEvent } from "@/lib/google-calendar";
 import { indexDocument } from "@/lib/rag/index-document";
+import { sanitizeNoteContent } from "@/lib/sanitize-note";
 import {
   ALLOWED_FILE_TYPES,
+  cleanFileName,
   deleteUploadedFile,
+  documentBlobPrefixes,
   MAX_FILE_SIZE_BYTES,
   readUploadedFile,
   saveUploadedFile,
+  verifyClientUpload,
 } from "@/lib/uploads";
 import { assignmentSchema } from "@/lib/validations/assignment";
 import { examSchema } from "@/lib/validations/exam";
@@ -79,7 +83,7 @@ export async function createNote(
         title: parsed.data.title,
         // Store absent content as NULL rather than an empty string, so
         // "no content" has exactly one representation in the database.
-        content: parsed.data.content || null,
+        content: parsed.data.content ? sanitizeNoteContent(parsed.data.content) : null,
       },
     });
   } catch (error) {
@@ -132,7 +136,7 @@ export async function updateNote(
       where: { id: noteId, courseId, course: { userId } },
       data: {
         title: parsed.data.title,
-        content: parsed.data.content || null,
+        content: parsed.data.content ? sanitizeNoteContent(parsed.data.content) : null,
       },
     });
 
@@ -786,16 +790,21 @@ export async function finalizeDocumentUpload(
     return { status: "error", message: "Could not save the file. Please try again." };
   }
 
+  // Only the URL is taken from the client, and only after Blob confirms it's
+  // a real file in this course's folder; name, type and size come from Blob.
+  const verified = await verifyClientUpload(
+    file?.storageUrl,
+    documentBlobPrefixes(courseId),
+    Object.keys(ALLOWED_FILE_TYPES),
+  );
+
+  if (!verified) {
+    return { status: "error", message: "Could not save the file. Please try again." };
+  }
+
   try {
     const document = await db.document.create({
-      data: {
-        courseId,
-        fileName: file.fileName,
-        storedName: file.storedName,
-        storageUrl: file.storageUrl,
-        mimeType: file.mimeType,
-        sizeBytes: file.sizeBytes,
-      },
+      data: { courseId, fileName: cleanFileName(file.fileName), ...verified },
     });
 
     autoIndexAfterResponse(document.id);

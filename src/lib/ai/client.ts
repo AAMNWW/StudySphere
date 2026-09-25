@@ -40,9 +40,11 @@ export function getClient(): GoogleGenAI {
 // document-content.ts, pdf.ts) where Next.js splitting a class's module
 // across per-Server-Action bundle chunks makes `instanceof` unreliable in
 // production; a plain property read survives that.
-const RETRYABLE_STATUS_CODES = new Set([429, 503]);
-const MAX_RETRIES = 2;
-const RETRY_DELAY_MS = 1500;
+// 503 "high demand" spells can outlast a couple of quick retries, so back
+// off for longer: 2s, 4s, 6s, 8s (~20s worst case) before giving up.
+const RETRYABLE_STATUS_CODES = new Set([429, 500, 503]);
+const MAX_RETRIES = 4;
+const RETRY_DELAY_MS = 2000;
 
 function isRetryableGeminiError(error: unknown): boolean {
   return (

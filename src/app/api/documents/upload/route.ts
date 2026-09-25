@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE_BYTES } from "@/lib/uploads-shared";
+import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE_BYTES, UPLOAD_NAME_PATTERN } from "@/lib/uploads-shared";
 
 // Authorizes client-side (browser-to-Blob) uploads for course documents. The
 // bytes never pass through this function — only this small token exchange
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const jsonResponse = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async (_pathname, clientPayload) => {
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
         const payload = clientPayload ? (JSON.parse(clientPayload) as { courseId?: string }) : null;
         const courseId = payload?.courseId;
 
@@ -38,6 +38,12 @@ export async function POST(request: Request) {
 
         if (!course) {
           throw new Error("Course not found.");
+        }
+
+        // Only the random name UploadDocumentForm generates, inside this
+        // course's folder — finalizeDocumentUpload relies on that prefix.
+        if (!new RegExp(`^documents/${courseId}/${UPLOAD_NAME_PATTERN}$`).test(pathname)) {
+          throw new Error("Invalid upload path.");
         }
 
         return {

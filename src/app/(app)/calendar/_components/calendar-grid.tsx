@@ -49,11 +49,13 @@ export function CalendarGrid({
 }) {
   return (
     <div className="overflow-x-auto">
-      <RevealGroup className="grid min-w-[640px] grid-cols-7 gap-2" stagger={0.012}>
+      {/* All 7 days fit on a phone: tighter cells, and entries show as just
+          their icon/dot below `sm` (tap for details; the title is on hover). */}
+      <RevealGroup className="grid grid-cols-7 gap-1 sm:min-w-[640px] sm:gap-2" stagger={0.012}>
         {WEEKDAY_LABELS.map((label) => (
           <div
             key={label}
-            className="text-muted-foreground px-1 text-xs font-semibold tracking-wide uppercase"
+            className="text-muted-foreground px-0.5 text-[0.65rem] font-semibold tracking-wide uppercase sm:px-1 sm:text-xs"
           >
             {label}
           </div>
@@ -71,7 +73,7 @@ export function CalendarGrid({
             <RevealItem
               key={key}
               className={cn(
-                "min-h-24 space-y-1 rounded-xl border p-2 transition-transform duration-200",
+                "min-h-16 min-w-0 space-y-1 rounded-lg border p-1 transition-transform duration-200 sm:min-h-24 sm:rounded-xl sm:p-2",
                 (assignments.length > 0 || exams.length > 0 || externalEvents.length > 0) &&
                   "hover:-translate-y-0.5 hover:shadow-sm",
                 !day.inCurrentMonth && "bg-muted/30",
@@ -95,10 +97,10 @@ export function CalendarGrid({
                     key={exam.id}
                     href={`/courses/${exam.courseId}/exams`}
                     title={exam.title}
-                    className="flex items-center gap-1 truncate rounded-md bg-red-100 px-1.5 py-0.5 text-xs text-red-700 transition-colors hover:bg-red-200"
+                    className="flex items-center justify-center gap-1 truncate rounded-md bg-red-100 px-1 py-0.5 text-xs text-red-700 transition-colors hover:bg-red-200 sm:justify-start sm:px-1.5"
                   >
                     <GraduationCap className="size-3 shrink-0" />
-                    <span className="truncate">{exam.title}</span>
+                    <span className="hidden truncate sm:inline">{exam.title}</span>
                   </Link>
                 ))}
                 {visible.map((assignment) => (
@@ -107,7 +109,7 @@ export function CalendarGrid({
                     href={`/courses/${assignment.courseId}/assignments`}
                     title={assignment.title}
                     className={cn(
-                      "flex items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-xs transition-colors",
+                      "flex items-center justify-center gap-1 truncate rounded-md px-1 py-0.5 text-xs transition-colors sm:justify-start sm:px-1.5",
                       assignment.completed
                         ? "text-muted-foreground bg-muted line-through"
                         : assignment.isOverdue
@@ -116,21 +118,21 @@ export function CalendarGrid({
                     )}
                   >
                     <PriorityDot priority={assignment.priority} />
-                    <span className="truncate">{assignment.title}</span>
+                    <span className="hidden truncate sm:inline">{assignment.title}</span>
                   </Link>
                 ))}
                 {overflow > 0 ? (
-                  <p className="text-muted-foreground px-1.5 text-xs">+{overflow} more</p>
+                  <p className="text-muted-foreground px-0.5 text-[0.65rem] sm:px-1.5 sm:text-xs">+{overflow}<span className="hidden sm:inline"> more</span></p>
                 ) : null}
                 {externalEvents.map((event) => {
                   const content = (
                     <>
                       <CalendarDays className="size-3 shrink-0" />
-                      <span className="truncate">{event.title}</span>
+                      <span className="hidden truncate sm:inline">{event.title}</span>
                     </>
                   );
                   const className =
-                    "flex items-center gap-1 truncate rounded-md bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700 transition-colors hover:bg-blue-200";
+                    "flex items-center justify-center gap-1 truncate rounded-md bg-blue-100 px-1 py-0.5 text-xs text-blue-700 transition-colors hover:bg-blue-200 sm:justify-start sm:px-1.5";
 
                   return event.url ? (
                     <a

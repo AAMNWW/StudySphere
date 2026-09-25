@@ -112,9 +112,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // to users (session strategy is plain JWT) — so link by email here
     // instead: reuse the existing row if one matches, or create a
     // password-less, pre-verified one (Google already confirmed the email).
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider !== "google" || !user.email) {
         return true;
+      }
+
+      // Linking is by email alone, so only trust an address Google itself
+      // has verified.
+      if (profile?.email_verified !== true) {
+        return false;
       }
 
       const existing = await db.user.findUnique({

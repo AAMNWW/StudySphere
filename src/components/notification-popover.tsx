@@ -68,7 +68,7 @@ export function NotificationPopover({
       >
         <Bell className="size-4" />
         {badgeCount > 0 ? (
-          <span className="bg-destructive text-destructive-foreground absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-medium">
+          <span className="bg-destructive ring-background absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-semibold text-white ring-2">
             {badgeCount > 9 ? "9+" : badgeCount}
           </span>
         ) : null}

@@ -16,6 +16,12 @@ export async function startStudySession(
 ): Promise<{ id: string; startedAt: string }> {
   const userId = await requireUserId();
 
+  const course = await db.course.findFirst({ where: { id: courseId, userId }, select: { id: true } });
+
+  if (!course) {
+    throw new Error("Course not found.");
+  }
+
   await db.studySession.updateMany({
     where: { userId, endedAt: null },
     data: { endedAt: new Date() },

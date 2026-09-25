@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { deleteResumeFile, saveResumeFile } from "@/lib/uploads";
+import {
+  cleanFileName,
+  deleteResumeFile,
+  RESUME_BLOB_PREFIX,
+  saveResumeFile,
+  verifyClientUpload,
+} from "@/lib/uploads";
 import { MAX_FILE_SIZE_BYTES, RESUME_MIME_TYPES } from "@/lib/uploads-shared";
 import { resumeTitleSchema } from "@/lib/validations/resume";
 
@@ -100,17 +106,27 @@ export async function finalizeResumeUpload(
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Invalid title." };
   }
 
+  // Only the URL is taken from the client, and only after Blob confirms it's
+  // a real resume file in this store; name, type and size come from Blob.
+  const verified = await verifyClientUpload(
+    file?.storageUrl,
+    [RESUME_BLOB_PREFIX],
+    RESUME_MIME_TYPES,
+  );
+
+  // Resume blob paths aren't per-user, so also make sure nobody has already
+  // saved this exact file — otherwise another user's resume URL could be
+  // claimed by re-submitting it.
+  const alreadyClaimed =
+    verified && (await db.resume.findFirst({ where: { storageUrl: verified.storageUrl } }));
+
+  if (!verified || alreadyClaimed) {
+    return { status: "error", message: "Could not save the resume. Please try again." };
+  }
+
   try {
     await db.resume.create({
-      data: {
-        userId,
-        title: parsed.data,
-        fileName: file.fileName,
-        storedName: file.storedName,
-        storageUrl: file.storageUrl,
-        mimeType: file.mimeType,
-        sizeBytes: file.sizeBytes,
-      },
+      data: { userId, title: parsed.data, fileName: cleanFileName(file.fileName), ...verified },
     });
   } catch (error) {
     console.error("Failed to save resume", error);

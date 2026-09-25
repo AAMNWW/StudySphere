@@ -109,7 +109,7 @@ export default async function AnalyticsPage({
   const topWeakTopic = weakTopics[0]?.topic ?? "—";
 
   return (
-    <main className="max-w-3xl">
+    <main className="max-w-2xl">
       <header className="mb-8 flex items-center gap-3">
         <IconTile color="purple">
           <BarChart3 className="size-5" />

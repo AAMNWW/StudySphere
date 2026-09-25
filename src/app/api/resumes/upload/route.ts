@@ -2,7 +2,7 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
-import { MAX_FILE_SIZE_BYTES, RESUME_MIME_TYPES } from "@/lib/uploads-shared";
+import { MAX_FILE_SIZE_BYTES, RESUME_MIME_TYPES, UPLOAD_NAME_PATTERN } from "@/lib/uploads-shared";
 
 // Authorizes client-side (browser-to-Blob) uploads for resumes. The bytes
 // never pass through this function — only this small token exchange does —
@@ -21,7 +21,12 @@ export async function POST(request: Request) {
     const jsonResponse = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async () => {
+      onBeforeGenerateToken: async (pathname) => {
+        // Only the random name UploadResumeForm generates, under resumes/.
+        if (!new RegExp(`^resumes/${UPLOAD_NAME_PATTERN}$`).test(pathname)) {
+          throw new Error("Invalid upload path.");
+        }
+
         return {
           allowedContentTypes: Array.from(RESUME_MIME_TYPES),
           maximumSizeInBytes: MAX_FILE_SIZE_BYTES,

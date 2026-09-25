@@ -103,7 +103,7 @@ export default async function AppLayout({
             </div>
           </header>
           <div className="flex flex-1 flex-col">{children}</div>
-          <SiteFooter />
+          <SiteFooter signedIn={Boolean(session?.user)} />
         </ThemeProvider>
       </body>
     </html>

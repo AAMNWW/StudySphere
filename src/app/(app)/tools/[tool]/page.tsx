@@ -72,16 +72,16 @@ export default async function ToolPage({ params }: PageProps<"/tools/[tool]">) {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10 md:flex-row md:gap-8">
       <AppSidebar isAdmin={session?.user?.role === "ADMIN"} />
       <main className="min-w-0 flex-1">
-        <header className="mb-8">
-          <div className="flex items-center gap-3">
-            <IconTile color={tool.color}>
-              <Icon className="size-5" />
-            </IconTile>
-            <h1 className="text-3xl font-bold tracking-tight">{tool.label}</h1>
+        <header className="mb-8 flex items-center gap-3">
+          <IconTile color={tool.color}>
+            <Icon className="size-5" />
+          </IconTile>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{tool.label}</h1>
+            {tool.description ? (
+              <p className="text-muted-foreground text-sm">{tool.description}</p>
+            ) : null}
           </div>
-          {tool.description ? (
-            <p className="text-muted-foreground mt-2">{tool.description}</p>
-          ) : null}
         </header>
 
         {courses.length === 0 ? (

@@ -20,8 +20,10 @@ const DUE_SOON_WINDOW_MS = 48 * 60 * 60 * 1000;
  */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
+  const secret = process.env.CRON_SECRET;
 
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // An unset secret must fail closed — otherwise "Bearer undefined" passes.
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return new Response(null, { status: 401 });
   }
 

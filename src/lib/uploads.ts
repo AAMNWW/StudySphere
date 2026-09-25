@@ -29,6 +29,105 @@ export function blobStorageConfigured(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
+// --- Trust boundary -------------------------------------------------------
+// A Document/Resume row's storedName and storageUrl decide which bytes the
+// server reads, serves and deletes. Rows are created from client-reported
+// values in the direct-to-Blob upload flow, so both are re-checked every time
+// they're used: a storageUrl must point into this app's own Blob store under
+// the owner's folder (never an arbitrary URL — that would be SSRF), and a
+// local storedName must be exactly the random name saveUploadedFile/
+// saveResumeFile generate (never a path — "../../.env" would read secrets).
+
+const STORED_NAME_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(pdf|docx|pptx)$/;
+const BLOB_HOST_SUFFIX = ".public.blob.vercel-storage.com";
+
+/** Blob path prefixes a course's documents can live under: the direct
+ * browser upload path, and the older server-side upload path. */
+export function documentBlobPrefixes(courseId: string): string[] {
+  return [`documents/${courseId}/`, `${courseId}/`];
+}
+
+export const RESUME_BLOB_PREFIX = "resumes/";
+
+export function isOwnBlobUrl(url: string, prefixes: string[]): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+
+  if (parsed.protocol !== "https:" || !parsed.hostname.endsWith(BLOB_HOST_SUFFIX)) {
+    return false;
+  }
+
+  const pathname = decodeURIComponent(parsed.pathname).replace(/^\//, "");
+  return !pathname.includes("..") && prefixes.some((prefix) => pathname.startsWith(prefix));
+}
+
+function localUploadPath(directory: string[], storedName: string): string {
+  if (!STORED_NAME_PATTERN.test(storedName)) {
+    throw new Error("Refusing to use an invalid stored file name.");
+  }
+  return path.join(UPLOAD_ROOT, ...directory, storedName);
+}
+
+async function fetchOwnBlob(url: string, prefixes: string[]): Promise<Buffer> {
+  if (!isOwnBlobUrl(url, prefixes)) {
+    throw new Error("Refusing to fetch a file outside this app's storage.");
+  }
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch uploaded file (${response.status})`);
+  }
+
+  return Buffer.from(await response.arrayBuffer());
+}
+
+/**
+ * Validates a file the browser says it uploaded straight to Blob, using
+ * Blob's own record of it rather than anything the client reported: the URL
+ * must be in this store under one of `prefixes`, and its real content type
+ * and size must be allowed. Returns the values to save, or null to reject.
+ */
+export async function verifyClientUpload(
+  url: unknown,
+  prefixes: string[],
+  allowedTypes: Iterable<string>,
+): Promise<{ storedName: string; storageUrl: string; mimeType: string; sizeBytes: number } | null> {
+  if (!blobStorageConfigured() || typeof url !== "string" || !isOwnBlobUrl(url, prefixes)) {
+    return null;
+  }
+
+  const { head } = await import("@vercel/blob");
+  const blob = await head(url).catch(() => null);
+
+  if (
+    !blob ||
+    !isOwnBlobUrl(blob.url, prefixes) ||
+    !new Set(allowedTypes).has(blob.contentType) ||
+    blob.size > MAX_FILE_SIZE_BYTES
+  ) {
+    return null;
+  }
+
+  return {
+    storedName: blob.pathname,
+    storageUrl: blob.url,
+    mimeType: blob.contentType,
+    sizeBytes: blob.size,
+  };
+}
+
+/** A client-reported original file name, kept only for display. */
+export function cleanFileName(value: unknown): string {
+  const name = typeof value === "string" ? value.trim().slice(0, 255) : "";
+  return name || "file";
+}
+
 /**
  * Writes an uploaded file to Vercel Blob (when configured) or a per-course
  * local directory otherwise, and returns the random name it was stored as
@@ -60,35 +159,28 @@ export async function saveUploadedFile(
   return { storedName, storageUrl: null };
 }
 
-export function getUploadedFilePath(courseId: string, storedName: string) {
-  return path.join(UPLOAD_ROOT, courseId, storedName);
-}
-
 /** Reads an uploaded file's bytes back, regardless of storage backend. */
 export async function readUploadedFile(document: UploadedFileRef): Promise<Buffer> {
   if (document.storageUrl) {
-    const response = await fetch(document.storageUrl);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch uploaded file (${response.status})`);
-    }
-
-    return Buffer.from(await response.arrayBuffer());
+    return fetchOwnBlob(document.storageUrl, documentBlobPrefixes(document.courseId));
   }
 
-  return readFile(getUploadedFilePath(document.courseId, document.storedName));
+  return readFile(localUploadPath([document.courseId], document.storedName));
 }
 
 /** Best-effort delete — a missing file shouldn't fail the request. */
 export async function deleteUploadedFile(document: UploadedFileRef) {
   if (document.storageUrl) {
+    if (!isOwnBlobUrl(document.storageUrl, documentBlobPrefixes(document.courseId))) {
+      return;
+    }
     const { del } = await import("@vercel/blob");
     await del(document.storageUrl).catch(() => {});
     return;
   }
 
   try {
-    await unlink(getUploadedFilePath(document.courseId, document.storedName));
+    await unlink(localUploadPath([document.courseId], document.storedName));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
       throw error;
@@ -156,28 +248,25 @@ export async function saveResumeBytes(userId: string, bytes: Buffer): Promise<St
 
 export async function readResumeFile(resume: UploadedResumeRef): Promise<Buffer> {
   if (resume.storageUrl) {
-    const response = await fetch(resume.storageUrl);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch uploaded file (${response.status})`);
-    }
-
-    return Buffer.from(await response.arrayBuffer());
+    return fetchOwnBlob(resume.storageUrl, [RESUME_BLOB_PREFIX]);
   }
 
-  return readFile(path.join(UPLOAD_ROOT, "resumes", resume.userId, resume.storedName));
+  return readFile(localUploadPath(["resumes", resume.userId], resume.storedName));
 }
 
 /** Best-effort delete — a missing file shouldn't fail the request. */
 export async function deleteResumeFile(resume: UploadedResumeRef) {
   if (resume.storageUrl) {
+    if (!isOwnBlobUrl(resume.storageUrl, [RESUME_BLOB_PREFIX])) {
+      return;
+    }
     const { del } = await import("@vercel/blob");
     await del(resume.storageUrl).catch(() => {});
     return;
   }
 
   try {
-    await unlink(path.join(UPLOAD_ROOT, "resumes", resume.userId, resume.storedName));
+    await unlink(localUploadPath(["resumes", resume.userId], resume.storedName));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
       throw error;

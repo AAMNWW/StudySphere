@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { answerInterviewMessageStream } from "@/lib/ai/interview";
+import { aiErrorMessage, primeStream } from "@/lib/ai/stream-response";
 import { db } from "@/lib/db";
 import { readResumeFile } from "@/lib/uploads";
 
@@ -77,9 +78,13 @@ export async function POST(
       history,
       message,
     );
+
+    // Surfaces an AI failure here, as a real error response, rather than
+    // after the 200 has been sent (see primeStream).
+    textStream = await primeStream(textStream);
   } catch (error) {
     console.error("Failed to start interview stream", error);
-    return new Response("Could not get a response. Please try again.", { status: 500 });
+    return new Response(aiErrorMessage(error), { status: 503 });
   }
 
   const encoder = new TextEncoder();

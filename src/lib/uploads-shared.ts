@@ -22,3 +22,9 @@ export const RESUME_MIME_TYPES = new Set([
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
+
+/** Regex source for the random file names the upload forms generate
+ * (`crypto.randomUUID()` plus an allowed extension) — the upload token
+ * routes accept nothing else as a Blob path. */
+export const UPLOAD_NAME_PATTERN =
+  "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[.](pdf|docx|pptx)";
