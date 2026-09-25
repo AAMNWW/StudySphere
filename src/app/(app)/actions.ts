@@ -67,3 +67,37 @@ export async function createQuickNote(formData: FormData): Promise<void> {
   revalidatePath("/");
   revalidatePath(`/courses/${courseId}/notes`);
 }
+
+/** A task added from a calendar date (see AddToDayDialog): the same Task as
+ * the dashboard's quick-add, plus the day it's for and optionally a course.
+ * Returns an error message instead of throwing so the dialog can show it. */
+export async function createCalendarTask(
+  formData: FormData,
+): Promise<{ status: "success" } | { status: "error"; message: string }> {
+  const userId = await requireUserId();
+  const title = taskTitleSchema.safeParse(formData.get("title"));
+  const day = String(formData.get("date") ?? "");
+  const courseId = String(formData.get("courseId") ?? "") || null;
+
+  if (!title.success) {
+    return { status: "error", message: "Give the task a title (up to 150 characters)." };
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || Number.isNaN(Date.parse(`${day}T00:00:00Z`))) {
+    return { status: "error", message: "That date isn't valid." };
+  }
+  if (courseId) {
+    const course = await db.course.findFirst({ where: { id: courseId, userId }, select: { id: true } });
+    if (!course) {
+      return { status: "error", message: "Could not save the task. Please try again." };
+    }
+  }
+
+  await db.task.create({
+    data: { userId, title: title.data, courseId, dueDate: new Date(`${day}T00:00:00Z`) },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/calendar");
+
+  return { status: "success" };
+}

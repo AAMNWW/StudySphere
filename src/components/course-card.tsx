@@ -24,6 +24,7 @@ export function CourseCard({
   description,
   color,
   className,
+  menu,
   children,
 }: {
   href: string;
@@ -31,6 +32,9 @@ export function CourseCard({
   description?: string | null;
   color: IconTileColor;
   className?: string;
+  /** Optional actions (e.g. an edit/delete menu) pinned top-right, above
+   * the stretched link. */
+  menu?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
@@ -40,6 +44,7 @@ export function CourseCard({
         className,
       )}
     >
+      {menu ? <div className="absolute top-3 right-3">{menu}</div> : null}
       <CardHeader>
         <IconTile color={color}>
           <BookOpen className="size-5" />

@@ -18,6 +18,7 @@ import {
   type CalendarAssignmentItem,
   type CalendarExamItem,
   type CalendarExternalItem,
+  type CalendarTaskItem,
 } from "./_components/calendar-grid";
 
 export const metadata: Metadata = {
@@ -75,7 +76,7 @@ export default async function CalendarPage({
   const gridEnd = new Date(days[days.length - 1].date);
   gridEnd.setUTCDate(gridEnd.getUTCDate() + 1);
 
-  const [assignments, exams] = await Promise.all([
+  const [assignments, exams, datedTasks, courses] = await Promise.all([
     db.assignment.findMany({
       where: { course: { userId }, dueDate: { gte: gridStart, lt: gridEnd } },
       include: { course: { select: { id: true, title: true } } },
@@ -86,7 +87,27 @@ export default async function CalendarPage({
       include: { course: { select: { id: true, title: true } } },
       orderBy: { examDate: "asc" },
     }),
+    db.task.findMany({
+      where: { userId, dueDate: { gte: gridStart, lt: gridEnd } },
+      select: { id: true, title: true, completed: true, dueDate: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    // For the "add to this day" dialog's course picker.
+    db.course.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, title: true },
+    }),
   ]);
+
+  const tasksByDay = new Map<string, CalendarTaskItem[]>();
+  for (const task of datedTasks) {
+    const key = dateKey(task.dueDate!);
+    tasksByDay.set(key, [
+      ...(tasksByDay.get(key) ?? []),
+      { id: task.id, title: task.title, completed: task.completed },
+    ]);
+  }
 
   const assignmentsByDay = new Map<string, CalendarAssignmentItem[]>();
   for (const assignment of assignments) {
@@ -180,7 +201,7 @@ export default async function CalendarPage({
                 {monthLabelFormatter.format(new Date(Date.UTC(year, month, 1)))}
               </h1>
               <p className="text-muted-foreground text-sm">
-                Assignments and exams across every course{googleStatus === "connected" ? ", plus your Google events" : ""}.
+                Assignments and exams across every course{googleStatus === "connected" ? ", plus your Google events" : ""}. Click a date to add something.
               </p>
             </div>
           </Reveal>
@@ -234,7 +255,9 @@ export default async function CalendarPage({
           days={days}
           assignmentsByDay={assignmentsByDay}
           examsByDay={examsByDay}
+          tasksByDay={tasksByDay}
           externalEventsByDay={externalEventsByDay}
+          courses={courses}
         />
       </main>
     </div>

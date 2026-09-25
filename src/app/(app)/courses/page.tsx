@@ -5,17 +5,10 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { CourseCard } from "@/components/course-card";
 import { CourseProgressBar } from "@/components/course-progress-bar";
 import { ICON_TILE_COLOR_CYCLE } from "@/components/icon-tile";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { requireUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-import { CreateCourseForm } from "./_components/create-course-form";
+import { CourseCardMenu, NewCourseButton } from "./_components/course-dialogs";
 
 export const metadata: Metadata = {
   title: "Courses",
@@ -45,25 +38,16 @@ export default async function CoursesPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10 md:flex-row md:gap-8">
       <AppSidebar isAdmin={session?.user?.role === "ADMIN"} />
       <main className="min-w-0 flex-1">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Your courses</h1>
-          <p className="text-muted-foreground mt-2">
-            Every note, assignment and document you add later will live inside a
-            course.
-          </p>
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Your courses</h1>
+            <p className="text-muted-foreground mt-2">
+              Every note, assignment and document you add later will live inside a
+              course.
+            </p>
+          </div>
+          <NewCourseButton />
         </header>
-
-        <Card className="mb-10 max-w-xl">
-          <CardHeader>
-            <CardTitle>Add a course</CardTitle>
-            <CardDescription>
-              Start with the subject you are studying right now.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CreateCourseForm />
-          </CardContent>
-        </Card>
 
         <section aria-labelledby="course-list-heading" className="mb-10">
           <h2 id="course-list-heading" className="mb-4 text-lg font-bold">
@@ -72,13 +56,18 @@ export default async function CoursesPage() {
 
           {courses.length === 0 ? (
             <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
-              No courses yet. Add your first one above.
+              No courses yet. Create your first one with New course.
             </p>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {courses.map((course, index) => (
                 <li key={course.id}>
                   <CourseCard
+                    menu={
+                      <CourseCardMenu
+                        course={{ id: course.id, title: course.title, description: course.description }}
+                      />
+                    }
                     href={`/courses/${course.id}`}
                     title={course.title}
                     description={course.description}

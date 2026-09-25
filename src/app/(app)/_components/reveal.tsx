@@ -55,12 +55,19 @@ export function RevealGroup({
 export function RevealItem({
   children,
   className,
+  onClick,
 }: {
   children: React.ReactNode;
   className?: string;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }) {
   return (
-    <motion.div className={className} variants={VARIANTS} transition={{ duration: 0.5, ease: "easeOut" }}>
+    <motion.div
+      className={className}
+      onClick={onClick}
+      variants={VARIANTS}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       {children}
     </motion.div>
   );
