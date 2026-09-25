@@ -24,7 +24,11 @@ function PopoverContent({
 }) {
   return (
     <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Positioner align={align} sideOffset={sideOffset}>
+      {/* The z-index has to be on the Positioner — it's the element that's
+          actually positioned, so a z-index only on the Popup inside it left
+          the whole menu underneath the sticky header (z-40), which cut off
+          its top edge. */}
+      <PopoverPrimitive.Positioner align={align} sideOffset={sideOffset} className="z-50">
         <PopoverPrimitive.Popup
           className={cn(
             "bg-popover text-popover-foreground z-50 w-80 rounded-2xl border border-black/5 p-2 shadow-lg outline-none",
